@@ -1,0 +1,42 @@
+id: ws-b1-t06-ui-overlay
+title: "UI Overlay with Progress and Controls"
+description: |
+  Build in-page overlay UI with progress bar, real-time preview,
+  pause/resume controls, and error notifications.
+
+stage: 4
+priority: 6
+dependencies:
+  - ws-b1-t01-project-setup
+  - ws-b1-t03-auto-scroller
+
+files:
+  allow:
+    - src/ui/overlay.ts
+    - src/ui/styles.css
+    - src/content/index.ts
+  create:
+    - src/ui/overlay.ts
+    - src/ui/styles.css
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets: []
+
+acceptance:
+  - "Overlay uses Shadow DOM for CSS isolation"
+  - "Progress bar shows items collected / max items"
+  - "Real-time preview shows last 5 extracted items"
+  - "Start, Pause, Resume, Stop buttons functional"
+  - "Error messages display in overlay"
+  - "Overlay is draggable and minimizable"
+  - "Scraper UI doesn't interfere with page content"
+
+verify:
+  - "bun run typecheck"
+  - "bun run build"
+
+estimate: 50min

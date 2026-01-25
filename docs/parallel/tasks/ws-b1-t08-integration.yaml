@@ -1,0 +1,47 @@
+id: ws-b1-t08-integration
+title: "Integration and E2E Testing"
+description: |
+  Wire all components together, implement service worker,
+  and create E2E tests with test pages.
+
+stage: 5
+priority: 8
+dependencies:
+  - ws-b1-t02-pattern-detector
+  - ws-b1-t03-auto-scroller
+  - ws-b1-t04-data-extractor
+  - ws-b1-t05-shadow-dom
+  - ws-b1-t06-ui-overlay
+  - ws-b1-t07-popup
+
+files:
+  allow:
+    - src/background/service-worker.ts
+    - src/content/index.ts
+    - tests/e2e/
+  create:
+    - src/background/service-worker.ts
+    - tests/e2e/scraper.test.ts
+    - tests/fixtures/test-page.html
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets: []
+
+acceptance:
+  - "Service worker handles extension lifecycle"
+  - "Content script initializes all modules correctly"
+  - "Message passing between all components works"
+  - "E2E test scrapes test page successfully"
+  - "Build produces loadable Chrome extension"
+  - "Extension passes Chrome Web Store requirements"
+
+verify:
+  - "bun run typecheck"
+  - "bun test"
+  - "bun run build"
+
+estimate: 60min

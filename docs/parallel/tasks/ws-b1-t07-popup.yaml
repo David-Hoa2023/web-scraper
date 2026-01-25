@@ -1,0 +1,44 @@
+id: ws-b1-t07-popup
+title: "Extension Popup UI"
+description: |
+  Build extension popup for configuration, starting scrapes,
+  and viewing/exporting collected data.
+
+stage: 4
+priority: 7
+dependencies:
+  - ws-b1-t01-project-setup
+  - ws-b1-t04-data-extractor
+
+files:
+  allow:
+    - src/ui/popup.html
+    - src/ui/popup.ts
+    - src/utils/storage.ts
+    - src/utils/messaging.ts
+  create:
+    - src/ui/popup.html
+    - src/ui/popup.ts
+    - src/utils/storage.ts
+    - src/utils/messaging.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets: []
+
+acceptance:
+  - "Popup shows current scrape status"
+  - "Configuration panel for pattern matching options"
+  - "Custom field definition UI"
+  - "Export buttons for JSON and CSV"
+  - "Chrome storage saves user preferences"
+  - "Message passing works between popup and content script"
+
+verify:
+  - "bun run typecheck"
+  - "bun run build"
+
+estimate: 45min

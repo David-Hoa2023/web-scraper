@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Scraper Pro</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Material Icons Font (using SVG instead to be offline-safe) -->
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <img src="../icons/icon48.png" alt="Logo">
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard" id="nav-dashboard" title="Dashboard">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+          </svg>
+        </button>
+        <button class="nav-item" data-tab="match" id="nav-match" title="Match Strategy">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+          </svg>
+        </button>
+        <button class="nav-item" data-tab="extract" id="nav-extract" title="Extraction">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+          </svg>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" title="Settings">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content-area">
+
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="tab-pane active">
+        <header class="section-header">
+          <h2>Dashboard</h2>
+          <div class="status-badge" id="status-badge">
+            <span class="dot"></span>
+            <span id="status-text">Idle</span>
+          </div>
+        </header>
+
+        <div class="hero-section">
+          <button id="main-action-btn" class="glow-button">Start Scraping</button>
+        </div>
+
+        <div class="grid-stats">
+          <div class="stat-card">
+            <span class="label">Collected</span>
+            <span class="value" id="items-count">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">Target</span>
+            <div class="mini-target">
+              <span class="target-tag">div.card</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button id="export-btn" class="secondary-btn">Export</button>
+          <button id="clear-btn" class="secondary-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- Match Strategy Tab -->
+      <div id="tab-match" class="tab-pane">
+        <header class="section-header">
+          <h2>Match Strategy</h2>
+        </header>
+
+        <div class="option-card">
+          <div class="option-row">
+            <span>Match Tag Name</span>
+            <label class="switch">
+              <input type="checkbox" id="match-tag" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="option-row">
+            <span>Match Classes</span>
+            <label class="switch">
+              <input type="checkbox" id="match-class" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="option-row">
+            <span>Match ID</span>
+            <label class="switch">
+              <input type="checkbox" id="match-id">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="option-card">
+          <h3>Auto-Scroll Config</h3>
+          <div class="input-group">
+            <label>Throttle (ms)</label>
+            <input type="number" id="scroll-speed" value="1000">
+          </div>
+          <div class="input-group">
+            <label>Max Items</label>
+            <input type="number" id="max-items" value="1000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Extraction Tab -->
+      <div id="tab-extract" class="tab-pane">
+        <header class="section-header">
+          <h2>Data Extraction</h2>
+          <button id="add-field-btn" class="icon-btn-small">+</button>
+        </header>
+
+        <div id="fields-list" class="scrolling-list">
+          <!-- Dynamic content -->
+          <div class="empty-placeholder">No fields customized</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <script type="module" src="./popup.ts"></script>
+</body>
+
+</html>

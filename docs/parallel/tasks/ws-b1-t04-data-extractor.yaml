@@ -1,0 +1,39 @@
+id: ws-b1-t04-data-extractor
+title: "Flexible Data Extraction"
+description: |
+  Implement customizable data extraction with user-defined fields,
+  hierarchical data preservation, and normalization.
+
+stage: 2
+priority: 4
+dependencies:
+  - ws-b1-t01-project-setup
+  - ws-b1-t02-pattern-detector
+
+files:
+  allow:
+    - src/content/dataExtractor.ts
+  create:
+    - src/content/dataExtractor.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets:
+    - web-scraper-by-Gemini.md#data-mapper
+
+acceptance:
+  - "extractData() extracts fields based on ExtractionConfig"
+  - "Supports text, href, src, and arbitrary attribute extraction"
+  - "preserveHierarchy option maintains parent-child relationships"
+  - "normalizeData() handles varying formats and missing data"
+  - "Heuristic defaults work when no custom config provided"
+  - "Unit tests cover edge cases (missing elements, empty text)"
+
+verify:
+  - "bun run typecheck"
+  - "bun test src/content/dataExtractor.test.ts"
+
+estimate: 40min

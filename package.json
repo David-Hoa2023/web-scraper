@@ -1,0 +1,27 @@
+{
+  "name": "web-scraper-extension",
+  "version": "1.0.0",
+  "description": "Chrome Extension web scraper with pattern detection and auto-scrolling",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && copy src\\manifest.json dist\\manifest.json && xcopy src\\icons dist\\icons /I /Y",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "bunx vitest run",
+    "test:watch": "bunx vitest"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vitest/browser": "^4.0.18",
+    "eslint": "^8.56.0",
+    "happy-dom": "^20.3.7",
+    "jsdom": "^27.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.0"
+  }
+}

@@ -1,0 +1,43 @@
+id: ws-b1-t01-project-setup
+title: "Project Setup & TypeScript Configuration"
+description: |
+  Initialize Chrome Extension project with Manifest V3, TypeScript, and build tooling.
+  Create core project structure and type definitions.
+
+stage: 0
+priority: 1
+dependencies: []
+
+files:
+  allow:
+    - src/manifest.json
+    - src/types.ts
+    - package.json
+    - tsconfig.json
+    - vite.config.ts
+    - .gitignore
+  create:
+    - src/manifest.json
+    - src/types.ts
+    - package.json
+    - tsconfig.json
+    - vite.config.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+  snippets: []
+
+acceptance:
+  - "package.json exists with TypeScript, Vite, and Chrome types"
+  - "tsconfig.json configured for Chrome Extension development"
+  - "manifest.json is valid Manifest V3 with content_scripts and service_worker"
+  - "src/types.ts defines PatternMatch, ScrollerConfig, ExtractionConfig interfaces"
+  - "bun run typecheck passes with no errors"
+
+verify:
+  - "bun install"
+  - "bun run typecheck"
+
+estimate: 30min

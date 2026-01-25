@@ -1,0 +1,42 @@
+id: ws-b1-t02-pattern-detector
+title: "Enhanced Pattern Detection"
+description: |
+  Implement pattern detection that matches repeating elements by tag name,
+  class, id, data-*, and aria-* attributes. Add visual feedback overlay.
+
+stage: 1
+priority: 2
+dependencies:
+  - ws-b1-t01-project-setup
+
+files:
+  allow:
+    - src/content/patternDetector.ts
+    - src/content/index.ts
+    - src/ui/overlay.ts
+    - src/ui/styles.css
+  create:
+    - src/content/patternDetector.ts
+    - src/ui/overlay.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets:
+    - web-scraper-by-Gemini.md#pattern-matcher
+
+acceptance:
+  - "detectPattern() matches elements by tag, class, id, data-*, aria-*"
+  - "PatternDetectorConfig allows toggling which attributes to match"
+  - "highlightPattern() draws green overlay around matched elements"
+  - "Overlay shows count of matched siblings"
+  - "mouseover events trigger pattern detection"
+  - "Unit tests pass for pattern detection logic"
+
+verify:
+  - "bun run typecheck"
+  - "bun test src/content/patternDetector.test.ts"
+
+estimate: 45min

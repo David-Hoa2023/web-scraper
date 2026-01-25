@@ -1,0 +1,41 @@
+id: ws-b1-t03-auto-scroller
+title: "Auto-Scroller with Throttling and Error Handling"
+description: |
+  Implement infinite scroll handling with throttling, error handling,
+  retry logic, and "load more" button support.
+
+stage: 2
+priority: 3
+dependencies:
+  - ws-b1-t01-project-setup
+
+files:
+  allow:
+    - src/content/autoScroller.ts
+    - src/utils/errors.ts
+  create:
+    - src/content/autoScroller.ts
+    - src/utils/errors.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+  snippets:
+    - web-scraper-by-Gemini.md#auto-scroller
+
+acceptance:
+  - "startScroll() begins scrolling with configurable throttleMs"
+  - "pauseScroll() and resumeScroll() work without data loss"
+  - "stopScroll() cleanly terminates scrolling"
+  - "Retry logic attempts up to retryCount times on failure"
+  - "Load more buttons detected by common patterns (button text, aria-label)"
+  - "onScrollProgress() callback fires with current state"
+  - "MutationObserver detects new DOM nodes"
+
+verify:
+  - "bun run typecheck"
+  - "bun test src/content/autoScroller.test.ts"
+
+estimate: 45min

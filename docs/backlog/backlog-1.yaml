@@ -1,0 +1,60 @@
+scraper_plan:
+  architecture:
+    - pattern_detection:
+        description: |
+          Enhance pattern matching to detect repeating elements based on a combination of attributes such as tag name, class, id, data attributes, and aria attributes.
+        improvements:
+          - add attribute-based matching (class, id, data-*, aria-*)
+          - provide visual feedback to highlight groups of matching elements or entire rows
+          - allow user to toggle pattern detection detail (e.g., match by tag name, class, id)
+    - auto_scroller:
+        description: |
+          Handle infinite scrolling efficiently and with error handling.
+        improvements:
+          - implement scroll throttling/debouncing to reduce resource consumption
+          - add error handling with retry logic and user notifications
+          - simulate "load more" button clicks for sites with such functionality
+    - data_extraction:
+        description: |
+          Improve data extraction heuristics and allow for more flexibility in what data is scraped.
+        improvements:
+          - allow users to customize data extraction (e.g., specify which fields to scrape)
+          - extract data in a hierarchical structure (preserve relationships between data)
+          - normalize extracted data to account for varying formats and missing data
+    - shadow_dom_handling:
+        description: |
+          Ensure compatibility with modern sites using web components and shadow DOMs.
+        improvements:
+          - detect and interact with shadow DOM elements
+          - leverage selectors like ::part for web components
+          - provide fallback mechanisms for heavily dynamic sites
+  user_experience:
+    - interface:
+        description: |
+          Improve user interface for starting, pausing, and stopping scraping processes.
+        improvements:
+          - add a progress bar for feedback during scraping
+          - allow users to specify maximum data limits (e.g., number of items)
+          - provide real-time data preview and progress feedback
+          - notify user of errors or issues (e.g., "scraping paused due to error")
+    - feedback:
+        description: |
+          Provide better user feedback during scraping to improve usability and transparency.
+        improvements:
+          - notify user when scraping is paused or completed
+          - show a live status of items collected (e.g., "X items collected out of Y expected")
+          - allow for quick pausing and restarting of the scraping session
+  error_handling:
+    - description: |
+        Add robust error handling across the scraper to ensure smooth execution and recovery from issues.
+    - improvements:
+        - retries for failed data loads or extraction
+        - handle network issues gracefully (e.g., retry on failure, notify user)
+        - ensure scraping can resume from where it left off
+  efficiency:
+    - description: |
+        Improve the scraper’s overall efficiency to minimize resource consumption and improve execution time.
+    - improvements:
+        - throttle scrolling or introduce delays between scroll actions
+        - optimize DOM parsing to avoid unnecessary checks
+        - implement an efficient data storage system to avoid memory overflow (e.g., store in batches)

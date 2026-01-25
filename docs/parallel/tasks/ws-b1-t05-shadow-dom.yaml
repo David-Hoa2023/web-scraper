@@ -1,0 +1,40 @@
+id: ws-b1-t05-shadow-dom
+title: "Shadow DOM Support"
+description: |
+  Add capability to detect and interact with Shadow DOM elements
+  and web components.
+
+stage: 3
+priority: 5
+dependencies:
+  - ws-b1-t02-pattern-detector
+  - ws-b1-t04-data-extractor
+
+files:
+  allow:
+    - src/content/shadowDomHandler.ts
+    - src/content/patternDetector.ts
+    - src/content/dataExtractor.ts
+  create:
+    - src/content/shadowDomHandler.ts
+
+context:
+  routes: []
+  files:
+    - docs/BLUEPRINT.md
+    - src/types.ts
+    - src/content/patternDetector.ts
+  snippets: []
+
+acceptance:
+  - "queryShadowRoot() traverses shadow boundaries"
+  - "Pattern detection works within shadow DOMs"
+  - "Data extraction works within shadow DOMs"
+  - "::part selector support for web components"
+  - "Fallback for closed shadow roots (limited access)"
+
+verify:
+  - "bun run typecheck"
+  - "bun test src/content/shadowDomHandler.test.ts"
+
+estimate: 35min
