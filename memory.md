@@ -1,56 +1,43 @@
 # Web Scraper Pro - Project Memory
 
-## Project Status: MVP Complete
+## Project Status: v1.0 Complete
 
-## What Was Built
+**GitHub:** https://github.com/David-Hoa2023/web-scraper
 
-Chrome Extension (Manifest V3) for DOM pattern detection and data extraction.
+## Overview
 
-### Core Modules
+Chrome Extension (Manifest V3) that detects repeating DOM patterns, auto-scrolls to load content, and extracts data to JSON.
 
-| Module | Purpose |
-|--------|---------|
-| `patternDetector.ts` | Detects repeating DOM patterns by tag/class/id/data/aria attributes |
-| `autoScroller.ts` | Infinite scroll with MutationObserver, retry logic, load-more detection |
-| `dataExtractor.ts` | Heuristic field extraction with normalization |
-| `shadowDomHandler.ts` | Shadow DOM traversal and extraction |
-| `overlay.ts` | Shadow DOM isolated visual overlay |
-| `errors.ts` | Error codes, backoff calculation |
+## Key Features
 
-### Key Interfaces
+- **Hover to detect** - Green highlight shows repeating patterns with item count
+- **Click to scrape** - Click highlighted area to start scraping
+- **Auto-scroll** - Infinite scroll with retry logic and "load more" button detection
+- **Data extraction** - Extracts text, links, images from detected elements
+- **JSON export** - Download collected data via popup
 
-- `PatternMatch` - Detected pattern with siblings, confidence score
-- `ScrollerConfig` - Throttle, retry, maxItems settings
-- `ExtractionConfig` - Fields, hierarchy, normalization options
-- `ScrollerState` - Status (idle/running/paused), itemsCollected, errors
+## Architecture
 
-## Verification
+| Layer | Components |
+|-------|------------|
+| Content Script | Pattern detection, auto-scroller, data extractor, in-page overlay |
+| Background | Service worker for extension lifecycle |
+| Popup | Dashboard with start/pause/export controls, settings tabs |
 
-- TypeScript: PASS
-- Tests: 51/51 PASS
-- Build: SUCCESS (dist/ folder ready)
+**Key decisions:**
+- Shadow DOM for overlay (style isolation)
+- MutationObserver for scroll detection
+- WeakSet for deduplication of extracted elements
 
-## Architecture Decisions
+## Commands
 
-1. **Shadow DOM for overlay** - Prevents style conflicts with host pages
-2. **MutationObserver for scrolling** - Efficient new content detection
-3. **Configurable pattern matching** - Flexible criteria (tag, class, id, data-*, aria-*)
-4. **Heuristic extraction fallback** - Auto-detects images, links, headings when no config
-
-## Files Structure
-
-```
-src/
-  content/   - Pattern detection, scrolling, extraction
-  background/ - Service worker
-  ui/        - Popup, overlay, styles
-  utils/     - Error handling
-  types.ts   - TypeScript interfaces
-tests/       - Vitest with jsdom
-dist/        - Built extension
+```bash
+bun install      # Install dependencies
+bun run build    # Build to dist/
+bun run test     # Run tests
 ```
 
-## To Load Extension
+## Load Extension
 
 1. `bun run build`
-2. Chrome > `chrome://extensions/` > Developer mode > Load unpacked > select `dist/`
+2. Chrome → `chrome://extensions` → Developer mode → Load unpacked → select `dist/`
