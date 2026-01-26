@@ -92,7 +92,14 @@ export type MessageType =
   // Tutorial messages
   | 'GENERATE_TUTORIAL'
   | 'EXPORT_TUTORIAL'
-  | 'PREVIEW_TUTORIAL';
+  | 'PREVIEW_TUTORIAL'
+  // Scheduler messages
+  | 'SCHEDULE_TASK'
+  | 'UNSCHEDULE_TASK'
+  | 'RUN_TASK_NOW'
+  | 'GET_SCHEDULED_TASKS'
+  | 'GET_TASK_HISTORY'
+  | 'RESCHEDULE_ALL';
 
 export interface ScraperMessage {
   type: MessageType;
