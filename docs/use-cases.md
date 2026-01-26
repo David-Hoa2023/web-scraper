@@ -268,6 +268,146 @@ This document outlines user stories, pain points addressed, and step-by-step gui
 
 ---
 
+## User Story 6: Social Media Researcher Collecting Feed Data
+
+### Persona
+**Carlos**, a social media researcher who needs to collect posts from Twitter/X and Reddit for sentiment analysis.
+
+### Pain Points
+- Social media feeds use "virtualized lists" — old posts disappear from DOM as you scroll
+- Copy-paste loses formatting and metadata (likes, timestamps, usernames)
+- Rate limits and infinite scroll make manual collection impossible
+- Posts are ephemeral and may be deleted before analysis
+
+### How Web Scraper Pro Helps
+- **Immediate Extraction** captures data as soon as posts enter viewport (before they're removed)
+- **MutationObserver Integration** detects new posts being added dynamically
+- **In-Memory Storage** preserves data even after DOM nodes are recycled
+- **Auto-Scroll** handles infinite feeds automatically
+
+### Step-by-Step Guide
+
+1. **Navigate to the Feed**
+   - Open Twitter/X, Reddit, or similar infinite-scroll site
+   - Apply any filters or search terms you need
+
+2. **Configure for Social Media**
+   - Open Web Scraper Pro → **Match Strategy** tab
+   - Enable **Match Tag Name** and **Match Classes**
+   - Set throttle to **1500-2000ms** (social sites load slower)
+   - Set **Max Items** to your target (e.g., 500 posts)
+
+3. **Start Scanning**
+   - Click **Start Scanning** on Dashboard
+   - Hover over a post card to detect the pattern
+   - The tool highlights all similar posts
+
+4. **Let It Run**
+   - Auto-scroll collects posts continuously
+   - Data is extracted immediately and stored in memory
+   - Even if posts disappear from DOM, data is preserved
+
+5. **Export for Analysis**
+   - Stop when you reach your target
+   - Export as JSON for data analysis tools
+   - Each record includes: text, images, links, metadata
+
+---
+
+## User Story 7: Developer Scraping Modern SPA Sites
+
+### Persona
+**Priya**, a developer who needs to scrape data from a React/Vue site with dynamically generated class names.
+
+### Pain Points
+- Class names like `css-175oi2r` change on every build
+- Traditional CSS selectors break constantly
+- Sites use complex nested components
+- Shadow DOM encapsulates content
+
+### How Web Scraper Pro Helps
+- **Structure-Based Matching** uses DOM tree depth and tag hierarchy, not just classes
+- **Multiple Match Strategies** (tag, class, ID, data attributes)
+- **Shadow DOM Handler** traverses shadow boundaries
+- **Pattern Refinement** lets you adjust detection manually
+
+### Step-by-Step Guide
+
+1. **Analyze the Site Structure**
+   - Open browser DevTools (F12)
+   - Identify the repeating pattern (look for consistent tag structure)
+   - Note if Shadow DOM is used (look for `#shadow-root`)
+
+2. **Configure Match Strategy**
+   - Open Web Scraper Pro → **Match Strategy** tab
+   - For dynamic classes: Enable **Match Tag Name**, disable **Match Classes**
+   - For data-driven sites: Enable **Match Data Attributes** (e.g., `data-testid`)
+   - For Shadow DOM: The extension automatically traverses shadow boundaries
+
+3. **Test Pattern Detection**
+   - Click **Start Scanning**
+   - Hover over different elements to find the best match
+   - Look for the pattern that highlights all target items
+
+4. **Refine If Needed**
+   - If too many items match: Enable more match criteria
+   - If too few match: Disable restrictive criteria
+   - Use **Match ID** sparingly (IDs are often unique)
+
+5. **Handle Edge Cases**
+   - For lazy-loaded images: Increase throttle delay
+   - For virtualized lists: Data is captured before removal
+   - For auth-required content: Log in first, then scrape
+
+---
+
+## User Story 8: Content Moderator Auditing User-Generated Content
+
+### Persona
+**Maria**, a content moderator who needs to audit user-generated content across multiple pages.
+
+### Pain Points
+- Manually reviewing hundreds of posts is exhausting
+- Need to capture both text and images for review
+- Content changes or gets deleted before review
+- No audit trail of what was reviewed
+
+### How Web Scraper Pro Helps
+- **Batch Collection** gathers all content in one run
+- **Image Extraction** captures image URLs automatically
+- **Timestamped Data** creates an audit record
+- **Export to Spreadsheet** for team review workflow
+
+### Step-by-Step Guide
+
+1. **Set Up Audit Task**
+   - Navigate to the content feed or page
+   - Open Web Scraper Pro
+
+2. **Configure for Content Capture**
+   - Go to **Extraction** tab
+   - Enable **Preserve Hierarchy** to maintain context
+   - Enable **Normalize Text** for consistent formatting
+
+3. **Run the Audit**
+   - Start scanning and let auto-scroll collect all content
+   - Monitor progress in Dashboard stats
+
+4. **Export Audit Record**
+   - Export as JSON or CSV
+   - Data includes:
+     - Text content
+     - Image URLs
+     - Link destinations
+     - Extraction timestamp
+
+5. **Set Up Recurring Audit**
+   - Create a scheduled task for daily/weekly audits
+   - Configure webhook to send data to your moderation queue
+   - Track history to compare content over time
+
+---
+
 ## Quick Reference: Feature → Pain Point Mapping
 
 | Feature | Pain Points Addressed |
@@ -281,6 +421,10 @@ This document outlines user stories, pain points addressed, and step-by-step gui
 | Scheduled Tasks | Manual repetitive work, missed updates |
 | Webhook Integration | Data silos, no automation pipeline |
 | Multi-format Export | Format incompatibility, manual conversion |
+| MutationObserver | Virtualized lists, disappearing DOM nodes |
+| Structure-Based Matching | Dynamic class names, CSS module hashes |
+| Shadow DOM Handler | Encapsulated web components, inaccessible content |
+| In-Memory Storage | Data loss from DOM recycling, ephemeral content |
 
 ---
 
