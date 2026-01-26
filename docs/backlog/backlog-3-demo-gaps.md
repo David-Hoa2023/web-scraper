@@ -8,6 +8,10 @@
 | LLM content generation e2e | 2, 3, 5 | Low | High |
 | Scheduled tasks backend | 4, 8 | Medium | Medium |
 | Webhook auto-triggers | 4, 8 | Low | Medium |
+| Auto-trigger tutorial after scrape | 2, 3 | Low | Medium |
+| Tutorial video preview | 2, 5 | Medium | Medium |
+| Review/edit guides before export | 2, 3, 5 | Medium | Low |
+| Pattern refinement verification | 1, 6, 7 | Low | Low |
 
 ---
 
@@ -172,9 +176,79 @@ async function onTaskComplete(task: ScheduledTask, results: ExtractedItem[], suc
 
 ---
 
-## Phase 3: Polish & Integration
+## Phase 3: User Experience & Feedback (from backlog-2)
 
-### 3.1 Dashboard Stats from Real Data
+### 3.1 Auto-Trigger Tutorial Generation After Scrape
+
+**Current State:** Scraping and tutorial generation are separate flows.
+
+**Tasks:**
+- [ ] After scrape completes, prompt user: "Generate tutorial from this session?"
+- [ ] Pass scraped data context to content generator
+- [ ] Show option in overlay or popup
+
+**Files:**
+- `src/content/index.ts` - scrape completion handler
+- `src/ui/overlay.ts` - add "Generate Tutorial" button post-scrape
+
+**User Story:** After extracting data, user can immediately create a how-to guide.
+
+---
+
+### 3.2 Tutorial Video Preview
+
+**Current State:** `tutorialPreview.ts` exists but may not be wired.
+
+**Tasks:**
+- [ ] Wire tutorialPreview.ts to recording panel
+- [ ] Show video preview with cursor overlay before export
+- [ ] Allow scrubbing/playback controls
+- [ ] Preview generated text alongside video
+
+**Files:**
+- `src/ui/tutorialPreview.ts`
+- `src/content/tutorial/exporters/video.ts`
+
+**Test:** Stop recording → see preview panel → play video with cursor → then export
+
+---
+
+### 3.3 Review & Edit Generated Guides
+
+**Current State:** LLM generates content, exported directly.
+
+**Tasks:**
+- [ ] Show generated markdown in editable text area
+- [ ] Let user modify steps before export
+- [ ] Add "Regenerate" button to try again with different prompt
+- [ ] Save edits before export
+
+**Files:**
+- `src/ui/tutorialPreview.ts` - add edit mode
+- `src/content/tutorial/contentGenerator.ts` - regenerate function
+
+**User Story:** User reviews LLM output, fixes any errors, then exports final version.
+
+---
+
+### 3.4 Manual Pattern Refinement Verification
+
+**Current State:** `patternRefinement.ts` exists.
+
+**Tasks:**
+- [ ] Verify click-to-adjust pattern selection works
+- [ ] Test expanding/shrinking selection
+- [ ] Ensure refined pattern persists for scraping session
+
+**Files:**
+- `src/content/patternRefinement.ts`
+- `src/content/patternDetector.ts`
+
+**Test:** Hover → click to lock → click again to refine → verify correct items selected
+
+---
+
+### 3.5 Dashboard Stats from Real Data
 
 **Tasks:**
 - [ ] Calculate success rate from actual task runs
@@ -183,7 +257,7 @@ async function onTaskComplete(task: ScheduledTask, results: ExtractedItem[], suc
 
 ---
 
-### 3.2 Error Handling & Notifications
+### 3.6 Error Handling & Notifications
 
 **Tasks:**
 - [ ] Show chrome.notifications on task completion/failure
@@ -206,9 +280,13 @@ Week 2: Phase 2 (Scheduled Tasks)
 ├── 2.2 Task execution
 └── 2.3 Webhook triggers
 
-Week 3: Phase 3 (Polish)
-├── 3.1 Real stats
-└── 3.2 Error handling
+Week 3: Phase 3 (UX & Feedback)
+├── 3.1 Auto-trigger tutorial after scrape
+├── 3.2 Tutorial video preview
+├── 3.3 Review/edit guides before export
+├── 3.4 Pattern refinement verification
+├── 3.5 Dashboard stats from real data
+└── 3.6 Error handling & notifications
 ```
 
 ---
