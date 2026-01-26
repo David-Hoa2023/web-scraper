@@ -62,13 +62,13 @@ function getStyles(): string {
   return `
     :host {
       all: initial;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(16, 34, 22, 0.85);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -80,8 +80,8 @@ function getStyles(): string {
       width: 90%;
       max-width: 520px;
       max-height: 90vh;
-      background: #0f172a;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #102216;
+      border: 1px solid rgba(19, 236, 91, 0.2);
       border-radius: 16px;
       overflow: hidden;
       display: flex;
@@ -94,14 +94,14 @@ function getStyles(): string {
       align-items: center;
       justify-content: space-between;
       padding: 16px 24px;
-      background: #1e293b;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.08);
+      border-bottom: 1px solid rgba(19, 236, 91, 0.2);
     }
 
     .title {
       font-size: 18px;
       font-weight: 600;
-      color: #ffffff;
+      color: #f6f8f6;
     }
 
     .close-btn {
@@ -112,15 +112,15 @@ function getStyles(): string {
       justify-content: center;
       background: transparent;
       border: none;
-      color: #9ca3af;
+      color: #92c9a4;
       cursor: pointer;
       border-radius: 8px;
       transition: all 0.2s;
     }
 
     .close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
+      background: rgba(19, 236, 91, 0.1);
+      color: #f6f8f6;
     }
 
     .content {
@@ -140,7 +140,7 @@ function getStyles(): string {
     .section-title {
       font-size: 12px;
       font-weight: 600;
-      color: #9ca3af;
+      color: #92c9a4;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 16px;
@@ -158,17 +158,17 @@ function getStyles(): string {
       display: block;
       font-size: 13px;
       font-weight: 500;
-      color: #d1d5db;
+      color: #f6f8f6;
       margin-bottom: 6px;
     }
 
     .input {
       width: 100%;
       padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.05);
+      border: 1px solid rgba(19, 236, 91, 0.2);
       border-radius: 8px;
-      color: #ffffff;
+      color: #f6f8f6;
       font-size: 14px;
       transition: all 0.2s;
       box-sizing: border-box;
@@ -176,25 +176,25 @@ function getStyles(): string {
 
     .input:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      border-color: #13ec5b;
+      box-shadow: 0 0 0 3px rgba(19, 236, 91, 0.2);
     }
 
     .input::placeholder {
-      color: #6b7280;
+      color: #92c9a4;
     }
 
     .select {
       width: 100%;
       padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.05);
+      border: 1px solid rgba(19, 236, 91, 0.2);
       border-radius: 8px;
-      color: #ffffff;
+      color: #f6f8f6;
       font-size: 14px;
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2392c9a4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 10px center;
       background-size: 16px;
@@ -203,12 +203,12 @@ function getStyles(): string {
 
     .select:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: #13ec5b;
     }
 
     .select option {
-      background: #1e293b;
-      color: #ffffff;
+      background: #102216;
+      color: #f6f8f6;
     }
 
     .checkbox-group {
@@ -216,7 +216,7 @@ function getStyles(): string {
       align-items: center;
       justify-content: space-between;
       padding: 12px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(19, 236, 91, 0.1);
     }
 
     .checkbox-group:last-child {
@@ -231,26 +231,26 @@ function getStyles(): string {
 
     .checkbox-title {
       font-size: 14px;
-      color: #ffffff;
+      color: #f6f8f6;
     }
 
     .checkbox-desc {
       font-size: 12px;
-      color: #6b7280;
+      color: #92c9a4;
     }
 
     .toggle {
       position: relative;
       width: 44px;
       height: 24px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.15);
       border-radius: 12px;
       cursor: pointer;
       transition: background 0.2s;
     }
 
     .toggle.active {
-      background: #22c55e;
+      background: #13ec5b;
     }
 
     .toggle::after {
@@ -282,7 +282,7 @@ function getStyles(): string {
     .slider {
       width: 100%;
       height: 4px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.15);
       border-radius: 2px;
       appearance: none;
       cursor: pointer;
@@ -292,14 +292,14 @@ function getStyles(): string {
       appearance: none;
       width: 16px;
       height: 16px;
-      background: #3b82f6;
+      background: #13ec5b;
       border-radius: 50%;
       cursor: pointer;
     }
 
     .hint {
       font-size: 12px;
-      color: #6b7280;
+      color: #92c9a4;
       margin-top: 4px;
     }
 
@@ -318,13 +318,13 @@ function getStyles(): string {
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: #6b7280;
+      color: #92c9a4;
       cursor: pointer;
       padding: 4px;
     }
 
     .toggle-visibility:hover {
-      color: #9ca3af;
+      color: #f6f8f6;
     }
 
     .footer {
@@ -332,8 +332,8 @@ function getStyles(): string {
       justify-content: flex-end;
       gap: 12px;
       padding: 16px 24px;
-      background: #1e293b;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(19, 236, 91, 0.08);
+      border-top: 1px solid rgba(19, 236, 91, 0.2);
     }
 
     .btn {
@@ -347,21 +347,21 @@ function getStyles(): string {
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
+      background: rgba(19, 236, 91, 0.1);
+      color: #f6f8f6;
     }
 
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(19, 236, 91, 0.15);
     }
 
     .btn-primary {
-      background: #3b82f6;
-      color: white;
+      background: #13ec5b;
+      color: #102216;
     }
 
     .btn-primary:hover {
-      background: #2563eb;
+      background: #10d450;
     }
 
     .status-indicator {
@@ -369,7 +369,7 @@ function getStyles(): string {
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(19, 236, 91, 0.05);
       border-radius: 12px;
       font-size: 12px;
       margin-top: 8px;
@@ -382,7 +382,7 @@ function getStyles(): string {
     }
 
     .status-dot.success {
-      background: #22c55e;
+      background: #13ec5b;
     }
 
     .status-dot.error {

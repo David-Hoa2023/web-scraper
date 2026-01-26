@@ -1,5 +1,6 @@
 /**
  * UI Overlay Module for Web Scraper Chrome Extension
+ * Stitch Design System - Extraction Wizard Panel
  *
  * Creates an in-page overlay with Shadow DOM isolation,
  * providing controls and real-time feedback for scraping operations.
@@ -29,27 +30,44 @@ export interface ButtonHandlers {
 let buttonHandlers: ButtonHandlers | null = null;
 
 /**
- * Gets the overlay styles (dark theme)
- */
-/**
- * Gets the overlay styles (Glassmorphism theme)
+ * Gets the overlay styles (Stitch Design System)
  */
 function getStyles(): string {
   return `
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
     :host {
       all: initial;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --glass-bg: rgba(16, 22, 37, 0.90);
-      --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --glass-blur: blur(12px);
-      
-      --accent: #00ff88;
-      --accent-hover: #00fa9a;
-      --text: #ffffff;
-      --text-muted: #9ca3af;
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      /* Stitch Design Tokens */
+      --primary: #13ec5b;
+      --primary-hover: #1cfc68;
+      --primary-glow: rgba(19, 236, 91, 0.3);
+      --primary-10: rgba(19, 236, 91, 0.1);
+      --primary-20: rgba(19, 236, 91, 0.2);
+      --primary-40: rgba(19, 236, 91, 0.4);
+
+      --background-dark: #102216;
+      --sidebar-bg: #0d1b12;
+      --accent-dark: #193322;
+      --ui-dark: #23482f;
+
+      --text: #f6f8f6;
+      --text-muted: #92c9a4;
+      --text-muted-40: rgba(146, 201, 164, 0.4);
+
       --danger: #ef4444;
-      --warning: #fbbf24;
+      --warning: #f59e0b;
+      --success: #22c55e;
+
+      --border-color: rgba(19, 236, 91, 0.15);
+      --border-hover: rgba(19, 236, 91, 0.5);
+
+      --radius-sm: 0.5rem;
+      --radius-md: 0.75rem;
+      --radius-lg: 1rem;
+      --radius-full: 9999px;
     }
 
     * {
@@ -62,32 +80,36 @@ function getStyles(): string {
       position: fixed;
       top: 20px;
       right: 20px;
-      width: 320px;
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      border: var(--glass-border);
-      border-radius: 12px;
-      box-shadow: var(--glass-shadow);
+      width: 380px;
+      background: var(--background-dark);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       z-index: 2147483647;
       color: var(--text);
       font-size: 13px;
       overflow: hidden;
       user-select: none;
-      transition: width 0.3s ease, min-width 0.3s ease, border-radius 0.3s ease;
+      transition: width 0.3s ease, border-radius 0.3s ease;
     }
 
     .overlay-container.minimized {
-      width: 180px;
-      min-width: 0;
-      border-radius: 24px;
+      width: 200px;
+      border-radius: var(--radius-full);
     }
 
     .overlay-container.minimized .overlay-body {
       display: none;
     }
-    
+
     .overlay-container.minimized .header-controls {
       display: none;
+    }
+
+    .overlay-container.minimized .overlay-header {
+      border-bottom: none;
+      padding: 10px 16px;
+      justify-content: center;
     }
 
     /* Header */
@@ -95,45 +117,49 @@ function getStyles(): string {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px 20px;
+      background: var(--sidebar-bg);
+      border-bottom: 1px solid var(--border-color);
       cursor: move;
-    }
-    
-    .overlay-container.minimized .overlay-header {
-      border-bottom: none;
-      padding: 8px 16px;
-      justify-content: center;
     }
 
     .overlay-title {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--accent);
-      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
     }
 
     .overlay-title-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay-title-icon svg {
       width: 18px;
       height: 18px;
+      fill: var(--background-dark);
     }
 
     .header-controls {
       display: flex;
-      gap: 4px;
+      gap: 6px;
     }
 
     .header-btn {
-      background: transparent;
+      background: var(--accent-dark);
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
+      padding: 6px;
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -141,284 +167,602 @@ function getStyles(): string {
     }
 
     .header-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--ui-dark);
       color: var(--text);
+    }
+
+    .header-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
     }
 
     /* Body */
     .overlay-body {
-      padding: 16px;
+      padding: 0;
     }
 
-    /* Progress & Status */
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.idle { background: var(--text-muted); }
+    .status-dot.running {
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+      animation: pulse 1.5s infinite;
+    }
+    .status-dot.paused { background: var(--warning); }
+    .status-dot.error { background: var(--danger); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    .status-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--primary-10);
+      border: 1px solid var(--primary-20);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Smart Detection Toggle */
+    .smart-detection {
+      margin: 16px 20px;
+      padding: 14px 16px;
+      background: var(--primary-10);
+      border: 1px solid var(--primary-20);
+      border-radius: var(--radius-md);
+    }
+
+    .smart-detection-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .smart-detection-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .smart-detection-title svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--primary);
+    }
+
+    .smart-detection-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Progress Section */
     .progress-section {
-      margin-bottom: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .progress-label {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 12px;
+      margin-bottom: 10px;
+      font-size: 11px;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
     }
 
     .progress-count {
-      color: var(--text);
+      color: var(--primary);
       font-weight: 700;
-      font-family: 'Monaco', monospace;
+      font-family: 'Monaco', 'Consolas', monospace;
     }
 
     .progress-bar-container {
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      height: 6px;
+      background: var(--ui-dark);
+      border-radius: var(--radius-full);
       overflow: hidden;
     }
 
     .progress-bar {
       height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
+      background: var(--primary);
+      border-radius: var(--radius-full);
       transition: width 0.3s ease;
       width: 0%;
-      box-shadow: 0 0 8px var(--accent);
+      box-shadow: 0 0 15px var(--primary-40);
     }
 
-    .status-section {
+    /* Active Columns Section */
+    .columns-section {
+      padding: 16px 20px;
+    }
+
+    .section-title {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      justify-content: space-between;
+      margin-bottom: 12px;
     }
 
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      box-shadow: 0 0 5px currentColor;
-    }
-
-    .status-dot.idle { background: var(--text-muted); color: var(--text-muted); }
-    .status-dot.running { background: var(--accent); color: var(--accent); animation: pulse 1.5s infinite; }
-    .status-dot.paused { background: var(--warning); color: var(--warning); }
-    .status-dot.error { background: var(--danger); color: var(--danger); }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
-    }
-
-    .status-text {
-      text-transform: uppercase;
+    .section-title h3 {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
+      color: var(--text-muted-40);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    /* Controls */
-    .buttons-section {
+    .add-column-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+
+    .add-column-btn:hover {
+      background: var(--primary-10);
+    }
+
+    .add-column-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    .columns-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.2s;
+    }
+
+    .column-item:hover {
+      border-color: var(--border-hover);
+    }
+
+    .column-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .column-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--primary-20);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .column-icon svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--primary);
+    }
+
+    .column-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .column-selector {
+      font-size: 9px;
+      color: var(--text-muted-40);
+      margin-top: 2px;
+    }
+
+    .column-actions {
       display: flex;
       gap: 8px;
-      margin-bottom: 16px;
     }
 
-    .control-btn {
-      flex: 1;
-      padding: 8px 12px;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
+    .column-actions button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted-40);
       cursor: pointer;
-      transition: all 0.2s;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+
+    .column-actions button:hover {
+      color: var(--text);
+    }
+
+    .column-actions button.delete:hover {
+      color: var(--danger);
+    }
+
+    .column-actions svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Sample Output */
+    .sample-section {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sample-output {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 10px;
+      color: var(--primary);
+      line-height: 1.6;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .sample-output::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sample-output::-webkit-scrollbar-thumb {
+      background: var(--ui-dark);
+      border-radius: 2px;
+    }
+
+    .sample-empty {
+      color: var(--text-muted-40);
+      font-style: italic;
+    }
+
+    /* Controls Footer */
+    .controls-footer {
+      padding: 16px 20px;
+      background: var(--sidebar-bg);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn-secondary {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .btn-start {
-      background: rgba(0, 255, 136, 0.15);
-      border-color: rgba(0, 255, 136, 0.3);
-      color: var(--accent);
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
-    .btn-start:hover { background: rgba(0, 255, 136, 0.25); }
 
-    .btn-pause {
-      background: rgba(251, 191, 36, 0.15);
-      border-color: rgba(251, 191, 36, 0.3);
-      color: var(--warning);
+    .btn-secondary svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
     }
-    .btn-pause:hover { background: rgba(251, 191, 36, 0.25); }
 
-    .btn-stop {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.3);
+    .btn-primary {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--primary);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--background-dark);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .btn-danger {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.3);
       color: var(--danger);
     }
-    .btn-stop:hover { background: rgba(239, 68, 68, 0.25); }
-    
-    .control-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-      filter: grayscale(1);
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
     }
 
-    /* Terminal Preview */
-    .preview-section {
+    .cancel-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted-40);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.2s;
+    }
+
+    .cancel-btn:hover {
+      color: var(--text);
+    }
+
+    /* Error Section */
+    .error-section {
+      margin: 0 20px 16px;
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+
+    .error-section.has-errors {
+      display: block;
+    }
+
+    .error-item {
+      color: var(--danger);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .error-item:last-child {
       margin-bottom: 0;
     }
 
-    .preview-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .preview-title {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .preview-list {
-      max-height: 120px;
-      overflow-y: auto;
-      background: #0a0e17;
-      border-radius: 6px;
-      padding: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-family: 'Fira Code', 'Consolas', monospace;
-    }
-
-    .preview-list::-webkit-scrollbar {
+    /* Scrollbar */
+    .columns-list::-webkit-scrollbar {
       width: 4px;
     }
-    .preview-list::-webkit-scrollbar-thumb {
-      background: #333;
+
+    .columns-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .columns-list::-webkit-scrollbar-thumb {
+      background: var(--ui-dark);
       border-radius: 2px;
     }
 
-    .preview-item {
-      font-size: 10px;
-      color: #a0a0a0;
-      padding: 4px 6px;
-      margin-bottom: 4px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .preview-item:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-    /* Syntax highlighting simulation */
-    .key { color: #f0a; }
-    .string { color: var(--accent); }
-    
-    .preview-empty {
-      text-align: center;
-      color: #444;
-      padding: 12px;
-      font-style: italic;
-    }
-
-    .error-section {
-      margin-top: 12px;
-      padding: 8px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 6px;
-      display: none;
-    }
-    
-    .error-section.has-errors { display: block; }
-    
-    .error-item {
-        color: var(--danger);
-        font-size: 11px;
-        margin-bottom: 4px;
+    .columns-list::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
     }
   `;
 }
 
 /**
- * Gets the overlay HTML structure
+ * Gets the overlay HTML structure (Stitch Design)
  */
 function getHTML(): string {
   return `
     <div class="overlay-container" id="overlay-container">
       <div class="overlay-header" id="drag-handle">
         <div class="overlay-title">
-          <svg class="overlay-title-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-          </svg>
-          <span style="font-family: inherit;">Scraper Pro</span>
+          <div class="overlay-title-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+          </div>
+          <span>Extraction Wizard</span>
         </div>
         <div class="header-controls">
-          <button class="header-btn" id="minimize-btn" title="Minimize/Maximize">
-            <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="currentColor">
+          <button class="header-btn" id="minimize-btn" title="Minimize">
+            <svg viewBox="0 0 24 24">
               <path d="M19 13H5v-2h14v2z"/>
             </svg>
           </button>
         </div>
       </div>
+
       <div class="overlay-body">
-        <div class="status-section">
-          <div class="status-dot idle" id="status-dot"></div>
-          <span class="status-text" id="status-text">Ready</span>
+        <div class="status-bar">
+          <div class="status-left">
+            <div class="status-dot idle" id="status-dot"></div>
+            <span class="status-text" id="status-text">Ready</span>
+          </div>
+          <div class="live-badge">
+            <span class="dot"></span>
+            LIVE SESSION
+          </div>
+        </div>
+
+        <div class="smart-detection">
+          <div class="smart-detection-header">
+            <div class="smart-detection-title">
+              <svg viewBox="0 0 24 24">
+                <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/>
+              </svg>
+              Smart Pattern Detection
+            </div>
+          </div>
+          <p class="smart-detection-desc" id="pattern-desc">Hover over elements to detect patterns.</p>
         </div>
 
         <div class="progress-section">
           <div class="progress-label">
-            <span>Collected</span>
-            <span class="progress-count"><span id="collected-count">0</span> / <span id="max-count">∞</span></span>
+            <span>Items Collected</span>
+            <span class="progress-count"><span id="collected-count">0</span> / <span id="max-count">--</span></span>
           </div>
           <div class="progress-bar-container">
             <div class="progress-bar" id="progress-bar"></div>
           </div>
         </div>
 
-        <div class="buttons-section">
-          <button class="control-btn btn-start" id="start-btn">
-            ▶ Start
-          </button>
-          <button class="control-btn btn-pause" id="pause-btn" style="display: none;">
-            ⏸ Pause
-          </button>
-          <button class="control-btn btn-resume" id="resume-btn" style="display: none;">
-            ▶ Resume
-          </button>
-          <button class="control-btn btn-stop" id="stop-btn" disabled>
-            ⏹ Stop
-          </button>
+        <div class="columns-section">
+          <div class="section-title">
+            <h3>Active Columns</h3>
+            <button class="add-column-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              New Column
+            </button>
+          </div>
+          <div class="columns-list" id="columns-list">
+            <div class="column-item">
+              <div class="column-info">
+                <div class="column-icon">
+                  <svg viewBox="0 0 24 24"><path d="M5 4v3h5.5v12h3V7H19V4z"/></svg>
+                </div>
+                <div>
+                  <div class="column-name">Text Content</div>
+                  <div class="column-selector">Auto-detected</div>
+                </div>
+              </div>
+              <div class="column-actions">
+                <button title="Edit"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+                <button class="delete" title="Delete"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="preview-section">
-          <div class="preview-header">
-            <span class="preview-title">Terminal Output</span>
+        <div class="sample-section">
+          <div class="section-title">
+            <h3>Sample Output</h3>
           </div>
-          <div class="preview-list" id="preview-list">
-            <div class="preview-empty">// Logs will appear here...</div>
+          <div class="sample-output" id="sample-output">
+            <span class="sample-empty">// Data will appear here...</span>
           </div>
         </div>
-        
+
         <div class="error-section" id="error-section">
-            <div class="error-list" id="error-list"></div>
-            <button class="header-btn" id="clear-errors-btn" style="width:100%; margin-top:4px;">Clear Errors</button>
+          <div class="error-list" id="error-list"></div>
         </div>
+      </div>
+
+      <div class="controls-footer">
+        <div class="btn-row">
+          <button class="btn-secondary" id="preview-btn">
+            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            Preview
+          </button>
+          <button class="btn-primary" id="start-btn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Start
+          </button>
+        </div>
+        <div class="btn-row" id="running-controls" style="display: none;">
+          <button class="btn-secondary" id="pause-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            Pause
+          </button>
+          <button class="btn-secondary btn-danger" id="stop-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+            Stop
+          </button>
+        </div>
+        <div class="btn-row" id="paused-controls" style="display: none;">
+          <button class="btn-primary" id="resume-btn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Resume
+          </button>
+          <button class="btn-secondary btn-danger" id="stop-btn-2">
+            <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+            Stop
+          </button>
+        </div>
+        <button class="cancel-btn" id="close-btn">Cancel Extraction</button>
       </div>
     </div>
   `;
@@ -429,7 +773,6 @@ function getHTML(): string {
  */
 function setupDragging(container: HTMLElement, handle: HTMLElement): void {
   handle.addEventListener('mousedown', (e: MouseEvent) => {
-    // Ignore if clicking on buttons
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
@@ -447,7 +790,6 @@ function setupDragging(container: HTMLElement, handle: HTMLElement): void {
     const x = e.clientX - dragOffset.x;
     const y = e.clientY - dragOffset.y;
 
-    // Keep within viewport bounds
     const maxX = window.innerWidth - container.offsetWidth;
     const maxY = window.innerHeight - container.offsetHeight;
 
@@ -470,14 +812,16 @@ function setupButtonHandlers(root: ShadowRoot): void {
   const pauseBtn = root.getElementById('pause-btn') as HTMLButtonElement;
   const resumeBtn = root.getElementById('resume-btn') as HTMLButtonElement;
   const stopBtn = root.getElementById('stop-btn') as HTMLButtonElement;
+  const stopBtn2 = root.getElementById('stop-btn-2') as HTMLButtonElement;
   const minimizeBtn = root.getElementById('minimize-btn') as HTMLButtonElement;
-  const clearErrorsBtn = root.getElementById('clear-errors-btn') as HTMLButtonElement;
+  const closeBtn = root.getElementById('close-btn') as HTMLButtonElement;
   const container = root.getElementById('overlay-container') as HTMLElement;
 
   if (startBtn) startBtn.addEventListener('click', () => buttonHandlers?.onStart());
   if (pauseBtn) pauseBtn.addEventListener('click', () => buttonHandlers?.onPause());
   if (resumeBtn) resumeBtn.addEventListener('click', () => buttonHandlers?.onResume());
   if (stopBtn) stopBtn.addEventListener('click', () => buttonHandlers?.onStop());
+  if (stopBtn2) stopBtn2.addEventListener('click', () => buttonHandlers?.onStop());
 
   if (minimizeBtn) {
     minimizeBtn.addEventListener('click', () => {
@@ -486,43 +830,39 @@ function setupButtonHandlers(root: ShadowRoot): void {
     });
   }
 
-  if (clearErrorsBtn) {
-    clearErrorsBtn.addEventListener('click', () => clearErrors());
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      buttonHandlers?.onStop();
+      destroyOverlay();
+    });
   }
 }
 
 /**
  * Creates the overlay with Shadow DOM isolation
- * @returns The ShadowRoot containing the overlay
  */
 export function createOverlay(): ShadowRoot {
-  // Remove existing overlay if present
   const existing = document.getElementById(SHADOW_HOST_ID);
   if (existing) {
     existing.remove();
   }
 
-  // Create shadow host
   const host = document.createElement('div');
   host.id = SHADOW_HOST_ID;
   host.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 2147483647; pointer-events: none;';
   document.body.appendChild(host);
 
-  // Create shadow DOM
   shadowRoot = host.attachShadow({ mode: 'open' });
 
-  // Add styles
   const styleSheet = document.createElement('style');
   styleSheet.textContent = getStyles();
   shadowRoot.appendChild(styleSheet);
 
-  // Add HTML structure
   const wrapper = document.createElement('div');
   wrapper.innerHTML = getHTML();
   wrapper.style.pointerEvents = 'auto';
   shadowRoot.appendChild(wrapper);
 
-  // Get container and handle
   const container = shadowRoot.getElementById('overlay-container') as HTMLElement;
   const handle = shadowRoot.getElementById('drag-handle') as HTMLElement;
 
@@ -531,16 +871,13 @@ export function createOverlay(): ShadowRoot {
     setupButtonHandlers(shadowRoot);
   }
 
-  console.log('[WebScraper Overlay] Created');
+  console.log('[WebScraper Overlay] Created with Stitch design');
 
   return shadowRoot;
 }
 
-
 /**
  * Updates the progress display
- * @param collected - Number of items collected
- * @param max - Maximum items to collect (optional)
  */
 export function updateProgress(collected: number, max?: number): void {
   if (!shadowRoot) return;
@@ -554,67 +891,51 @@ export function updateProgress(collected: number, max?: number): void {
   }
 
   if (maxEl) {
-    maxEl.textContent = max !== undefined ? String(max) : '--';
+    maxEl.textContent = max !== undefined && max > 0 ? String(max) : '--';
   }
 
   if (progressBar && max !== undefined && max > 0) {
     const percentage = Math.min((collected / max) * 100, 100);
     progressBar.style.width = `${percentage}%`;
   } else if (progressBar) {
-    // Indeterminate progress - show pulsing animation
     progressBar.style.width = collected > 0 ? '100%' : '0%';
   }
 }
 
 /**
- * Updates the preview list with the last 5 extracted items
- * @param items - Array of extracted items
+ * Updates the preview with extracted items
  */
 export function updatePreview(items: ExtractedItem[]): void {
   if (!shadowRoot) return;
 
-  const previewList = shadowRoot.getElementById('preview-list');
-  const previewCount = shadowRoot.getElementById('preview-count');
+  const sampleOutput = shadowRoot.getElementById('sample-output');
+  if (!sampleOutput) return;
 
-  if (!previewList) return;
-
-  // Update count
-  if (previewCount) {
-    previewCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
-  }
-
-  // Show last 5 items
-  const lastItems = items.slice(-5);
+  const lastItems = items.slice(-3);
 
   if (lastItems.length === 0) {
-    previewList.innerHTML = '<div class="preview-empty">No items collected yet</div>';
+    sampleOutput.innerHTML = '<span class="sample-empty">// Data will appear here...</span>';
     return;
   }
 
-  previewList.innerHTML = lastItems
-    .map((item) => {
-      const json = JSON.stringify(item);
-      const truncated = json.length > 80 ? json.substring(0, 77) + '...' : json;
-      return `<div class="preview-item" title="${escapeHtml(json)}">${escapeHtml(truncated)}</div>`;
-    })
-    .join('');
+  const preview = JSON.stringify(lastItems, null, 2);
+  const truncated = preview.length > 300 ? preview.substring(0, 297) + '...' : preview;
+  sampleOutput.textContent = truncated;
 }
 
 /**
  * Updates the status display
- * @param status - Current scroller status
  */
 export function updateStatus(status: ScrollerStatus): void {
   if (!shadowRoot) return;
 
   const statusDot = shadowRoot.getElementById('status-dot');
   const statusText = shadowRoot.getElementById('status-text');
-  const startBtn = shadowRoot.getElementById('start-btn') as HTMLButtonElement;
-  const pauseBtn = shadowRoot.getElementById('pause-btn') as HTMLButtonElement;
-  const resumeBtn = shadowRoot.getElementById('resume-btn') as HTMLButtonElement;
-  const stopBtn = shadowRoot.getElementById('stop-btn') as HTMLButtonElement;
+  const startControls = shadowRoot.querySelector('.btn-row:first-child') as HTMLElement;
+  const runningControls = shadowRoot.getElementById('running-controls') as HTMLElement;
+  const pausedControls = shadowRoot.getElementById('paused-controls') as HTMLElement;
+  const patternDesc = shadowRoot.getElementById('pattern-desc');
 
-  // Update status indicator
   if (statusDot) {
     statusDot.className = `status-dot ${status}`;
   }
@@ -623,44 +944,38 @@ export function updateStatus(status: ScrollerStatus): void {
     statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
   }
 
-  // Update button visibility and states based on status
-  if (startBtn && pauseBtn && resumeBtn && stopBtn) {
+  // Update control visibility
+  if (startControls && runningControls && pausedControls) {
     switch (status) {
       case 'idle':
-        startBtn.style.display = 'flex';
-        startBtn.disabled = false;
-        pauseBtn.style.display = 'none';
-        resumeBtn.style.display = 'none';
-        stopBtn.disabled = true;
+        startControls.style.display = 'flex';
+        runningControls.style.display = 'none';
+        pausedControls.style.display = 'none';
         break;
       case 'running':
-        startBtn.style.display = 'none';
-        pauseBtn.style.display = 'flex';
-        pauseBtn.disabled = false;
-        resumeBtn.style.display = 'none';
-        stopBtn.disabled = false;
+        startControls.style.display = 'none';
+        runningControls.style.display = 'flex';
+        pausedControls.style.display = 'none';
+        if (patternDesc) patternDesc.textContent = 'Scanning page for patterns...';
         break;
       case 'paused':
-        startBtn.style.display = 'none';
-        pauseBtn.style.display = 'none';
-        resumeBtn.style.display = 'flex';
-        resumeBtn.disabled = false;
-        stopBtn.disabled = false;
+        startControls.style.display = 'none';
+        runningControls.style.display = 'none';
+        pausedControls.style.display = 'flex';
+        if (patternDesc) patternDesc.textContent = 'Extraction paused.';
         break;
       case 'error':
-        startBtn.style.display = 'flex';
-        startBtn.disabled = false;
-        pauseBtn.style.display = 'none';
-        resumeBtn.style.display = 'none';
-        stopBtn.disabled = true;
+        startControls.style.display = 'flex';
+        runningControls.style.display = 'none';
+        pausedControls.style.display = 'none';
+        if (patternDesc) patternDesc.textContent = 'An error occurred. Try again.';
         break;
     }
   }
 }
 
 /**
- * Shows an error message in the overlay
- * @param message - Error message to display
+ * Shows an error message
  */
 export function showError(message: string): void {
   if (!shadowRoot) return;
@@ -676,13 +991,12 @@ export function showError(message: string): void {
     errorItem.textContent = message;
     errorList.appendChild(errorItem);
 
-    // Auto-scroll to bottom
     errorList.scrollTop = errorList.scrollHeight;
   }
 }
 
 /**
- * Clears all error messages from the overlay
+ * Clears all errors
  */
 export function clearErrors(): void {
   if (!shadowRoot) return;
@@ -697,15 +1011,14 @@ export function clearErrors(): void {
 }
 
 /**
- * Sets the button handlers to connect overlay buttons to scroller
- * @param handlers - Object containing handler functions
+ * Sets button handlers
  */
 export function setButtonHandlers(handlers: ButtonHandlers): void {
   buttonHandlers = handlers;
 }
 
 /**
- * Destroys the overlay and cleans up
+ * Destroys the overlay
  */
 export function destroyOverlay(): void {
   const host = document.getElementById(SHADOW_HOST_ID);
@@ -719,17 +1032,8 @@ export function destroyOverlay(): void {
 }
 
 /**
- * Checks if the overlay is currently visible
+ * Checks if overlay is visible
  */
 export function isOverlayVisible(): boolean {
   return shadowRoot !== null;
-}
-
-/**
- * Helper function to escape HTML entities
- */
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }

@@ -41,15 +41,15 @@ function getStyles(): string {
   return `
     :host {
       all: initial;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --bg-primary: rgba(16, 22, 37, 0.95);
-      --bg-secondary: rgba(30, 41, 59, 0.9);
-      --border-color: rgba(255, 255, 255, 0.1);
-      --text-primary: #ffffff;
-      --text-secondary: #9ca3af;
-      --accent: #ef4444;
-      --accent-hover: #dc2626;
-      --success: #22c55e;
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --bg-primary: rgba(16, 34, 22, 0.95);
+      --bg-secondary: rgba(19, 236, 91, 0.08);
+      --border-color: rgba(19, 236, 91, 0.2);
+      --text-primary: #f6f8f6;
+      --text-secondary: #92c9a4;
+      --accent: #13ec5b;
+      --accent-hover: #10d450;
+      --success: #13ec5b;
       --warning: #f59e0b;
       --error: #ef4444;
     }
