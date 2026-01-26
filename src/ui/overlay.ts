@@ -13,7 +13,7 @@ const SHADOW_HOST_ID = 'web-scraper-shadow-host';
 // State
 let shadowRoot: ShadowRoot | null = null;
 let isDragging = false;
-let dragOffset = { x: 0, y: 0 };
+const dragOffset = { x: 0, y: 0 };
 let isMinimized = false;
 
 /**

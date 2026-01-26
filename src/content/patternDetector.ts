@@ -50,20 +50,22 @@ function getElementSignature(
           parts.push(`id:${idPattern}`);
         }
         break;
-      case 'data':
+      case 'data': {
         const dataAttrs = getDataAttributes(element);
         if (Object.keys(dataAttrs).length > 0) {
           const dataKeys = Object.keys(dataAttrs).sort();
           parts.push(`data:${dataKeys.join(',')}`);
         }
         break;
-      case 'aria':
+      }
+      case 'aria': {
         const ariaAttrs = getAriaAttributes(element);
         if (Object.keys(ariaAttrs).length > 0) {
           const ariaKeys = Object.keys(ariaAttrs).sort();
           parts.push(`aria:${ariaKeys.join(',')}`);
         }
         break;
+      }
     }
   }
 
@@ -129,20 +131,22 @@ function calculateConfidence(
           score += 1.5;
         }
         break;
-      case 'data':
+      case 'data': {
         // Data attributes indicate semantic structure
         const dataCount = Object.keys(getDataAttributes(element)).length;
         if (dataCount > 0) {
           score += Math.min(dataCount * 0.5, 1.5);
         }
         break;
-      case 'aria':
+      }
+      case 'aria': {
         // ARIA attributes indicate interactive elements
         const ariaCount = Object.keys(getAriaAttributes(element)).length;
         if (ariaCount > 0) {
           score += Math.min(ariaCount * 0.5, 1);
         }
         break;
+      }
     }
   }
 

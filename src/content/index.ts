@@ -219,7 +219,7 @@ chrome.runtime.onMessage.addListener(
           sendResponse({ success: true, data: { status: 'idle' } });
           break;
 
-        case 'GET_STATUS':
+        case 'GET_STATUS': {
           const state = AutoScroller.getState();
           sendResponse({
             success: true,
@@ -229,6 +229,7 @@ chrome.runtime.onMessage.addListener(
             }
           });
           break;
+        }
 
         case 'UPDATE_CONFIG':
           if (message.payload) {

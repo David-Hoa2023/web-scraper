@@ -28,6 +28,19 @@ let retryAttempt = 0;
 let lastScrollHeight = 0;
 let noChangeCount = 0;
 
+// Progress estimation state
+let scrollStartTime = 0;
+let initialItemCount = 0;
+let itemsPerSecond = 0;
+let estimatedTotalItems = 0;
+let scrollType: 'infinite' | 'pagination' | 'unknown' = 'unknown';
+
+// Resource optimization state
+let isThrottled = false;
+let pendingMutations = 0;
+const MUTATION_BATCH_THRESHOLD = 50;
+const THROTTLE_RECOVERY_MS = 100;
+
 // Constants
 const LOAD_MORE_SELECTORS = [
   'button[class*="load-more"]',
@@ -317,6 +330,7 @@ function scheduleNextIteration(): void {
 
 /**
  * Sets up the MutationObserver to detect new DOM nodes
+ * Includes throttling and batching for resource optimization
  */
 function setupMutationObserver(): void {
   if (mutationObserver) {
@@ -324,6 +338,28 @@ function setupMutationObserver(): void {
   }
 
   mutationObserver = new MutationObserver((mutations) => {
+    // Track pending mutations for throttling
+    pendingMutations += mutations.length;
+
+    // If we're receiving too many mutations, throttle processing
+    if (pendingMutations > MUTATION_BATCH_THRESHOLD && !isThrottled) {
+      isThrottled = true;
+      console.log(`[AutoScroller] Throttling: ${pendingMutations} pending mutations`);
+
+      // Schedule recovery
+      setTimeout(() => {
+        isThrottled = false;
+        pendingMutations = 0;
+        console.log('[AutoScroller] Throttle recovered');
+      }, THROTTLE_RECOVERY_MS);
+      return;
+    }
+
+    // Skip processing if throttled
+    if (isThrottled) {
+      return;
+    }
+
     let hasNewNodes = false;
 
     for (const mutation of mutations) {
@@ -337,11 +373,20 @@ function setupMutationObserver(): void {
       // Reset no-change counter when new nodes are detected
       noChangeCount = 0;
       retryAttempt = 0;
+      pendingMutations = 0;
 
       // Update item count
       const currentItems = countItems();
       if (currentItems !== currentState.itemsCollected) {
         updateState({ itemsCollected: currentItems });
+
+        // Update items per second for progress estimation
+        if (scrollStartTime > 0) {
+          const elapsedMs = Date.now() - scrollStartTime;
+          if (elapsedMs > 0) {
+            itemsPerSecond = (currentItems - initialItemCount) / (elapsedMs / 1000);
+          }
+        }
       }
     }
   });
@@ -371,6 +416,13 @@ function cleanup(): void {
   retryAttempt = 0;
   noChangeCount = 0;
   lastScrollHeight = 0;
+  scrollStartTime = 0;
+  initialItemCount = 0;
+  itemsPerSecond = 0;
+  estimatedTotalItems = 0;
+  scrollType = 'unknown';
+  isThrottled = false;
+  pendingMutations = 0;
 
   console.log('[AutoScroller] Cleanup complete');
 }
@@ -380,6 +432,142 @@ function cleanup(): void {
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ==================== PROGRESS ESTIMATION ====================
+
+/**
+ * Estimates scroll progress as a percentage
+ * @returns Progress percentage (0-100) or -1 if unknown
+ */
+export function estimateProgress(): number {
+  if (currentState.status !== 'running' || !currentConfig) {
+    return -1;
+  }
+
+  // If max items is set, use that for progress
+  if (currentConfig.maxItems && currentConfig.maxItems > 0) {
+    return Math.min(100, (currentState.itemsCollected / currentConfig.maxItems) * 100);
+  }
+
+  // Estimate based on scroll position
+  const scrollHeight = document.documentElement.scrollHeight;
+  const scrollTop = window.scrollY;
+  const windowHeight = window.innerHeight;
+
+  if (scrollHeight <= windowHeight) {
+    return 100; // Content fits in viewport
+  }
+
+  return Math.min(100, ((scrollTop + windowHeight) / scrollHeight) * 100);
+}
+
+/**
+ * Estimates remaining time in seconds
+ * @returns Estimated seconds remaining or -1 if unknown
+ */
+export function estimateRemainingTime(): number {
+  if (scrollStartTime === 0 || currentState.itemsCollected <= initialItemCount) {
+    return -1;
+  }
+
+  const elapsedMs = Date.now() - scrollStartTime;
+  const itemsCollected = currentState.itemsCollected - initialItemCount;
+
+  if (itemsCollected === 0 || elapsedMs < 1000) {
+    return -1;
+  }
+
+  // Calculate items per second
+  itemsPerSecond = itemsCollected / (elapsedMs / 1000);
+
+  // If we have a max items target
+  if (currentConfig?.maxItems && currentConfig.maxItems > 0) {
+    const remaining = currentConfig.maxItems - currentState.itemsCollected;
+    if (remaining <= 0) return 0;
+    return Math.ceil(remaining / itemsPerSecond);
+  }
+
+  // Estimate based on scroll progress
+  const progress = estimateProgress();
+  if (progress <= 0 || progress >= 100) {
+    return -1;
+  }
+
+  const elapsedSeconds = elapsedMs / 1000;
+  const totalEstimatedSeconds = (elapsedSeconds / progress) * 100;
+  return Math.ceil(totalEstimatedSeconds - elapsedSeconds);
+}
+
+/**
+ * Detects the type of scrolling mechanism on the page
+ */
+function detectScrollType(): 'infinite' | 'pagination' | 'unknown' {
+  // Check for pagination links
+  const paginationSelectors = [
+    '.pagination',
+    '[class*="pagination"]',
+    '[class*="pager"]',
+    'nav[aria-label*="pagination"]',
+    '.page-numbers',
+  ];
+
+  for (const selector of paginationSelectors) {
+    if (document.querySelector(selector)) {
+      return 'pagination';
+    }
+  }
+
+  // Check for infinite scroll indicators
+  const infiniteScrollSelectors = [
+    '[data-infinite-scroll]',
+    '[class*="infinite"]',
+    '.load-more',
+    '.loadmore',
+  ];
+
+  for (const selector of infiniteScrollSelectors) {
+    if (document.querySelector(selector)) {
+      return 'infinite';
+    }
+  }
+
+  return 'unknown';
+}
+
+/**
+ * Gets detailed progress information
+ */
+export function getProgressInfo(): {
+  progress: number;
+  itemsCollected: number;
+  itemsPerSecond: number;
+  estimatedRemaining: number;
+  estimatedTotal: number;
+  scrollType: string;
+  elapsedTime: number;
+} {
+  const elapsedTime = scrollStartTime > 0 ? (Date.now() - scrollStartTime) / 1000 : 0;
+
+  // Estimate total items if not set by config
+  let totalEstimate = estimatedTotalItems;
+  if (totalEstimate === 0 && itemsPerSecond > 0) {
+    // Rough estimate based on scroll position
+    const progress = estimateProgress();
+    if (progress > 0 && progress < 100) {
+      totalEstimate = Math.round((currentState.itemsCollected / progress) * 100);
+    }
+  }
+
+  return {
+    progress: estimateProgress(),
+    itemsCollected: currentState.itemsCollected,
+    itemsPerSecond: Math.round(itemsPerSecond * 10) / 10,
+    estimatedRemaining: estimateRemainingTime(),
+    estimatedTotal: totalEstimate,
+    scrollType,
+    elapsedTime: Math.round(elapsedTime),
+  };
 }
 
 // ==================== PUBLIC API ====================
@@ -410,9 +598,17 @@ export function startScroll(config: ScrollerConfig): void {
   currentState = createInitialState();
   lastScrollHeight = document.documentElement.scrollHeight;
 
+  // Initialize progress estimation
+  scrollStartTime = Date.now();
+  initialItemCount = countItems();
+  scrollType = detectScrollType();
+  estimatedTotalItems = config.maxItems && config.maxItems > 0 ? config.maxItems : 0;
+
+  console.log(`[AutoScroller] Detected scroll type: ${scrollType}, initial items: ${initialItemCount}`);
+
   updateState({
     status: 'running',
-    itemsCollected: countItems(),
+    itemsCollected: initialItemCount,
   });
 
   setupMutationObserver();

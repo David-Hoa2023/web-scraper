@@ -82,7 +82,17 @@ export type MessageType =
   | 'GET_STATUS'
   | 'EXPORT_DATA'
   | 'CLEAR_DATA'
-  | 'UPDATE_CONFIG';
+  | 'UPDATE_CONFIG'
+  // Recording messages
+  | 'START_RECORDING'
+  | 'PAUSE_RECORDING'
+  | 'RESUME_RECORDING'
+  | 'STOP_RECORDING'
+  | 'GET_RECORDING_STATUS'
+  // Tutorial messages
+  | 'GENERATE_TUTORIAL'
+  | 'EXPORT_TUTORIAL'
+  | 'PREVIEW_TUTORIAL';
 
 export interface ScraperMessage {
   type: MessageType;
