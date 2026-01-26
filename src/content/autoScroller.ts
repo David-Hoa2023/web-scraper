@@ -280,10 +280,14 @@ async function scrollIteration(): Promise<void> {
     const isAtBottom =
       currentScrollTop + windowHeight >= currentScrollHeight - 10;
 
+    console.log(`[AutoScroller] Scroll position: ${currentScrollTop}/${currentScrollHeight}, isAtBottom: ${isAtBottom}`);
+
     if (!isAtBottom) {
       // Scroll down
+      const scrollAmount = windowHeight * 0.8;
+      console.log(`[AutoScroller] Scrolling down by ${scrollAmount}px`);
       window.scrollBy({
-        top: windowHeight * 0.8,
+        top: scrollAmount,
         behavior: 'smooth',
       });
     } else {
@@ -612,7 +616,9 @@ export function startScroll(config: ScrollerConfig): void {
   });
 
   setupMutationObserver();
-  scheduleNextIteration();
+
+  // Start scrolling immediately, then continue with throttled iterations
+  void scrollIteration();
 }
 
 /**

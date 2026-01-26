@@ -7,9 +7,16 @@ export default defineConfig({
     globals: true,
   },
   base: './',
+  define: {
+    // Replace import.meta.url with empty string for content scripts
+    // This fixes jsPDF's internal dynamic imports
+    'import.meta.url': '""',
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    target: 'esnext',
+    modulePreload: false,
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'src/ui/popup.html'),

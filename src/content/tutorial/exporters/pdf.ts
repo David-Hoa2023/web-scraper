@@ -11,8 +11,7 @@ import type {
 } from '../../../types/tutorial';
 
 import { EXPORT_MIME_TYPES } from '../../../types/tutorial';
-
-// Note: jsPDF will be imported dynamically to avoid bundle size issues
+import { jsPDF } from 'jspdf';
 
 /**
  * Export a tutorial to PDF format
@@ -41,8 +40,6 @@ export async function generatePdf(
   tutorial: GeneratedTutorial,
   config: ExportConfig
 ): Promise<Blob> {
-  // Dynamic import jsPDF to reduce initial bundle size
-  const { jsPDF } = await import('jspdf');
 
   const pdfConfig = DEFAULT_PDF_CONFIG;
   const pageSize = config.pdfPageSize || pdfConfig.pageSize;

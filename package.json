@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && copy src\\manifest.json dist\\manifest.json && xcopy src\\icons dist\\icons /I /Y",
+    "build": "tsc && vite build && node scripts/post-build.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "bunx vitest run",
