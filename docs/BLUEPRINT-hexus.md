@@ -3,7 +3,7 @@
 **Run ID:** web-scraper-hexus-b2
 **Source:** docs/backlog/backlog-2-hexus-integration.yaml
 **Created:** 2026-01-26
-**Status:** In Progress - Stages 0-3 Complete
+**Status:** In Progress - Stages 0-4, 7-8 Complete
 
 ## Overview
 
@@ -331,12 +331,13 @@ function showRefinementOverlay(match: PatternMatch): void;
 - [x] Pause/resume support
 - [x] Memory management for long recordings
 
-### Stage 4: Capture Orchestrator
-- [ ] Implement `captureOrchestrator.ts` to coordinate all capture systems
-- [ ] Timestamp synchronization between DOM events and video frames
-- [ ] Snapshot system for page layout checkpoints
-- [ ] State management (idle/recording/paused/processing)
-- [ ] Error handling and recovery
+### Stage 4: Capture Orchestrator (COMPLETE)
+- [x] Implement `captureOrchestrator.ts` to coordinate all capture systems
+- [x] Timestamp synchronization between DOM events and video frames
+- [x] Snapshot system for page layout checkpoints (`snapshotSystem.ts`)
+- [x] Timeline synchronization utilities (`timeline.ts`)
+- [x] State management (idle/recording/paused/processing)
+- [x] Error handling and recovery
 
 ### Stage 5: Pattern Detection Enhancement
 - [ ] Add visual overlay with distinct highlight colors
@@ -351,20 +352,21 @@ function showRefinementOverlay(match: PatternMatch): void;
 - [ ] Improve error handling with retry strategies
 - [ ] Add scroll progress estimation
 
-### Stage 7: LLM Content Generation
-- [ ] Implement `actionParser.ts` to convert events to steps
-- [ ] Build LLM prompt templates
-- [ ] Implement `contentGenerator.ts` with API integration
-- [ ] Support multiple providers (OpenAI, Anthropic, custom)
-- [ ] Handle rate limits and errors gracefully
-- [ ] User-configurable prompts/templates
+### Stage 7: LLM Content Generation (COMPLETE)
+- [x] Implement `actionParser.ts` to convert events to steps
+- [x] Build LLM prompt templates
+- [x] Implement `contentGenerator.ts` with API integration
+- [x] Implement `guideBuilder.ts` for tutorial assembly
+- [x] Support multiple providers (OpenAI, Anthropic, custom)
+- [x] Handle rate limits and errors gracefully
+- [x] User-configurable prompts/templates
 
-### Stage 8: Tutorial Export
-- [ ] Implement Markdown exporter
-- [ ] Implement PDF exporter (jsPDF)
-- [ ] Implement video exporter with cursor overlay
-- [ ] Screenshot embedding in exports
-- [ ] Format-specific styling options
+### Stage 8: Tutorial Export (COMPLETE)
+- [x] Implement Markdown exporter
+- [x] Implement PDF exporter (jsPDF)
+- [x] Implement video exporter with cursor overlay
+- [x] Screenshot embedding in exports
+- [x] Format-specific styling options
 
 ### Stage 9: UI/UX
 - [ ] Recording panel (start/stop/pause)
