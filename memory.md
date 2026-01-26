@@ -10,7 +10,8 @@ Chrome Extension (Manifest V3) for web scraping + tutorial generation. Records b
 
 - **Scraping:** Pattern detection, auto-scroll, JSON/CSV export
 - **Tutorial Generation:** DOM event capture, video recording, cursor tracking, LLM content generation
-- **UI:** Stitch design system, task wizard, webhooks, scheduled tasks
+- **Scheduled Tasks:** Background scheduler with chrome.alarms, webhook notifications
+- **UI:** Stitch design system, task wizard, webhooks panel
 
 ## Architecture
 
@@ -18,7 +19,7 @@ Chrome Extension (Manifest V3) for web scraping + tutorial generation. Records b
 |-------|------------|
 | Content | `patternDetector`, `autoScroller`, `recorder/*`, `tutorial/*` |
 | UI | `popup`, `overlay`, `recordingPanel`, `settingsPanel` |
-| Background | `service-worker` (message routing) |
+| Background | `service-worker` (scheduler, task execution, webhooks) |
 
 ## Commands
 
@@ -28,6 +29,14 @@ bun run typecheck && bun run lint
 bun run test
 ```
 
-## Design Reference
+## Build Notes
 
-See `docs/STITCH_UI_MAPPING.md` for UI component mapping to Stitch designs.
+- Post-build script (`scripts/post-build.js`) fixes content script for Chrome compatibility
+- Removes `import.meta.url` and ES module exports (not allowed in content scripts)
+- Copies manifest.json and icons to dist/
+
+## Documentation
+
+- `docs/use-cases.md` - User stories and step-by-step guides
+- `docs/STITCH_UI_MAPPING.md` - UI component mapping to Stitch designs
+- `docs/backlog/` - Feature backlogs and demo gaps plan
