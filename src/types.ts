@@ -1,3 +1,7 @@
+// Re-export recording and tutorial types
+export * from './types/recording';
+export * from './types/tutorial';
+
 // Pattern Detection Types
 export interface PatternMatch {
   tag: string;
