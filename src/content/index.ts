@@ -348,6 +348,27 @@ chrome.runtime.onMessage.addListener(
           sendResponse({ success: true });
           break;
 
+        case 'SET_EXTENSION_ENABLED': {
+          const payload = message.payload as { enabled?: boolean } | undefined;
+          const enabled = payload?.enabled ?? true;
+          isPatternDetectionEnabled = enabled;
+          console.log('[Content] Extension enabled:', enabled);
+
+          if (!enabled) {
+            // Cleanup: hide highlights, stop scraping
+            hideHighlight();
+            unlockPattern();
+            currentPattern = null;
+            AutoScroller.stopScroll();
+            cleanupPatternDetection();
+          } else {
+            // Re-initialize pattern detection
+            initPatternDetection();
+          }
+          sendResponse({ success: true, data: { enabled } });
+          break;
+        }
+
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
       }
@@ -416,6 +437,10 @@ function handleStopScrape() {
 // --- Initialization ---
 
 async function init() {
+  // Load extension enabled state
+  const enabledResult = await chrome.storage.local.get('extensionEnabled');
+  isPatternDetectionEnabled = enabledResult.extensionEnabled !== false;
+
   // Load saved config
   const saved = await chrome.storage.local.get('scraperConfig');
   if (saved.scraperConfig) {
@@ -431,7 +456,10 @@ async function init() {
     };
   }
 
-  initPatternDetection();
+  // Only init pattern detection if extension is enabled
+  if (isPatternDetectionEnabled) {
+    initPatternDetection();
+  }
 }
 
 // Ensure init is called after DOMContentLoaded if not already loaded

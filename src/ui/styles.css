@@ -111,6 +111,37 @@ input[type="text"]:focus {
   color: rgba(19, 236, 91, 0.6);
 }
 
+/* Extension Master Toggle */
+.extension-toggle-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-color);
+}
+
+.extension-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(19, 236, 91, 0.08);
+  border-radius: 8px;
+}
+
+.extension-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.extension-status.disabled {
+  color: #ff6b6b;
+}
+
+.extension-toggle-row:has(input:not(:checked)) {
+  background: rgba(255, 107, 107, 0.1);
+}
+
 .nav-menu {
   display: flex;
   flex-direction: column;

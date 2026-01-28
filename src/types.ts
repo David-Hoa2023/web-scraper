@@ -114,7 +114,8 @@ export type MessageType =
   | 'UPDATE_STATUS'
   | 'UPDATE_PROGRESS'
   | 'SHOW_ERROR'
-  | 'UPDATE_PREVIEW';
+  | 'UPDATE_PREVIEW'
+  | 'SET_EXTENSION_ENABLED';
 
 export interface ScraperMessage {
   type: MessageType;

@@ -81,6 +81,10 @@ const DEFAULT_CONFIG: AppConfig = {
 
 // UI Elements
 const ui = {
+  // Extension Master Toggle
+  extensionEnabled: document.getElementById('extension-enabled') as HTMLInputElement,
+  extensionStatus: document.getElementById('extension-status') as HTMLSpanElement,
+
   // Navigation
   tabs: document.querySelectorAll('.nav-item[data-tab]'),
   contents: document.querySelectorAll('.tab-pane'),
@@ -174,6 +178,7 @@ let webhookConfig: WebhookConfig = {
 };
 let previewMode: 'cards' | 'json' = 'cards';
 let previewItems: ExtractedItem[] = [];
+let extensionEnabled = true;
 
 // --- Utility Functions ---
 
@@ -275,6 +280,39 @@ async function loadHistory(): Promise<HistoryEntry[]> {
 
 async function saveHistory(entries: HistoryEntry[]) {
   await chrome.storage.local.set({ scraperHistory: entries });
+}
+
+// Extension Enabled State
+async function loadExtensionEnabled(): Promise<boolean> {
+  const result = await chrome.storage.local.get('extensionEnabled');
+  return result.extensionEnabled !== false; // Default to true
+}
+
+async function saveExtensionEnabled(enabled: boolean) {
+  await chrome.storage.local.set({ extensionEnabled: enabled });
+  // Notify content script
+  sendToContentScript({
+    type: 'SET_EXTENSION_ENABLED',
+    payload: { enabled }
+  });
+}
+
+function updateExtensionToggleUI(enabled: boolean) {
+  if (ui.extensionEnabled) {
+    ui.extensionEnabled.checked = enabled;
+  }
+  if (ui.extensionStatus) {
+    ui.extensionStatus.textContent = enabled ? 'Active' : 'Disabled';
+    ui.extensionStatus.classList.toggle('disabled', !enabled);
+  }
+}
+
+function bindExtensionToggle() {
+  ui.extensionEnabled?.addEventListener('change', async () => {
+    extensionEnabled = ui.extensionEnabled.checked;
+    await saveExtensionEnabled(extensionEnabled);
+    updateExtensionToggleUI(extensionEnabled);
+  });
 }
 
 // --- Messaging ---
@@ -993,6 +1031,12 @@ ui.exportBtn?.addEventListener('click', async () => {
 
 async function init() {
   setupTabs();
+
+  // Initialize extension toggle
+  extensionEnabled = await loadExtensionEnabled();
+  updateExtensionToggleUI(extensionEnabled);
+  bindExtensionToggle();
+
   await syncUIWithConfig();
   bindSettingsListeners();
   await loadAndRenderHistory();
