@@ -4,23 +4,22 @@
 
 ## Overview
 
-Chrome Extension (Manifest V3) for web scraping with data analysis and Excel export.
+Chrome Extension (Manifest V3) for web scraping with data analysis, visualization, and Excel export.
 
 ## Key Features
 
-- **Scraping:** Pattern detection with locking, auto-scroll, SPA navigation support
-- **Preview:** Visual cards with image thumbnails + text
-- **Export:** JSON, CSV, Excel (.xlsx) with analysis sheet
-- **Analysis:** Statistics, aggregations, pivot tables, pattern detection
-- **Scheduling:** Background tasks with webhooks
+- **Scraping:** Pattern detection, auto-scroll, SPA support
+- **Analysis:** Statistics, aggregations, insights extraction
+- **Export:** JSON, CSV, Excel with analysis sheet
+- **Visualization:** HTML reports with Chart.js
 
 ## Architecture
 
 | Layer | Components |
 |-------|------------|
 | Content | `patternDetector`, `autoScroller`, `dataExtractor` |
-| UI | `sidepanel` (dashboard, preview cards, settings) |
-| Background | `service-worker` (scheduler, export, webhooks) |
+| UI | `sidepanel` (dashboard, preview, settings) |
+| Background | `service-worker` (scheduler, export) |
 | Export | `src/export/` (ExcelJS + simple-statistics) |
 
 ## Commands
@@ -34,22 +33,18 @@ bun run typecheck && bun run test
 
 | Skill | Purpose |
 |-------|---------|
-| `scraper-data-analysis` | Analyze data, generate insights, create reports |
+| `scraper-data-analysis` | Analyze CSV/JSON, generate insights & reports |
 | `frontend-slides` | Create HTML presentations from data |
 
-## Key APIs
+## Documentation
 
-```typescript
-// Export
-await exportToExcel(items, { includeAnalysis: true });
+| Doc | Description |
+|-----|-------------|
+| `docs/use-cases.md` | User stories & pain points (Vietnamese) |
+| `CLAUDE.md` | Build commands & architecture reference |
 
-// Analysis
-const analysis = analyzeData(items);
-const totals = aggregate(items, 'price', 'sum', 'category');
-```
+## Recent Updates
 
-## Message Types
-
-- `EXPORT_EXCEL` / `EXPORT_CSV` - Export data
-- `ANALYZE_DATA` - Get statistics without export
-- `UPDATE_PREVIEW` - Send preview to sidepanel
+- Vietnamese user stories covering 8 use cases (scraping, analysis, visualization)
+- HTML report generator with Chart.js (dark mode, responsive)
+- Shopee e-commerce data analysis example
