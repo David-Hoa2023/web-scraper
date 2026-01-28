@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CSS Inspector Tool Overlay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #102216;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #326744;
+            border-radius: 10px;
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background-color: rgba(16, 34, 22, 0.95);
+        }
+    </style>
+</head>
+<body class="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-start justify-end p-6">
+<!-- CSS Inspector Overlay Container -->
+<div class="fixed right-6 top-6 bottom-6 w-80 glass-panel border-l-4 border-primary shadow-2xl flex flex-col overflow-hidden rounded-xl dark:text-white">
+<!-- Header: Selected Element Info -->
+<div class="p-4 border-b border-primary/20 bg-background-dark/50">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">layers</span>
+<h1 class="text-sm font-bold uppercase tracking-wider text-primary">CSS Inspector</h1>
+</div>
+<button class="text-primary/70 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="bg-black/30 p-3 rounded-lg border border-white/5">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-xs font-mono text-primary/60 italic">selected:</span>
+<span class="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">DOM Element</span>
+</div>
+<p class="text-sm font-mono font-medium truncate text-white">div.container.main</p>
+<div class="mt-2 flex gap-2">
+<button class="flex items-center gap-1 text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-all">
+<span class="material-symbols-outlined text-xs">ads_click</span> Select New
+                    </button>
+<button class="flex items-center gap-1 text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-all">
+<span class="material-symbols-outlined text-xs">visibility</span> Highlight
+                    </button>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex border-b border-white/5 px-2 bg-background-dark/20">
+<button class="px-4 py-3 text-xs font-bold border-b-2 border-primary text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">code</span> STYLES
+            </button>
+<button class="px-4 py-3 text-xs font-bold border-b-2 border-transparent text-white/40 hover:text-white/70 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">grid_view</span> LAYOUT
+            </button>
+<button class="px-4 py-3 text-xs font-bold border-b-2 border-transparent text-white/40 hover:text-white/70 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">terminal</span> CONSOLE
+            </button>
+</div>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
+<!-- Active Properties Section -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-xs font-bold uppercase tracking-widest text-white/60">Active Properties</h3>
+<span class="material-symbols-outlined text-sm text-white/40">settings</span>
+</div>
+<div class="space-y-1">
+<!-- Property Item -->
+<label class="flex items-center justify-between group py-1.5 px-2 hover:bg-white/5 rounded cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input checked="" class="h-4 w-4 rounded border-white/20 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 transition-all checked:bg-primary" type="checkbox"/>
+<span class="text-sm font-mono text-white/90">display: <span class="text-primary">flex</span></span>
+</div>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 text-white/30 transition-opacity">edit</span>
+</label>
+<label class="flex items-center justify-between group py-1.5 px-2 hover:bg-white/5 rounded cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input checked="" class="h-4 w-4 rounded border-white/20 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 transition-all checked:bg-primary" type="checkbox"/>
+<span class="text-sm font-mono text-white/90">bg-color: <span class="text-primary">#121212</span></span>
+</div>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 text-white/30 transition-opacity">edit</span>
+</label>
+<label class="flex items-center justify-between group py-1.5 px-2 hover:bg-white/5 rounded cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input checked="" class="h-4 w-4 rounded border-white/20 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 transition-all checked:bg-primary" type="checkbox"/>
+<span class="text-sm font-mono text-white/90">font-size: <span class="text-primary">16px</span></span>
+</div>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 text-white/30 transition-opacity">edit</span>
+</label>
+<label class="flex items-center justify-between group py-1.5 px-2 hover:bg-white/5 rounded cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input class="h-4 w-4 rounded border-white/20 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 transition-all checked:bg-primary" type="checkbox"/>
+<span class="text-sm font-mono text-white/40 line-through">padding: 20px</span>
+</div>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 text-white/30 transition-opacity">edit</span>
+</label>
+</div>
+<button class="mt-2 w-full py-1.5 border border-dashed border-white/20 rounded text-[10px] text-white/40 hover:text-white/70 hover:border-white/40 transition-all">
+                    + Add new property
+                </button>
+</section>
+<!-- Box Model Visual Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-white/60">Box Model</h3>
+<span class="text-[10px] text-primary/60 font-mono">box-sizing: border-box</span>
+</div>
+<div class="relative w-full aspect-video flex items-center justify-center">
+<!-- Margin Box -->
+<div class="absolute inset-0 border border-white/10 bg-white/5 rounded-lg flex flex-col p-1">
+<span class="text-[8px] uppercase font-bold text-white/30 ml-1">Margin</span>
+<div class="flex-1 flex items-center justify-center">
+<!-- Border Box -->
+<div class="w-[80%] h-[80%] border-2 border-primary/40 bg-primary/5 rounded flex flex-col p-1">
+<span class="text-[8px] uppercase font-bold text-primary/40 ml-1">Border</span>
+<div class="flex-1 flex items-center justify-center">
+<!-- Padding Box -->
+<div class="w-[70%] h-[70%] border border-white/10 bg-white/10 rounded flex flex-col p-1">
+<span class="text-[8px] uppercase font-bold text-white/40 ml-1">Padding</span>
+<div class="flex-1 flex items-center justify-center">
+<!-- Content Box -->
+<div class="w-[60%] h-[60%] border border-primary bg-primary/20 rounded flex items-center justify-center">
+<span class="text-[10px] font-mono font-bold text-primary">960x700</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Box Model Values Grid -->
+<div class="grid grid-cols-3 gap-2 mt-4">
+<div class="bg-black/20 p-2 rounded border border-white/5">
+<p class="text-[9px] text-white/40 uppercase mb-1">Margin</p>
+<p class="text-xs font-mono text-white">0px</p>
+</div>
+<div class="bg-black/20 p-2 rounded border border-white/5">
+<p class="text-[9px] text-white/40 uppercase mb-1">Padding</p>
+<p class="text-xs font-mono text-white">20px</p>
+</div>
+<div class="bg-black/20 p-2 rounded border border-primary/20">
+<p class="text-[9px] text-primary/60 uppercase mb-1">Border</p>
+<p class="text-xs font-mono text-white">1px solid</p>
+</div>
+</div>
+</section>
+<!-- Export Preview -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-xs font-bold uppercase tracking-widest text-white/60">Export Preview</h3>
+</div>
+<div class="bg-black/40 rounded-lg p-3 border border-white/5 relative group">
+<pre class="text-[11px] font-mono leading-relaxed text-white/70 overflow-x-hidden">.container.main {
+  display: flex;
+  background-color: #121212;
+  font-size: 16px;
+  border: 1px solid #13ec5b;
+}</pre>
+<button class="absolute top-2 right-2 p-1.5 bg-white/5 hover:bg-primary/20 hover:text-primary rounded text-white/40 transition-all opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Sticky Footer Actions -->
+<div class="p-4 bg-background-dark/80 border-t border-white/10 space-y-3">
+<button class="w-full flex items-center justify-center gap-2 py-2 border border-primary/40 text-primary hover:bg-primary/10 rounded-lg text-sm font-bold transition-all tracking-tight">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                COPY SELECTOR
+            </button>
+<button class="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-background-dark hover:bg-primary/90 rounded-lg text-sm font-extrabold transition-all shadow-lg shadow-primary/20 tracking-tight">
+<span class="material-symbols-outlined text-lg">download</span>
+                EXPORT CSS
+            </button>
+<div class="flex justify-center pt-1">
+<p class="text-[10px] text-white/20 font-medium">Scraping Suite v2.4.0 • Active Session</p>
+</div>
+</div>
+</div>
+<!-- Small Trigger (Minimized State UI) -->
+<div class="fixed right-0 top-1/2 -translate-y-1/2 bg-primary p-1.5 rounded-l-lg shadow-xl cursor-pointer hover:pr-4 transition-all group">
+<span class="material-symbols-outlined text-background-dark font-bold">chevron_left</span>
+</div>
+</body></html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Webhooks Management &amp; Configuration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "border-dark": "#326744",
+                        "surface-dark": "#193322",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            --checkbox-tick-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27rgb(17,34,23)%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z%27/%3e%3c/svg%3e');
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen">
+<div class="relative flex flex-col w-full min-h-screen overflow-x-hidden">
+<!-- Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark px-10 py-3 bg-background-dark">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary">
+<span class="material-symbols-outlined text-3xl">webhook</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Scraper Hub</h2>
+</div>
+<nav class="flex items-center gap-9">
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Dashboard</a>
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Scrapers</a>
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Proxies</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary leading-normal" href="#">Webhooks</a>
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<label class="flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full overflow-hidden">
+<div class="text-[#92c9a4] flex border-none bg-surface-dark items-center justify-center pl-4">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-surface-dark focus:ring-0 h-full placeholder:text-[#92c9a4] px-4 pl-2 text-base font-normal" placeholder="Search webhooks..." value=""/>
+</div>
+</label>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-border-dark" data-alt="User avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUHOIzJkxsR27BW11J9UBWcHP3i93JUjtYDsoeaV7iI31WKR54vJs1pKg-HKNosURZldGmzB1Nv0XzE8p-Ds7PV5UYYg5u8TKv6Lro68SRDudmp4x913ko3DLAKpKlCPsHJuW7ft0PFxB_OV2D9I5aeJcE_u4xAog1MuoBMZWHdBdNuc-U3u-pou2FDTeRyue6Kh7S5o_j7gYeDbyGuZvB1y1_M-PL3F1UzxvRtfptM_AUeCYObP11eSTkYiQGO0guKFFwUwG8wVJv");'></div>
+</div>
+</header>
+<main class="flex-1 px-10 py-8 max-w-[1200px] mx-auto w-full">
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-end gap-3 mb-8">
+<div class="flex min-w-72 flex-col gap-1">
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Webhooks</h1>
+<p class="text-[#92c9a4] text-base font-normal leading-normal">Configure real-time notifications for your scraping lifecycle.</p>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined mr-2">add</span>
+<span class="truncate">Create New Webhook</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Main Configuration & List Section -->
+<div class="lg:col-span-2 flex flex-col gap-8">
+<!-- Config Panel (Create/Edit Form) -->
+<section class="bg-surface-dark/50 border border-border-dark rounded-xl p-6">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">settings</span>
+<h2 class="text-white text-xl font-bold tracking-tight">Configuration</h2>
+</div>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<label class="text-white text-sm font-medium">Payload URL</label>
+<input class="form-input w-full rounded-lg text-white border border-border-dark bg-background-dark focus:border-primary focus:ring-1 focus:ring-primary h-12 placeholder:text-white/30 p-4 text-base" placeholder="https://api.yourdomain.com/hooks/scraper" value="https://api.acme.com/hooks/scraping-events"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-white text-sm font-medium">Secret Key</label>
+<div class="relative">
+<input class="form-input w-full rounded-lg text-white border border-border-dark bg-background-dark focus:border-primary h-12 pr-12 text-base font-mono" readonly="" value="whsec_83d2k9s..."/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+<p class="text-xs text-[#92c9a4]">Used to sign payloads for security.</p>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-white text-sm font-medium">Environment</label>
+<select class="form-select w-full rounded-lg text-white border border-border-dark bg-background-dark focus:border-primary h-12 px-4">
+<option>Production</option>
+<option>Staging</option>
+<option>Development</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<label class="text-white text-sm font-medium">Trigger Events</label>
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 border border-border-dark rounded-lg bg-background-dark cursor-pointer hover:bg-surface-dark transition-colors">
+<input checked="" class="h-5 w-5 rounded border-border-dark bg-transparent text-primary checked:bg-primary focus:ring-0" type="checkbox"/>
+<span class="text-sm">task.completed</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-border-dark rounded-lg bg-background-dark cursor-pointer hover:bg-surface-dark transition-colors">
+<input checked="" class="h-5 w-5 rounded border-border-dark bg-transparent text-primary checked:bg-primary focus:ring-0" type="checkbox"/>
+<span class="text-sm">task.failed</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-border-dark rounded-lg bg-background-dark cursor-pointer hover:bg-surface-dark transition-colors">
+<input class="h-5 w-5 rounded border-border-dark bg-transparent text-primary checked:bg-primary focus:ring-0" type="checkbox"/>
+<span class="text-sm">proxy.blocked</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-border-dark rounded-lg bg-background-dark cursor-pointer hover:bg-surface-dark transition-colors">
+<input class="h-5 w-5 rounded border-border-dark bg-transparent text-primary checked:bg-primary focus:ring-0" type="checkbox"/>
+<span class="text-sm">credits.low</span>
+</label>
+</div>
+</div>
+<div class="pt-4 border-t border-border-dark flex gap-3">
+<button class="bg-primary text-background-dark font-bold px-6 py-2 rounded-lg hover:opacity-90">Update Webhook</button>
+<button class="bg-surface-dark text-white font-bold px-6 py-2 rounded-lg hover:bg-border-dark">Test Connection</button>
+</div>
+</div>
+</section>
+<!-- Webhook Table -->
+<div class="bg-background-dark border border-border-dark rounded-xl overflow-hidden">
+<div class="p-4 border-b border-border-dark flex items-center justify-between">
+<h3 class="font-bold">Active Endpoints</h3>
+<span class="text-xs bg-surface-dark px-2 py-1 rounded text-[#92c9a4]">3 Webhooks Active</span>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-dark/50 text-xs uppercase tracking-wider text-[#92c9a4]">
+<th class="px-6 py-3 font-semibold">Endpoint URL</th>
+<th class="px-6 py-3 font-semibold">Subscribed Events</th>
+<th class="px-6 py-3 font-semibold">Status</th>
+<th class="px-6 py-3 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-dark">
+<tr class="hover:bg-surface-dark transition-colors group">
+<td class="px-6 py-4 text-sm font-medium">https://api.acme.com/hooks/main</td>
+<td class="px-6 py-4">
+<div class="flex gap-1">
+<span class="text-[10px] bg-border-dark px-2 py-0.5 rounded text-white">completed</span>
+<span class="text-[10px] bg-border-dark px-2 py-0.5 rounded text-white">+1</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="relative inline-block w-10 mr-2 align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-primary border-4 border-background-dark appearance-none cursor-pointer right-0" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary/30 cursor-pointer"></label>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[#92c9a4] hover:text-primary mr-2"><span class="material-symbols-outlined text-xl">edit</span></button>
+<button class="text-[#92c9a4] hover:text-red-400"><span class="material-symbols-outlined text-xl">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-dark transition-colors group">
+<td class="px-6 py-4 text-sm font-medium">https://webhook.site/b2a1...</td>
+<td class="px-6 py-4">
+<span class="text-[10px] bg-border-dark px-2 py-0.5 rounded text-white">failed</span>
+</td>
+<td class="px-6 py-4">
+<div class="relative inline-block w-10 mr-2 align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-primary border-4 border-background-dark appearance-none cursor-pointer right-0" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary/30 cursor-pointer"></label>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[#92c9a4] hover:text-primary mr-2"><span class="material-symbols-outlined text-xl">edit</span></button>
+<button class="text-[#92c9a4] hover:text-red-400"><span class="material-symbols-outlined text-xl">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Recent Deliveries Side Log -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<section class="bg-background-dark border border-border-dark rounded-xl flex flex-col h-full max-h-[900px]">
+<div class="p-4 border-b border-border-dark flex items-center justify-between">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history</span>
+                                Recent Deliveries
+                            </h3>
+<button class="text-xs text-primary hover:underline">Clear Logs</button>
+</div>
+<div class="overflow-y-auto flex-1">
+<!-- Delivery Log Item 1 -->
+<div class="p-4 border-b border-border-dark hover:bg-surface-dark/30 transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs text-[#92c9a4]">Today, 10:45 AM</span>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/20 text-primary uppercase">200 OK</span>
+</div>
+<div class="text-sm font-mono truncate mb-2">task.completed</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-white/50 truncate max-w-[150px]">POST .../hooks/main</span>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:bg-primary/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                        RESEND
+                                    </button>
+</div>
+</div>
+<!-- Delivery Log Item 2 -->
+<div class="p-4 border-b border-border-dark hover:bg-surface-dark/30 transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs text-[#92c9a4]">Today, 09:12 AM</span>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 uppercase">500 ERR</span>
+</div>
+<div class="text-sm font-mono truncate mb-2">task.failed</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-white/50 truncate max-w-[150px]">POST .../hooks/main</span>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:bg-primary/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                        RESEND
+                                    </button>
+</div>
+</div>
+<!-- Delivery Log Item 3 -->
+<div class="p-4 border-b border-border-dark hover:bg-surface-dark/30 transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs text-[#92c9a4]">Yesterday, 06:30 PM</span>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/20 text-primary uppercase">200 OK</span>
+</div>
+<div class="text-sm font-mono truncate mb-2">task.completed</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-white/50 truncate max-w-[150px]">POST .../hooks/main</span>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:bg-primary/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                        RESEND
+                                    </button>
+</div>
+</div>
+<!-- Delivery Log Item 4 -->
+<div class="p-4 border-b border-border-dark hover:bg-surface-dark/30 transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs text-[#92c9a4]">Yesterday, 04:15 PM</span>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 uppercase">404 N/F</span>
+</div>
+<div class="text-sm font-mono truncate mb-2">task.completed</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-white/50 truncate max-w-[150px]">POST .../hooks/staging</span>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:bg-primary/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                        RESEND
+                                    </button>
+</div>
+</div>
+</div>
+<div class="p-4 text-center">
+<button class="text-sm text-primary font-bold hover:underline">View All Deliveries</button>
+</div>
+</section>
+<!-- Documentation Card -->
+<section class="bg-primary/10 border border-primary/20 rounded-xl p-6">
+<h4 class="text-primary font-bold mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined">lightbulb</span>
+                            Developer Tip
+                        </h4>
+<p class="text-sm text-[#92c9a4] mb-4">
+                            All requests include a <code class="bg-background-dark px-1 rounded text-white">X-Scraper-Signature</code> header. Use your Secret Key to verify the payload's integrity.
+                        </p>
+<a class="text-xs font-bold text-white flex items-center gap-1 hover:underline" href="#">
+                            Read Security Docs
+                            <span class="material-symbols-outlined text-sm">open_in_new</span>
+</a>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="mt-auto border-t border-border-dark py-6 px-10 flex justify-between items-center text-[#92c9a4] text-sm">
+<p>© 2024 Scraper Hub Inc. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">API Status</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Help Center</a>
+</div>
+</footer>
+</div>
+</body></html>

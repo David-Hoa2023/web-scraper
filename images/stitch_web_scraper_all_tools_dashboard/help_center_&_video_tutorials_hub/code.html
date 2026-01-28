@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Help Center &amp; Video Tutorials Hub | ScraperPro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+<div class="relative flex min-h-screen flex-col">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-white/10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold tracking-tight">ScraperPro <span class="text-primary/80 font-medium">Help</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Docs</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">API Reference</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Community</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Changelog</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-background-dark hover:brightness-110 transition-all">
+                        Go to Dashboard
+                    </button>
+<div class="h-10 w-10 rounded-full border-2 border-primary/20 bg-cover bg-center" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC_kZ-nEssEuNMdgJqcQE0Dawi_tK8V9IwqDW632cxJ3YHGNwWu6CxCSV9f1008ZlVsNisBJYBwH_SAwBXIbG9bsIOvWVMi1E4paIdn1dT-eeuvCJdEbrPi7WlHw0O_8AQ8lpQFvDUz1-VLsG2yxcv5PKf0PAcCzOTOPbmLFFMPIAbe3TdRMAqsxXuEm8elJXPOGW1hlBMrBflyFARm_kA6Tc9Gd7YIEG_eyuYJGBzXzEmDacO3Z6-rT2pMeBFUqAiiCdRtMQfcUnCS");'></div>
+</div>
+</div>
+</header>
+<main class="mx-auto flex w-full max-w-[1440px] flex-1 gap-8 px-6 py-8">
+<!-- Sidebar Navigation -->
+<aside class="hidden w-64 shrink-0 flex-col gap-8 lg:flex">
+<div class="flex flex-col gap-6">
+<div>
+<h3 class="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Help Topics</h3>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2 text-primary font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">book</span>
+<span>Basics</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">computer</span>
+<span>Advanced Extraction</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">construction</span>
+<span>Troubleshooting</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+<span>Integrations</span>
+</a>
+</div>
+</div>
+<div>
+<h3 class="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Resources</h3>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span>Certification</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">article</span>
+<span>Case Studies</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Simple Card In Sidebar -->
+<div class="mt-auto rounded-xl bg-primary/5 p-4 border border-primary/20">
+<p class="text-xs font-medium text-primary">Pro Tip</p>
+<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Use the Chrome extension shortcut <kbd class="rounded border border-white/20 bg-white/10 px-1 font-sans text-xs">Alt+S</kbd> to quickly select elements.</p>
+</div>
+</aside>
+<!-- Content Area -->
+<div class="flex-1 overflow-hidden">
+<!-- Search Section -->
+<div class="mb-8 flex flex-col gap-4">
+<div class="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary transition-colors" href="#">Help Center</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-900 dark:text-slate-100">Video Tutorials</span>
+</div>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-primary/60">search</span>
+<input class="h-14 w-full rounded-xl border-none bg-white shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10 focus:ring-2 focus:ring-primary pl-12 text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="Search for selectors, APIs, or guides..." type="text"/>
+</div>
+</div>
+<!-- Video Tutorials Section -->
+<div class="mb-12">
+<div class="mb-6 flex items-center justify-between">
+<h2 class="text-2xl font-bold tracking-tight">Video Tutorials</h2>
+<a class="text-sm font-bold text-primary hover:underline" href="#">View all 24 videos</a>
+</div>
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+<!-- Video Card 1 -->
+<div class="group cursor-pointer flex flex-col overflow-hidden rounded-xl bg-white dark:bg-white/5 shadow-sm ring-1 ring-slate-200 dark:ring-white/10 hover:ring-primary transition-all">
+<div class="relative aspect-video w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Getting started tutorial video thumbnail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB81P2Asp5oe5qjCbNy8ZPg4lMDbczpT9EtBTXmamA0p_5HYaDHNMFDvtppRrS3vM3SiwaqOEHtqGX0wgMmhmxU5v918llGqKagoyabjaMAqoTiX3xJiarOVdbY0raCkG8MRK33XKUDo-juBbdeB1r8v_FMLZFML-izAspK8mYsXN9U3YYfe90gEQEqRxl3ytbshZnQsF6QQRwhE1gXUGjyE60MuXPOJxyscD4_qHN0BVMZxLl6-kVCfRl7GcrLT6JZL5WnSTt1QowL");'></div>
+<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-6xl drop-shadow-lg">play_circle</span>
+</div>
+<div class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white">12:45</div>
+</div>
+<div class="p-4">
+<h3 class="font-bold leading-tight group-hover:text-primary transition-colors">Getting Started with ScraperPro</h3>
+<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Learn the fundamental workflow from installation to your first export.</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="rounded-full bg-slate-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-500">Beginner</span>
+<span class="text-[10px] text-slate-400">• 2 days ago</span>
+</div>
+</div>
+</div>
+<!-- Video Card 2 -->
+<div class="group cursor-pointer flex flex-col overflow-hidden rounded-xl bg-white dark:bg-white/5 shadow-sm ring-1 ring-slate-200 dark:ring-white/10 hover:ring-primary transition-all">
+<div class="relative aspect-video w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="CSS selectors masterclass video thumbnail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCf5n-RjnS2EZAj44b7jwIFezB44t7s3U8E3BlFsqeFZJxfOToQUxnbDQuyIbNS1eLQYE1Iw98u_DInNs8_Lxow54HRQ7PqwdtGsLn02GaljOP7YkWAfyIT45DZO9qSqz8epMxSUDkdsSfvqptPxTk_xGPOuBKjuM9CQUzJtzzlwil9Kc6rNoBtW2MONbNsHvtTRJiYhSqb0xC8JNzsY2NGh1nhE1HPNNq2hbgksBEJWLvR8p9sVXqz37nvyyrg6sy-IVDfQ-vseoCR");'></div>
+<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-6xl drop-shadow-lg">play_circle</span>
+</div>
+<div class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white">24:10</div>
+</div>
+<div class="p-4">
+<h3 class="font-bold leading-tight group-hover:text-primary transition-colors">Mastering CSS Selectors</h3>
+<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Deep dive into identifying complex DOM structures for precise data.</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">Advanced</span>
+<span class="text-[10px] text-slate-400">• 1 week ago</span>
+</div>
+</div>
+</div>
+<!-- Video Card 3 -->
+<div class="group cursor-pointer flex flex-col overflow-hidden rounded-xl bg-white dark:bg-white/5 shadow-sm ring-1 ring-slate-200 dark:ring-white/10 hover:ring-primary transition-all">
+<div class="relative aspect-video w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Automation automation task video thumbnail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCGF6SoTYA7zBMIjoNeVqxWwuirzyCHV2busL6uXxUD0uT3tFZASxBEn_etlNCVzImzHoamX0ZadQzNG6K4IanvTN_NucjhDcBlDzRqNKrDpgIB7GKo7gfd1nIMBWv53MM6sXIn6zw2ct_Cxdplm_RN45sM97wCr00KWOr4v3jSO2FRd8MtYZSDayEuYkIJBctZuaeDXfGUgIXed7N91DIwGTlZEWrY175xKnQNILjieVlJQHoulYLYSAs4eaaG1SQpr8Czzho7VqKT");'></div>
+<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-6xl drop-shadow-lg">play_circle</span>
+</div>
+<div class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white">08:30</div>
+</div>
+<div class="p-4">
+<h3 class="font-bold leading-tight group-hover:text-primary transition-colors">Automating Your First Task</h3>
+<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">How to schedule scrapers and setup webhooks for real-time updates.</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="rounded-full bg-slate-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-500">Intermediate</span>
+<span class="text-[10px] text-slate-400">• 2 weeks ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Featured Articles Section -->
+<div>
+<h2 class="mb-6 text-2xl font-bold tracking-tight">Popular Guides</h2>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div class="group flex items-start gap-4 rounded-xl border border-white/10 p-4 hover:bg-primary/5 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-slate-100">Bypassing CAPTCHA</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">How to integrate with popular anti-captcha solvers.</p>
+</div>
+</div>
+<div class="group flex items-start gap-4 rounded-xl border border-white/10 p-4 hover:bg-primary/5 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">layers</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-slate-100">Infinite Scrolling Sites</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Tips for scraping dynamic content that loads on scroll.</p>
+</div>
+</div>
+<div class="group flex items-start gap-4 rounded-xl border border-white/10 p-4 hover:bg-primary/5 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">api</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-slate-100">Webhook Documentation</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Push your scraped data directly into your own backend.</p>
+</div>
+</div>
+<div class="group flex items-start gap-4 rounded-xl border border-white/10 p-4 hover:bg-primary/5 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">shield</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-slate-100">Privacy &amp; Terms</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Best practices for ethical scraping and staying compliant.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-background-dark shadow-xl hover:scale-105 transition-transform group" title="Contact Support">
+<span class="material-symbols-outlined text-3xl font-bold group-hover:rotate-12 transition-transform">support_agent</span>
+<!-- Tooltip-like label -->
+<span class="absolute right-20 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1 text-sm font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/20">
+                Contact Support
+            </span>
+</button>
+<!-- Footer -->
+<footer class="border-t border-white/10 py-8">
+<div class="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 md:flex-row">
+<p class="text-xs text-slate-500">© 2024 ScraperPro. Empowering data developers.</p>
+<div class="flex items-center gap-6">
+<a class="text-xs text-slate-500 hover:text-primary" href="#">Status</a>
+<a class="text-xs text-slate-500 hover:text-primary" href="#">Terms of Service</a>
+<a class="text-xs text-slate-500 hover:text-primary" href="#">Privacy Policy</a>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

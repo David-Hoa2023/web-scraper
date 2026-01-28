@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Data Transformation Rules Pipeline</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .rule-card-active {
+            border-left: 4px solid #13ec5b;
+            background: rgba(19, 236, 91, 0.05);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display">
+<!-- Header Navigation -->
+<header class="border-b border-slate-200 dark:border-emerald-900/30 bg-white/50 dark:bg-black/20 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-icons text-background-dark text-xl">Auto_fix_high</span>
+</div>
+<div>
+<h1 class="text-lg font-bold leading-none tracking-tight">Pipeline: Product_Scraper_v2</h1>
+<p class="text-xs text-slate-500 dark:text-emerald-500/60 mt-1">Status: <span class="text-primary uppercase tracking-widest font-bold">Drafting</span></p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-slate-300 dark:border-emerald-800 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-900/30 transition-all">
+<span class="material-icons text-sm">play_arrow</span> Run Test
+                </button>
+<button class="flex items-center gap-2 px-6 py-2 text-sm font-bold bg-primary text-background-dark rounded-lg hover:brightness-110 transition-all shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+<span class="material-icons text-sm">save</span> SAVE PIPELINE
+                </button>
+</div>
+</div>
+</header>
+<main class="max-w-[1600px] mx-auto grid grid-cols-12 gap-0 h-[calc(100vh-64px)] overflow-hidden">
+<!-- Left Sidebar: Rule Pipeline -->
+<aside class="col-span-3 border-r border-slate-200 dark:border-emerald-900/20 bg-slate-50/50 dark:bg-black/10 flex flex-col">
+<div class="p-6 border-b border-slate-200 dark:border-emerald-900/20 flex justify-between items-center">
+<h2 class="text-sm font-bold uppercase tracking-widest opacity-60">Rule Pipeline</h2>
+<button class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-all">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+<!-- Rule Card: Trim -->
+<div class="p-4 bg-white dark:bg-emerald-950/20 border border-slate-200 dark:border-emerald-800/40 rounded-xl flex items-center gap-4 cursor-grab group active:cursor-grabbing">
+<span class="material-icons text-slate-400 dark:text-emerald-800">drag_indicator</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold">Trim Whitespace</h3>
+<p class="text-[10px] text-slate-400 font-mono">Input: Title, Description</p>
+</div>
+<div class="flex flex-col gap-1">
+<div class="w-8 h-4 bg-primary/20 rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Rule Card: Extract Digits -->
+<div class="p-4 bg-white dark:bg-emerald-950/20 border border-slate-200 dark:border-emerald-800/40 rounded-xl flex items-center gap-4 cursor-grab group">
+<span class="material-icons text-slate-400 dark:text-emerald-800">drag_indicator</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold">Extract Digits</h3>
+<p class="text-[10px] text-slate-400 font-mono">Target: price_raw</p>
+</div>
+<div class="w-8 h-4 bg-primary/20 rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-primary rounded-full"></div>
+</div>
+</div>
+<!-- Rule Card: Find & Replace (ACTIVE) -->
+<div class="p-4 bg-white dark:bg-emerald-900/10 border-2 border-primary rounded-xl flex items-center gap-4 cursor-grab relative">
+<span class="material-icons text-primary/60">drag_indicator</span>
+<div class="flex-1">
+<div class="flex items-center gap-2">
+<h3 class="text-sm font-bold text-primary">Find &amp; Replace</h3>
+<span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">STEP 03</span>
+</div>
+<p class="text-[10px] text-primary/80 font-mono italic">Replace "USD" with "$"</p>
+</div>
+<span class="material-icons text-primary">chevron_right</span>
+</div>
+<!-- Rule Card: Regex Match -->
+<div class="p-4 bg-white dark:bg-emerald-950/20 border border-slate-200 dark:border-emerald-800/40 rounded-xl flex items-center gap-4 cursor-grab group">
+<span class="material-icons text-slate-400 dark:text-emerald-800">drag_indicator</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold">Regex Match</h3>
+<p class="text-[10px] text-slate-400 font-mono">/[A-Z]{2,}/g</p>
+</div>
+<div class="w-8 h-4 bg-slate-300 dark:bg-emerald-900/40 rounded-full relative">
+<div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white/40 rounded-full"></div>
+</div>
+</div>
+<!-- Add Step Placeholder -->
+<button class="w-full py-4 border-2 border-dashed border-slate-200 dark:border-emerald-900/30 rounded-xl flex flex-col items-center gap-1 text-slate-400 hover:text-primary hover:border-primary transition-all">
+<span class="material-icons">add_circle_outline</span>
+<span class="text-xs font-bold uppercase tracking-widest">New Transformation</span>
+</button>
+</div>
+</aside>
+<!-- Center: Live Preview -->
+<section class="col-span-6 p-8 bg-white dark:bg-background-dark overflow-y-auto">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-xl font-bold flex items-center gap-3">
+                        Live Preview 
+                        <span class="text-xs font-normal px-2 py-1 bg-slate-100 dark:bg-emerald-900/30 text-slate-500 dark:text-emerald-400 rounded">Sample Row #104</span>
+</h2>
+<p class="text-sm text-slate-500 dark:text-emerald-500/60 mt-1">Real-time transformation preview based on the current pipeline.</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 border border-slate-200 dark:border-emerald-900/40 rounded text-slate-400">
+<span class="material-icons">chevron_left</span>
+</button>
+<button class="p-2 border border-slate-200 dark:border-emerald-900/40 rounded text-slate-400">
+<span class="material-icons">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-8 h-fit">
+<!-- Before -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+<span class="w-2 h-2 bg-slate-400 rounded-full"></span> Raw Extraction
+                    </div>
+<div class="bg-slate-100/50 dark:bg-emerald-950/10 border border-slate-200 dark:border-emerald-900/20 rounded-xl p-6 font-mono text-sm space-y-6">
+<div>
+<span class="text-[10px] text-slate-400 uppercase block mb-1 tracking-widest">Field: product_title</span>
+<div class="text-slate-600 dark:text-emerald-100">
+                                   Mechanical Keyboard - RGB Lighting (NEW)    
+                            </div>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 uppercase block mb-1 tracking-widest">Field: price_string</span>
+<div class="text-slate-600 dark:text-emerald-100">
+                                List Price: USD 129.99
+                            </div>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 uppercase block mb-1 tracking-widest">Field: sku_code</span>
+<div class="text-slate-600 dark:text-emerald-100">
+                                SKU-AF920-XLT-99
+                            </div>
+</div>
+</div>
+</div>
+<!-- After -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
+<span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span> Transformed Output
+                    </div>
+<div class="bg-primary/5 border border-primary/30 rounded-xl p-6 font-mono text-sm space-y-6">
+<div>
+<span class="text-[10px] text-primary/60 uppercase block mb-1 tracking-widest">Field: product_title</span>
+<div class="text-slate-900 dark:text-white">
+                                Mechanical Keyboard - RGB Lighting (NEW)
+                            </div>
+</div>
+<div>
+<span class="text-[10px] text-primary/60 uppercase block mb-1 tracking-widest">Field: price_string</span>
+<div class="text-slate-900 dark:text-white">
+                                List Price: <span class="bg-primary text-background-dark px-1">$</span> 129.99
+                            </div>
+</div>
+<div>
+<span class="text-[10px] text-primary/60 uppercase block mb-1 tracking-widest">Field: sku_code</span>
+<div class="text-slate-900 dark:text-white">
+                                SKU-AF920-XLT-99
+                            </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Visualization Help -->
+<div class="mt-8 p-4 border border-primary/20 bg-primary/5 rounded-lg flex gap-4 items-start">
+<span class="material-icons text-primary">info</span>
+<p class="text-xs text-slate-500 dark:text-emerald-400/80 leading-relaxed">
+                    Step 3 <b>Find &amp; Replace</b> modified the <code class="bg-emerald-900/40 px-1 rounded">price_string</code> field. The string "USD" was found and replaced with the character "$". This transformation is currently active for all rows in this extraction session.
+                </p>
+</div>
+</section>
+<!-- Right: Configuration Panel -->
+<aside class="col-span-3 border-l border-slate-200 dark:border-emerald-900/20 bg-slate-50/50 dark:bg-black/10 flex flex-col">
+<div class="p-6 border-b border-slate-200 dark:border-emerald-900/20">
+<h2 class="text-sm font-bold uppercase tracking-widest opacity-60">Rule Settings</h2>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
+<span class="material-icons text-primary">find_replace</span>
+<div>
+<h3 class="text-sm font-bold">Find &amp; Replace</h3>
+<p class="text-[10px] text-emerald-500">Configuration ID: RULE_TR_003</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="space-y-2">
+<label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Apply to Field</label>
+<select class="w-full bg-white dark:bg-emerald-950/40 border-slate-300 dark:border-emerald-800 rounded-lg text-sm p-2 outline-none focus:ring-1 focus:ring-primary">
+<option>price_string</option>
+<option>product_title</option>
+<option>sku_code</option>
+<option>All Fields</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Search Term</label>
+<div class="relative">
+<input class="w-full bg-white dark:bg-emerald-950/40 border-slate-300 dark:border-emerald-800 rounded-lg text-sm p-2.5 outline-none focus:ring-1 focus:ring-primary font-mono" type="text" value="USD"/>
+<span class="absolute right-3 top-2.5 text-[10px] bg-slate-100 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded text-slate-400">text</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Replacement</label>
+<input class="w-full bg-white dark:bg-emerald-950/40 border-slate-300 dark:border-emerald-800 rounded-lg text-sm p-2.5 outline-none focus:ring-1 focus:ring-primary font-mono" type="text" value="$"/>
+</div>
+<div class="flex items-center justify-between pt-4">
+<div class="flex items-center gap-2">
+<div class="w-10 h-5 bg-primary rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></div>
+</div>
+<span class="text-xs font-medium">Case Sensitive</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-10 h-5 bg-slate-300 dark:bg-emerald-900/40 rounded-full relative">
+<div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white/40 rounded-full"></div>
+</div>
+<span class="text-xs font-medium text-slate-500">Regex Mode</span>
+</div>
+</div>
+</div>
+<div class="pt-6 border-t border-slate-200 dark:border-emerald-900/20 flex flex-col gap-2">
+<button class="w-full py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-primary rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-background-dark transition-all">
+                        Update Preview
+                    </button>
+<button class="w-full py-2 text-red-500 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500/10 rounded-lg transition-all">
+<span class="material-icons text-sm">delete_outline</span> Remove Rule
+                    </button>
+</div>
+</div>
+<!-- Footer Stats -->
+<div class="mt-auto p-6 bg-slate-100 dark:bg-black/20 text-[10px] font-mono text-slate-400 space-y-1 border-t border-slate-200 dark:border-emerald-900/20">
+<div class="flex justify-between">
+<span>Processed:</span>
+<span class="text-emerald-500">4,291 records</span>
+</div>
+<div class="flex justify-between">
+<span>Performance:</span>
+<span class="text-emerald-500">0.02ms / record</span>
+</div>
+</div>
+</aside>
+</main>
+<!-- Bottom Status Bar -->
+<footer class="h-8 border-t border-slate-200 dark:border-emerald-900/40 bg-white dark:bg-background-dark fixed bottom-0 left-0 right-0 z-50 px-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+<div class="flex gap-4">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> EXTENSION CONNECTED</span>
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> AUTO-SYNC IDLE</span>
+</div>
+<div>
+            V3.4.12-BETA    |    DOMAIN: amazon.com
+        </div>
+</footer>
+</body></html>

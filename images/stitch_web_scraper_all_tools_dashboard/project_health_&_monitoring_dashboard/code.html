@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Health &amp; Monitoring Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .sparkline-green {
+            stroke: #13ec5b;
+            fill: rgba(19, 236, 91, 0.1);
+        }
+        .sparkline-amber {
+            stroke: #f59e0b;
+            fill: rgba(245, 158, 11, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a2e1f;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #326744;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#23482f] px-10 py-3 bg-background-light dark:bg-background-dark">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6">
+<span class="material-symbols-outlined text-3xl">terminal</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">ScraperPro</h2>
+</div>
+<div class="flex items-center gap-9">
+<a class="text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-[#92c9a4] text-sm font-medium leading-normal hover:text-white transition-colors" href="#">Data Explorer</a>
+<a class="text-[#92c9a4] text-sm font-medium leading-normal hover:text-white transition-colors" href="#">Proxy Manager</a>
+<a class="text-[#92c9a4] text-sm font-medium leading-normal hover:text-white transition-colors" href="#">Scheduler</a>
+</div>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<label class="flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#92c9a4] flex border-none bg-[#1a2e1f] items-center justify-center pl-4 rounded-l-lg">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-[#1a2e1f] text-white focus:ring-0 h-full placeholder:text-[#92c9a4] px-4 rounded-r-lg pl-2 text-sm" placeholder="Search projects..."/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#1a2e1f] text-white hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#1a2e1f] text-white hover:bg-primary/20 transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#102216]"></span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-[#326744]" data-alt="User profile avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBDSOLihJ2H5wkPO4VZYduubrTfgf9YaJ1hfbOTfCpRhCn-pYB0pG_7BDbnGeT76zu1ZPTVaVhHf7j1ZpcwziEH_K5ReBheFE1nmWWVfyFPvndVfM74_dS3OZ0UDtED5flm96BpBBt0Ab-a5AgHVnz8RtZfsVbGOp1bvk8ERQKYQae26WmOuGSrAcKnMMkOunga96x4Q9rfjfGIUmpoP9vxYOheMvZZK1noR4mG9TmASAolXMi8tsDLd6svu5TPS_Tk1h9RqtQp2OsW");'></div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto p-8">
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-end gap-3 mb-8">
+<div class="flex flex-col gap-1">
+<p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Project Health Dashboard</p>
+<p class="text-[#92c9a4] text-base font-normal leading-normal">Real-time monitoring for your web scraping infrastructure</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 bg-[#1a2e1f] border border-[#326744] text-white rounded-lg h-10 text-sm font-bold hover:bg-[#23482f] transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Export Report</span>
+</button>
+<button class="flex items-center gap-2 px-4 bg-primary text-background-dark rounded-lg h-10 text-sm font-bold shadow-[0_0_15px_rgba(19,236,91,0.3)] hover:scale-[1.02] transition-all">
+<span class="material-symbols-outlined text-sm">refresh</span>
+<span>Refresh Data</span>
+</button>
+</div>
+</div>
+<!-- KPI Scoreboard -->
+<div class="flex flex-wrap gap-6 mb-8">
+<div class="flex min-w-[280px] flex-1 flex-col gap-2 rounded-xl p-6 border border-[#326744] bg-[#1a2e1f]/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">check_circle</span>
+</div>
+<p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Success Rate</p>
+<div class="flex items-baseline gap-2">
+<p class="text-white text-4xl font-black">98.2%</p>
+<p class="text-primary text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> +2.4%
+                    </p>
+</div>
+<div class="w-full bg-[#112217] h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-[98.2%] shadow-[0_0_8px_#13ec5b]"></div>
+</div>
+</div>
+<div class="flex min-w-[280px] flex-1 flex-col gap-2 rounded-xl p-6 border border-[#326744] bg-[#1a2e1f]/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">database</span>
+</div>
+<p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Total Rows Today</p>
+<div class="flex items-baseline gap-2">
+<p class="text-white text-4xl font-black">12.4k</p>
+<p class="text-primary text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> +15.2%
+                    </p>
+</div>
+<p class="text-[#92c9a4] text-xs">Across 14 active scrapers</p>
+</div>
+<div class="flex min-w-[280px] flex-1 flex-col gap-2 rounded-xl p-6 border border-[#326744] bg-[#1a2e1f]/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">bolt</span>
+</div>
+<p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Active Tasks</p>
+<div class="flex items-baseline gap-2">
+<p class="text-white text-4xl font-black">14</p>
+<p class="text-[#92c9a4] text-sm font-bold">Stable</p>
+</div>
+<p class="text-[#92c9a4] text-xs">4 scheduled for next hour</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<!-- Left & Center Content: Health Grid & Main Chart -->
+<div class="lg:col-span-3 space-y-8">
+<!-- Data Volume Chart Area -->
+<div class="bg-[#1a2e1f]/30 border border-[#326744] rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-bold">Data Volume per Day</h3>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-xs text-[#92c9a4]"><span class="w-3 h-3 bg-primary rounded-sm"></span> Success</span>
+<span class="flex items-center gap-1 text-xs text-[#92c9a4]"><span class="w-3 h-3 bg-red-500 rounded-sm"></span> Failures</span>
+</div>
+</div>
+<div class="flex items-end justify-between h-48 gap-4 px-2">
+<!-- Mock Bars -->
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[40%] rounded-t-sm transition-all relative">
+<div class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] px-2 py-1 rounded font-bold">4.2k</div>
+</div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">MON</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[65%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">TUE</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[55%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">WED</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[85%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">THU</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[70%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">FRI</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[30%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">SAT</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-1 h-full group cursor-pointer">
+<div class="bg-primary/40 group-hover:bg-primary h-[95%] rounded-t-sm transition-all"></div>
+<span class="text-[10px] text-[#92c9a4] text-center mt-2">SUN</span>
+</div>
+</div>
+</div>
+<!-- Task Health Grid -->
+<div>
+<div class="flex items-center justify-between px-2 mb-4">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Task Health Grid</h2>
+<div class="flex gap-2">
+<button class="text-xs text-primary border border-primary/30 px-3 py-1 rounded-full bg-primary/10">All Tasks</button>
+<button class="text-xs text-[#92c9a4] px-3 py-1">Active</button>
+<button class="text-xs text-[#92c9a4] px-3 py-1">Paused</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<!-- Project Card 1 -->
+<div class="flex flex-col gap-4 rounded-xl p-5 border border-[#326744] bg-[#1a2e1f]/40 hover:bg-[#1a2e1f]/60 transition-all group">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-base font-bold leading-normal">Amazon Product Scraper</p>
+<p class="text-[#92c9a4] text-xs">Updated 2m ago</p>
+</div>
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded uppercase">Running</span>
+</div>
+<!-- Mini Sparkline -->
+<div class="w-full h-12">
+<svg class="w-full h-full" viewbox="0 0 100 20">
+<path class="sparkline-green fill-none stroke-2" d="M0,15 Q10,5 20,12 T40,8 T60,15 T80,5 T100,10"></path>
+</svg>
+</div>
+<div class="flex justify-between items-end border-t border-[#326744] pt-3">
+<div>
+<p class="text-[#92c9a4] text-[10px] uppercase font-bold">Reliability</p>
+<p class="text-white text-lg font-black">99.2%</p>
+</div>
+<button class="text-[#92c9a4] hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="flex flex-col gap-4 rounded-xl p-5 border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 transition-all group">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-base font-bold leading-normal">LinkedIn Lead Gen</p>
+<p class="text-red-400 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">warning</span> Failed 15m ago
+                                    </p>
+</div>
+<span class="bg-red-500/20 text-red-500 text-[10px] font-bold px-2 py-1 rounded uppercase">Error</span>
+</div>
+<div class="w-full h-12">
+<svg class="w-full h-full" viewbox="0 0 100 20">
+<path class="fill-none stroke-red-500 stroke-2" d="M0,10 Q10,18 20,15 T40,18 T60,10 T80,18 T100,20"></path>
+</svg>
+</div>
+<div class="flex justify-between items-end border-t border-red-500/20 pt-3">
+<div>
+<p class="text-red-400 text-[10px] uppercase font-bold">Reliability</p>
+<p class="text-white text-lg font-black">88.5%</p>
+</div>
+<button class="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-red-600 transition-colors">Debug</button>
+</div>
+</div>
+<!-- Project Card 3 -->
+<div class="flex flex-col gap-4 rounded-xl p-5 border border-[#326744] bg-[#1a2e1f]/40 hover:bg-[#1a2e1f]/60 transition-all group">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-base font-bold leading-normal">Real Estate Aggregator</p>
+<p class="text-[#92c9a4] text-xs">Updated 1h ago</p>
+</div>
+<span class="bg-amber-500/20 text-amber-500 text-[10px] font-bold px-2 py-1 rounded uppercase">Warning</span>
+</div>
+<div class="w-full h-12">
+<svg class="w-full h-full" viewbox="0 0 100 20">
+<path class="sparkline-amber fill-none stroke-2" d="M0,10 Q10,12 20,8 T40,15 T60,5 T80,12 T100,10"></path>
+</svg>
+</div>
+<div class="flex justify-between items-end border-t border-[#326744] pt-3">
+<div>
+<p class="text-amber-500 text-[10px] uppercase font-bold">Reliability</p>
+<p class="text-white text-lg font-black">94.1%</p>
+</div>
+<button class="text-[#92c9a4] hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Project Card 4 -->
+<div class="flex flex-col gap-4 rounded-xl p-5 border border-[#326744] bg-[#1a2e1f]/40 hover:bg-[#1a2e1f]/60 transition-all group">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<p class="text-white text-base font-bold leading-normal">eBay Price Watch</p>
+<p class="text-[#92c9a4] text-xs">Updated 45m ago</p>
+</div>
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded uppercase">Running</span>
+</div>
+<div class="w-full h-12">
+<svg class="w-full h-full" viewbox="0 0 100 20">
+<path class="sparkline-green fill-none stroke-2" d="M0,12 Q10,10 20,10 T40,10 T60,10 T80,10 T100,10"></path>
+</svg>
+</div>
+<div class="flex justify-between items-end border-t border-[#326744] pt-3">
+<div>
+<p class="text-[#92c9a4] text-[10px] uppercase font-bold">Reliability</p>
+<p class="text-white text-lg font-black">100%</p>
+</div>
+<button class="text-[#92c9a4] hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Add New Task Card -->
+<div class="flex flex-col items-center justify-center gap-2 rounded-xl p-5 border-2 border-dashed border-[#326744] bg-transparent hover:border-primary hover:bg-primary/5 transition-all group cursor-pointer">
+<span class="material-symbols-outlined text-4xl text-[#326744] group-hover:text-primary transition-colors">add_circle</span>
+<p class="text-[#92c9a4] font-bold group-hover:text-white transition-colors">Deploy New Scraper</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Issues Sidebar -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-[#1a2e1f]/50 border border-[#326744] rounded-xl flex flex-col h-full">
+<div class="p-5 border-b border-[#326744] flex justify-between items-center">
+<h3 class="font-bold text-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500">priority_high</span> Recent Issues
+                        </h3>
+<span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">3</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4 max-h-[700px]">
+<!-- Issue Item 1 -->
+<div class="bg-background-dark border border-red-500/20 rounded-lg p-4 space-y-3">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-red-400 uppercase">Captcha Blocked</span>
+<span class="text-[#92c9a4]">2m ago</span>
+</div>
+<p class="text-sm font-medium">LinkedIn Lead Gen failed to resolve challenge on 'search/people'</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2 rounded transition-colors">Debug</button>
+<button class="flex-1 bg-[#1a2e1f] hover:bg-[#23482f] text-white text-xs font-bold py-2 rounded transition-colors">Re-run</button>
+</div>
+</div>
+<!-- Issue Item 2 -->
+<div class="bg-background-dark border border-amber-500/20 rounded-lg p-4 space-y-3">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-amber-500 uppercase">Proxy Timeout</span>
+<span class="text-[#92c9a4]">14m ago</span>
+</div>
+<p class="text-sm font-medium">Amazon Scraper experienced high latency on node: US-EAST-1</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-xs font-bold py-2 rounded transition-colors">Rotate Proxy</button>
+</div>
+</div>
+<!-- Issue Item 3 -->
+<div class="bg-background-dark border border-red-500/20 rounded-lg p-4 space-y-3">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-red-400 uppercase">DOM Changed</span>
+<span class="text-[#92c9a4]">1h ago</span>
+</div>
+<p class="text-sm font-medium">Real Estate Aggregator: Selector '#price-tag' not found on 42 pages</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2 rounded transition-colors">Update Selector</button>
+</div>
+</div>
+<!-- Historical Success Entry -->
+<div class="opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all border border-[#326744]/30 rounded-lg p-4 bg-background-dark/50">
+<div class="flex justify-between text-[10px] font-bold mb-1">
+<span class="text-primary uppercase">Resolved</span>
+<span class="text-[#92c9a4]">3h ago</span>
+</div>
+<p class="text-xs">eBay Price Watch recovery successful after session refresh.</p>
+</div>
+</div>
+<div class="p-4 bg-[#1a2e1f] rounded-b-xl border-t border-[#326744]">
+<button class="w-full text-[#92c9a4] text-xs font-bold hover:text-white transition-colors">View All Logs</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Stats -->
+<footer class="max-w-[1440px] mx-auto px-8 py-10 mt-10 border-t border-[#326744]">
+<div class="flex flex-wrap justify-between items-center gap-6">
+<div class="flex gap-10">
+<div class="flex flex-col">
+<p class="text-[#92c9a4] text-xs font-bold uppercase">System Status</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+<p class="text-white text-sm">All systems operational</p>
+</div>
+</div>
+<div class="flex flex-col">
+<p class="text-[#92c9a4] text-xs font-bold uppercase">API Usage</p>
+<p class="text-white text-sm font-bold">42.8% of daily quota</p>
+</div>
+<div class="flex flex-col">
+<p class="text-[#92c9a4] text-xs font-bold uppercase">Active Proxies</p>
+<p class="text-white text-sm font-bold">1,042 / 1,200</p>
+</div>
+</div>
+<div class="text-[#92c9a4] text-sm">
+                ScraperPro Dashboard v2.4.0
+            </div>
+</div>
+</footer>
+</body></html>

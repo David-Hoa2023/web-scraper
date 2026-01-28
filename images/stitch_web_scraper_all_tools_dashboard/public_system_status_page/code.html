@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public System Status | ScrapePro Tools</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "warning": "#fbbf24",
+                        "error": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .status-pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(19, 236, 91, 0.4); }
+            100% { box-shadow: 0 0 0 12px rgba(19, 236, 91, 0); }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 border-b border-white/10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<svg class="w-8 h-8" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 0.757355L47.2426 24L24 47.2426L0.757355 24L24 0.757355ZM21 35.7574V12.2426L9.24264 24L21 35.7574Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h1 class="text-xl font-bold tracking-tight">ScrapePro <span class="text-primary/80 font-medium">Status</span></h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-6 text-sm font-medium opacity-70">
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+<a class="hover:text-primary transition-colors" href="#">Platform API</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</nav>
+<button class="bg-primary hover:bg-primary/90 text-background-dark px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">notifications</span>
+                    Subscribe to Updates
+                </button>
+</div>
+</div>
+</header>
+<main class="max-w-[1000px] mx-auto px-6 py-10 space-y-10">
+<!-- Global Status Banner -->
+<section>
+<div class="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-xl border-2 border-primary/30 bg-primary/5 dark:bg-primary/10">
+<div class="flex items-center gap-5">
+<div class="w-14 h-14 bg-primary rounded-full flex items-center justify-center status-pulse">
+<span class="material-symbols-outlined text-background-dark text-3xl font-bold">check</span>
+</div>
+<div>
+<h2 class="text-2xl font-bold">All Systems Operational</h2>
+<p class="opacity-70 text-sm">Last verified: Oct 24, 2023 - 14:02:18 UTC</p>
+</div>
+</div>
+<div class="text-right">
+<div class="text-sm font-medium opacity-60 mb-1">Uptime Last 90 Days</div>
+<div class="text-3xl font-bold text-primary">99.98%</div>
+</div>
+</div>
+</section>
+<!-- Service Status Grid -->
+<section>
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="text-lg font-bold">Current Service Health</h3>
+<span class="text-xs font-mono opacity-50 uppercase tracking-widest">Live Feed</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- API -->
+<div class="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">api</span>
+<span class="font-semibold">Core REST API</span>
+</div>
+<span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full border border-primary/30 uppercase">Operational</span>
+</div>
+<!-- Scraping Engine -->
+<div class="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">memory</span>
+<span class="font-semibold">Scraping Engine</span>
+</div>
+<span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full border border-primary/30 uppercase">Operational</span>
+</div>
+<!-- Proxy Network -->
+<div class="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">lan</span>
+<span class="font-semibold">Residential Proxy Network</span>
+</div>
+<span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full border border-primary/30 uppercase">Operational</span>
+</div>
+<!-- Web Dashboard -->
+<div class="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">dashboard</span>
+<span class="font-semibold">Developer Dashboard</span>
+</div>
+<span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full border border-primary/30 uppercase">Operational</span>
+</div>
+</div>
+</section>
+<!-- System Metrics (Visualized) -->
+<section class="space-y-6">
+<h3 class="text-lg font-bold px-2">Performance Metrics (Last 24h)</h3>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Metric 1: Response Time -->
+<div class="p-6 rounded-xl border border-white/10 bg-white/5">
+<div class="flex justify-between items-end mb-6">
+<div>
+<p class="text-sm opacity-60 mb-1">API Response Time</p>
+<h4 class="text-2xl font-bold">248ms <span class="text-sm font-normal text-primary text-primary ml-2">avg</span></h4>
+</div>
+<div class="flex gap-1 items-end h-8">
+<div class="w-1 bg-primary/40 h-[60%] rounded-full"></div>
+<div class="w-1 bg-primary/60 h-[80%] rounded-full"></div>
+<div class="w-1 bg-primary/50 h-[70%] rounded-full"></div>
+<div class="w-1 bg-primary h-full rounded-full"></div>
+</div>
+</div>
+<div class="h-32 w-full relative flex items-end gap-1">
+<!-- Simulated Chart Bars -->
+<div class="flex-1 bg-primary/20 rounded-t h-[45%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[50%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[48%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[52%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[60%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[55%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[42%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[40%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[45%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[48%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[52%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t h-[50%]"></div>
+<div class="flex-1 bg-primary h-[45%] relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] px-2 py-1 rounded hidden group-hover:block whitespace-nowrap">Now: 248ms</div>
+</div>
+</div>
+</div>
+<!-- Metric 2: Success Rate -->
+<div class="p-6 rounded-xl border border-white/10 bg-white/5">
+<div class="flex justify-between items-end mb-6">
+<div>
+<p class="text-sm opacity-60 mb-1">Scraping Success Rate</p>
+<h4 class="text-2xl font-bold">99.92% <span class="text-sm font-normal text-primary ml-2">avg</span></h4>
+</div>
+<span class="material-symbols-outlined text-primary text-3xl">trending_up</span>
+</div>
+<!-- Area Chart Visual -->
+<div class="h-32 w-full bg-primary/5 border-b border-white/10 relative overflow-hidden">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M0 80 Q 10 75, 20 78 T 40 70 T 60 72 T 80 65 T 100 68 V 100 H 0 Z" fill="rgba(19, 236, 91, 0.15)"></path>
+<path d="M0 80 Q 10 75, 20 78 T 40 70 T 60 72 T 80 65 T 100 68" fill="none" stroke="#13ec5b" stroke-width="2"></path>
+</svg>
+<div class="absolute bottom-0 left-0 w-full flex justify-between px-2 pb-1 text-[10px] opacity-40">
+<span>24h ago</span>
+<span>12h ago</span>
+<span>Now</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Incident History -->
+<section class="space-y-6 pb-20">
+<h3 class="text-lg font-bold px-2">Incident History</h3>
+<!-- Date Group -->
+<div class="space-y-4">
+<div class="flex items-center gap-4 px-2">
+<span class="text-sm font-bold opacity-40 uppercase tracking-widest">October 22, 2023</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<!-- Resolved Incident -->
+<div class="p-5 rounded-lg border border-warning/30 bg-warning/5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-warning mt-1">warning</span>
+<div>
+<h4 class="font-bold text-lg">Partial Outage: Residential Proxy Node - EU West</h4>
+<p class="text-sm opacity-80 mt-1">Connection latency increased significantly for requests routed through European residential nodes.</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-warning/20 text-warning text-[10px] font-bold rounded border border-warning/30 uppercase">Resolved</span>
+</div>
+<div class="pl-9 space-y-3 border-l border-white/10 ml-3">
+<div class="text-sm">
+<span class="font-bold text-xs opacity-50 block uppercase mb-1">Resolved (16:45 UTC)</span>
+<p class="opacity-70">The issue was traced to a routing loop at our provider's Frankfurt IXP. Normal service has been restored.</p>
+</div>
+<div class="text-sm">
+<span class="font-bold text-xs opacity-50 block uppercase mb-1">Investigating (15:20 UTC)</span>
+<p class="opacity-70">We are investigating elevated timeout rates in the EU-West-1 region.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Date Group -->
+<div class="space-y-4 pt-4">
+<div class="flex items-center gap-4 px-2">
+<span class="text-sm font-bold opacity-40 uppercase tracking-widest">October 15, 2023</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<!-- Major Incident -->
+<div class="p-5 rounded-lg border border-error/30 bg-error/5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-error mt-1">error</span>
+<div>
+<h4 class="font-bold text-lg">Major Outage: ScrapePro Dashboard &amp; Authentication</h4>
+<p class="text-sm opacity-80 mt-1">Users were unable to login or access API keys via the web interface.</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-error/20 text-error text-[10px] font-bold rounded border border-error/30 uppercase">Resolved</span>
+</div>
+<div class="pl-9 space-y-3 border-l border-white/10 ml-3 text-sm">
+<div>
+<span class="font-bold text-xs opacity-50 block uppercase mb-1">Resolved (10:12 UTC)</span>
+<p class="opacity-70">A database migration script caused locking on the authentication table. The migration has been rolled back and optimized.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="text-center py-10">
+<button class="text-sm font-bold opacity-50 hover:opacity-100 flex items-center gap-2 mx-auto transition-all">
+                    View Incident History Archive
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</section>
+</main>
+<footer class="border-t border-white/10 py-10 bg-black/20">
+<div class="max-w-[1000px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-4 text-xs opacity-40 uppercase font-bold tracking-widest">
+<span>© 2023 ScrapePro Tools Inc.</span>
+<span class="w-1 h-1 bg-white/40 rounded-full"></span>
+<span>Powered by ScrapePro Infrastructure</span>
+</div>
+<div class="flex gap-6">
+<a class="text-xs font-bold opacity-40 hover:opacity-100 hover:text-primary transition-all uppercase tracking-widest" href="#">Privacy Policy</a>
+<a class="text-xs font-bold opacity-40 hover:opacity-100 hover:text-primary transition-all uppercase tracking-widest" href="#">SLA Terms</a>
+<a class="text-xs font-bold opacity-40 hover:opacity-100 hover:text-primary transition-all uppercase tracking-widest" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

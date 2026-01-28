@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Billing &amp; Subscription Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#23482f] px-6 lg:px-40 py-3 bg-white dark:bg-background-dark">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">ScrapePro</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Scrapers</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Proxies</a>
+<a class="text-primary text-sm font-medium" href="#">Settings</a>
+</nav>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold transition-transform hover:scale-105">
+<span class="truncate">Upgrade</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User profile avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEUjy-BKxuCeLUKvYb4UeKjzygbmHQONUu4sP_4eFMlN67qaTleY6NmKpUxtdTlaecDIYhAc-AiEiXalRy-YioyAsHBnHJa5NxroMv5xna1VUj-LIc75JQVzDPLyC2LOQuVPP2P7DsdHXm4DGa7PH-rcUC6HEGGhc8GbGsDaUl0rBdzbp4KNXmpIo9gkeZ9RRiv8KAT5Amb4qXscxAcviBecxud9Mir0H8N92rN43a_Tezon0-Z64h3LN8-zPMep9_8jOECHLSKNRq");'></div>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-6 lg:px-10 py-8">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 mb-4">
+<a class="text-primary/70 text-base font-medium hover:text-primary" href="#">Settings</a>
+<span class="text-primary/70 text-base font-medium">/</span>
+<span class="text-slate-900 dark:text-white text-base font-medium">Billing &amp; Subscription</span>
+</div>
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-end gap-3 mb-8">
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl font-black leading-tight tracking-tight">Billing &amp; Subscription</h1>
+<p class="text-slate-500 dark:text-[#92c9a4] text-base font-normal">Manage your plans, payment methods, and view your billing history.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Current Plan Section -->
+<div class="lg:col-span-3">
+<h2 class="text-[22px] font-bold leading-tight tracking-tight mb-4">Current Plan</h2>
+<div class="p-6 bg-white dark:bg-[#193322] rounded-xl border border-slate-200 dark:border-[#23482f] shadow-sm">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary">verified</span>
+<p class="text-2xl font-bold">Pro Plan <span class="text-sm font-normal text-slate-400 dark:text-[#92c9a4] ml-2">Active since Jan 2023</span></p>
+</div>
+<p class="text-slate-500 dark:text-[#92c9a4] mb-4">Your plan renews on <span class="font-bold text-slate-900 dark:text-white">Oct 12, 2023</span>.</p>
+<!-- Progress Bar -->
+<div class="w-full max-w-md">
+<div class="flex justify-between text-sm mb-2">
+<span class="font-medium">Credits Used</span>
+<span class="font-bold">8,500 / 10,000</span>
+</div>
+<div class="h-3 w-full bg-slate-200 dark:bg-[#112217] rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 85%;"></div>
+</div>
+<p class="text-xs text-slate-400 dark:text-[#92c9a4] mt-2 italic">85% of monthly quota reached. Refills in 12 days.</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 w-full md:w-auto">
+<button class="w-full md:min-w-[180px] cursor-pointer items-center justify-center rounded-lg h-11 px-6 bg-primary text-background-dark text-sm font-bold">
+                                Buy More Credits
+                            </button>
+<button class="w-full md:min-w-[180px] cursor-pointer items-center justify-center rounded-lg h-11 px-6 bg-primary/10 text-primary border border-primary/20 text-sm font-bold">
+                                Change Plan
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Available Plans Section -->
+<div class="lg:col-span-3 mt-4">
+<h2 class="text-[22px] font-bold leading-tight tracking-tight mb-4">Available Plans</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Free Plan -->
+<div class="bg-white dark:bg-[#193322] border border-slate-200 dark:border-[#23482f] rounded-xl p-6 flex flex-col">
+<p class="text-lg font-bold mb-1">Free</p>
+<p class="text-3xl font-black mb-6">$0<span class="text-sm font-normal text-slate-400">/mo</span></p>
+<ul class="space-y-3 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 1,000 Credits / mo
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 2 Concurrent requests
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> Basic proxies
+                            </li>
+</ul>
+<button class="w-full h-10 rounded-lg border border-slate-300 dark:border-white/10 text-sm font-bold opacity-50 cursor-not-allowed">Downgrade</button>
+</div>
+<!-- Pro Plan (Selected) -->
+<div class="bg-white dark:bg-[#193322] border-2 border-primary rounded-xl p-6 flex flex-col relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-primary text-background-dark text-[10px] font-black px-3 py-1 uppercase tracking-widest rounded-bl-lg">Current</div>
+<p class="text-lg font-bold mb-1">Pro</p>
+<p class="text-3xl font-black mb-6">$49<span class="text-sm font-normal text-slate-400">/mo</span></p>
+<ul class="space-y-3 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 10,000 Credits / mo
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 20 Concurrent requests
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> Residential proxy rotation
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> API Access
+                            </li>
+</ul>
+<button class="w-full h-10 rounded-lg bg-primary/20 text-primary text-sm font-bold">Manage Billing</button>
+</div>
+<!-- Enterprise Plan -->
+<div class="bg-white dark:bg-[#193322] border border-slate-200 dark:border-[#23482f] rounded-xl p-6 flex flex-col">
+<p class="text-lg font-bold mb-1">Enterprise</p>
+<p class="text-3xl font-black mb-6">$299<span class="text-sm font-normal text-slate-400">/mo</span></p>
+<ul class="space-y-3 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 100,000 Credits / mo
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> Unlimited concurrency
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> Dedicated infrastructure
+                            </li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span> 24/7 Priority support
+                            </li>
+</ul>
+<button class="w-full h-10 rounded-lg bg-primary text-background-dark text-sm font-bold">Contact Sales</button>
+</div>
+</div>
+</div>
+<!-- Payment Methods Section -->
+<div class="lg:col-span-1">
+<h2 class="text-[22px] font-bold leading-tight tracking-tight mb-4">Payment Methods</h2>
+<div class="flex flex-col gap-4">
+<!-- Card 1 -->
+<div class="bg-white dark:bg-[#193322] border border-slate-200 dark:border-[#23482f] p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="bg-slate-100 dark:bg-background-dark size-10 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">credit_card</span>
+</div>
+<div>
+<p class="text-sm font-bold">Visa ending in 4242</p>
+<p class="text-xs text-slate-500 dark:text-[#92c9a4]">Expires 12/26 • Primary</p>
+</div>
+</div>
+<button class="material-symbols-outlined text-slate-400 hover:text-white transition-colors">more_vert</button>
+</div>
+<!-- Add New Card -->
+<button class="border-2 border-dashed border-slate-200 dark:border-[#23482f] p-4 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-[#92c9a4] hover:border-primary hover:text-primary transition-all group">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-sm font-bold">Add New Method</span>
+</button>
+</div>
+</div>
+<!-- Billing History Section -->
+<div class="lg:col-span-2">
+<h2 class="text-[22px] font-bold leading-tight tracking-tight mb-4">Billing History</h2>
+<div class="bg-white dark:bg-[#193322] border border-slate-200 dark:border-[#23482f] rounded-xl overflow-hidden">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-[#23482f]">
+<tr>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#92c9a4]">Invoice ID</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#92c9a4]">Date</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#92c9a4]">Amount</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#92c9a4]">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#92c9a4]">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-[#23482f]">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-sm font-mono text-primary">INV-2023-09</td>
+<td class="px-6 py-4 text-sm">Sep 12, 2023</td>
+<td class="px-6 py-4 text-sm font-bold">$49.00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-primary/20 text-primary uppercase">Paid</span>
+</td>
+<td class="px-6 py-4">
+<button class="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> PDF
+                                    </button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-sm font-mono text-primary">INV-2023-08</td>
+<td class="px-6 py-4 text-sm">Aug 12, 2023</td>
+<td class="px-6 py-4 text-sm font-bold">$49.00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-primary/20 text-primary uppercase">Paid</span>
+</td>
+<td class="px-6 py-4">
+<button class="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> PDF
+                                    </button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-sm font-mono text-primary">INV-CR-001</td>
+<td class="px-6 py-4 text-sm">Jul 28, 2023</td>
+<td class="px-6 py-4 text-sm font-bold">$15.00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-primary/20 text-primary uppercase">Paid</span>
+</td>
+<td class="px-6 py-4">
+<button class="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> PDF
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-20 border-t border-slate-200 dark:border-[#23482f] py-10">
+<div class="max-w-[1200px] mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-3 opacity-50">
+<div class="size-6 text-white">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<p class="text-sm font-medium">© 2023 ScrapePro Extension. All rights reserved.</p>
+</div>
+<div class="flex gap-8 text-sm text-slate-500 dark:text-[#92c9a4]">
+<a class="hover:text-primary" href="#">Terms of Service</a>
+<a class="hover:text-primary" href="#">Privacy Policy</a>
+<a class="hover:text-primary" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

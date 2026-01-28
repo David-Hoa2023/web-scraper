@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Referral &amp; Rewards Dashboard | Scraper.io</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(35, 72, 47, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(146, 201, 164, 0.1);
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(19, 236, 91, 0.2);
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#23482f] px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Scraper.io</h2>
+</div>
+<label class="flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-400 dark:text-[#92c9a4] flex border-none bg-slate-100 dark:bg-[#23482f] items-center justify-center pl-4 rounded-l-lg">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-0 border-none bg-slate-100 dark:bg-[#23482f] h-full placeholder:text-slate-400 dark:placeholder:text-[#92c9a4] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search resources..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Tools</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Proxy</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">API</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Pricing</a>
+</nav>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em] hover:brightness-110">
+<span class="truncate">Refer &amp; Earn</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCsh1bEH--BuYvDFacIDtImHUb7f-XNlyz4nyYGlMKI2t9IOZb338FcHPlDRuNKtRuS2z0ZuPQQ0K01IDeFZisOPSkj-CRoDMFVh2-6Xr7B6RulOnCHzgn-XeO8K581voeJUMpMkQ7QZa1_EtAdVthIQXd7xT1vjtAFx0hkj3jFOaP4mvZYIr31jhYEKJqiGNrCwBj4Q_gx7UgQRehyi6E_FbcrmAcr1Qnt3w-BCRcYP_u4ZZHa-nMjgJxBT52AkSl79FFf9ciBbAov");'></div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-10">
+<div class="layout-content-container flex flex-col max-w-[1000px] flex-1 gap-8">
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-end gap-3 px-4">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Referral &amp; Rewards</p>
+<p class="text-slate-500 dark:text-[#92c9a4] text-base font-normal leading-normal">Invite developers to Scraper.io and get lifetime rewards plus bonus credits.</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-slate-200 dark:bg-[#23482f] text-slate-900 dark:text-white text-sm font-bold leading-normal tracking-[0.015em] border border-primary/10">
+<span class="truncate">Program FAQ</span>
+</button>
+</div>
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-slate-100 dark:bg-[#23482f] neon-glow border border-primary/20">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-300 text-sm font-medium uppercase tracking-wider">Total Credits Earned</p>
+<span class="material-symbols-outlined text-primary">token</span>
+</div>
+<p class="text-slate-900 dark:text-white tracking-light text-4xl font-bold leading-tight">12,500</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-[#0bda43]">trending_up</span>
+<p class="text-[#0bda43] text-sm font-bold leading-normal">+1,200 this week</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-slate-100 dark:bg-[#23482f] border border-white/5">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-300 text-sm font-medium uppercase tracking-wider">Active Referrals</p>
+<span class="material-symbols-outlined text-primary">group</span>
+</div>
+<p class="text-slate-900 dark:text-white tracking-light text-4xl font-bold leading-tight">14</p>
+<p class="text-slate-400 dark:text-[#92c9a4] text-sm font-medium leading-normal">5 pending verification</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-primary/10 dark:bg-primary/5 border border-primary/30 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2">
+<div class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Current Rank</div>
+</div>
+<p class="text-slate-500 dark:text-slate-300 text-sm font-medium uppercase tracking-wider">Reward Tier</p>
+<p class="text-slate-900 dark:text-white tracking-light text-4xl font-bold leading-tight">Gold</p>
+<p class="text-primary text-sm font-bold leading-normal">Next: Platinum at 25 refs</p>
+</div>
+</div>
+<!-- Share Section -->
+<div class="flex flex-col gap-6 p-4">
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight tracking-[-0.015em]">Share Your Link</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+<div class="flex flex-col gap-4">
+<label class="flex flex-col gap-2">
+<p class="text-slate-600 dark:text-slate-300 text-sm font-bold">YOUR UNIQUE REFERRAL URL</p>
+<div class="flex w-full items-stretch rounded-lg shadow-inner">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-slate-300 dark:border-[#326744] bg-white dark:bg-[#193322] h-14 p-4 rounded-r-none border-r-0 text-base font-mono" readonly="" value="scraper.io/ref/dev_99x"/>
+<button class="text-primary flex border border-slate-300 dark:border-[#326744] bg-white dark:bg-[#193322] items-center justify-center px-5 rounded-r-lg border-l-0 hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+</label>
+<div class="flex items-center gap-4">
+<p class="text-slate-400 text-xs font-bold uppercase">Quick Share:</p>
+<button class="p-2 rounded-lg bg-blue-600/10 text-blue-500 hover:bg-blue-600/20"><span class="material-symbols-outlined">share</span></button>
+<button class="p-2 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20"><span class="material-symbols-outlined">alternate_email</span></button>
+<button class="p-2 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20"><span class="material-symbols-outlined">chat</span></button>
+</div>
+</div>
+<!-- Progress Visualization -->
+<div class="bg-slate-50 dark:bg-primary/5 p-6 rounded-xl border border-primary/10">
+<div class="flex justify-between mb-4">
+<p class="font-bold text-sm">Tier Progress</p>
+<p class="text-primary text-sm font-bold">14 / 25</p>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-3 rounded-full overflow-hidden mb-6">
+<div class="bg-primary h-full rounded-full w-[56%] neon-glow"></div>
+</div>
+<div class="grid grid-cols-4 gap-2 text-center">
+<div class="flex flex-col items-center gap-2">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">check</span>
+</div>
+<p class="text-[10px] font-bold uppercase opacity-60">5 Refs</p>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">check</span>
+</div>
+<p class="text-[10px] font-bold uppercase opacity-60">10 Refs</p>
+</div>
+<div class="flex flex-col items-center gap-2 opacity-100">
+<div class="size-10 rounded-full border-2 border-dashed border-primary flex items-center justify-center text-primary animate-pulse">
+<span class="material-symbols-outlined text-lg">military_tech</span>
+</div>
+<p class="text-[10px] font-bold uppercase text-primary">25 Refs</p>
+</div>
+<div class="flex flex-col items-center gap-2 opacity-40">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-lg">lock</span>
+</div>
+<p class="text-[10px] font-bold uppercase">50 Refs</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Reward Tiers Grid -->
+<div class="flex flex-col gap-4 px-4">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold">Achievement Rewards</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="p-5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">redeem</span>
+<h3 class="font-bold text-sm">500 Credits</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Instantly credited for your first successful referral.</p>
+<div class="mt-auto text-[10px] font-black text-primary uppercase">Unlocked</div>
+</div>
+<div class="p-5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
+<h3 class="font-bold text-sm">Pro Features</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Unlock advanced scheduling after 5 referrals.</p>
+<div class="mt-auto text-[10px] font-black text-primary uppercase">Unlocked</div>
+</div>
+<div class="p-5 rounded-xl border border-white/5 bg-slate-50 dark:bg-white/5 flex flex-col gap-3 opacity-75">
+<span class="material-symbols-outlined text-slate-400 text-3xl">workspace_premium</span>
+<h3 class="font-bold text-sm">Free Pro Month</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Reach 25 referrals to get 30 days of Unlimited Pro.</p>
+<div class="mt-auto text-[10px] font-black text-slate-500 uppercase">In Progress</div>
+</div>
+<div class="p-5 rounded-xl border border-white/5 bg-slate-50 dark:bg-white/5 flex flex-col gap-3 opacity-50">
+<span class="material-symbols-outlined text-slate-400 text-3xl">api</span>
+<h3 class="font-bold text-sm">API White-label</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Custom endpoints available for Elite referrers (50+).</p>
+<div class="mt-auto text-[10px] font-black text-slate-500 uppercase">Locked</div>
+</div>
+</div>
+</div>
+<!-- Referral History Table -->
+<div class="flex flex-col gap-4 px-4 pb-20">
+<div class="flex items-center justify-between">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold">Referral History</h2>
+<button class="text-sm font-bold text-primary flex items-center gap-1">
+                            Download CSV <span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+<div class="overflow-hidden rounded-xl border border-slate-200 dark:border-[#23482f] bg-white dark:bg-[#112217]">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 dark:bg-[#193322] border-b border-slate-200 dark:border-[#23482f]">
+<tr>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-[#92c9a4] uppercase tracking-wider">User</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-[#92c9a4] uppercase tracking-wider">Date Joined</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-[#92c9a4] uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-[#92c9a4] uppercase tracking-wider">Credits Awarded</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-[#23482f]">
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center font-bold text-xs">AM</div>
+<span class="text-sm font-medium">alex_***@gmail.com</span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">Oct 24, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0bda43]/20 text-[#0bda43]">
+                                            Active
+                                        </span>
+</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">+1,000</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center font-bold text-xs">JD</div>
+<span class="text-sm font-medium">john_***@yahoo.com</span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">Oct 22, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0bda43]/20 text-[#0bda43]">
+                                            Active
+                                        </span>
+</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">+1,000</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center font-bold text-xs">KL</div>
+<span class="text-sm font-medium">k_dev***@outlook.com</span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">Oct 19, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-500">
+                                            Pending
+                                        </span>
+</td>
+<td class="px-6 py-4 text-sm font-bold text-slate-500">---</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center font-bold text-xs">SM</div>
+<span class="text-sm font-medium">sarah.***@apple.com</span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">Oct 15, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0bda43]/20 text-[#0bda43]">
+                                            Active
+                                        </span>
+</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">+1,000</td>
+</tr>
+</tbody>
+</table>
+<div class="px-6 py-4 border-t border-slate-200 dark:border-[#23482f] flex justify-between items-center">
+<p class="text-xs text-slate-500">Showing 4 of 14 referrals</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-[#23482f] rounded hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50" disabled="">Previous</button>
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-[#23482f] rounded hover:bg-slate-100 dark:hover:bg-white/5">Next</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

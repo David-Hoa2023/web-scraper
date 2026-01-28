@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Onboarding Spotlight: Tool Selection</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .spotlight-mask {
+            background: radial-gradient(circle 45px at 104px 104px, transparent 100%, rgba(16, 34, 22, 0.85) 0%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-hidden h-screen w-screen">
+<!-- Mockup Webpage Background (Simulating a data-heavy site) -->
+<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40 dark:opacity-20 grayscale">
+<div class="p-20 grid grid-cols-4 gap-6">
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-20 bg-zinc-800/50 rounded-lg col-span-4"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+<div class="h-64 bg-zinc-800/50 rounded-lg"></div>
+</div>
+</div>
+<!-- Spotlight Overlay Layer -->
+<div class="fixed inset-0 z-10 spotlight-mask"></div>
+<!-- Layout Container -->
+<div class="relative z-20 flex h-full w-full flex-col">
+<!-- Header (Extension Top Bar) -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-white/10 px-10 py-3 bg-background-dark/80 backdrop-blur-md">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">ScrapePro <span class="text-primary font-medium text-sm ml-2">v2.4.0</span></h2>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<nav class="flex items-center gap-9">
+<a class="text-white/70 hover:text-white text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-white/70 hover:text-white text-sm font-medium transition-colors" href="#">Recipes</a>
+<a class="text-white/70 hover:text-white text-sm font-medium transition-colors" href="#">Proxies</a>
+</nav>
+<div class="size-10 rounded-full border border-white/20 bg-cover bg-center" data-alt="User avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDb-N6XSIJgyFCd36fGbMLEyN_ckg7BAGHhNinJsAJ7DIgcWb9HWUj1Vu2LhPKuQRp3w4MateRhzT2FZZxnxzpUgf2n4lnfVXaG-yBLiozoqxLW3fp-M1giYKokhrHJGt1fvO0i1lqSQzydHB1u5FSWcar9-QfsDkANvOo4QeMqdm8AYaKd3__wnb--J55yZEHnrLpSwvnx2O7yXJfHgZ_Fd8qgOFH0fHVnuNjFlpp6rDOhBBKtRLQY9A3G5iX3kWWlhn5n1gMeS56b");'></div>
+</div>
+</header>
+<!-- Main Content (Walkthrough Area) -->
+<main class="flex-1 relative flex items-start justify-start p-10">
+<!-- The Floating Extension Toolbar -->
+<div class="absolute top-10 left-10 flex flex-col gap-4 p-2 bg-[#193322] rounded-xl shadow-2xl border border-white/5 ring-1 ring-white/10">
+<!-- Inspector Icon (Spotlighted) -->
+<div class="relative p-3 rounded-lg bg-primary/20 text-primary ring-2 ring-primary/50 shadow-[0_0_20px_rgba(19,236,91,0.3)]">
+<span class="material-symbols-outlined text-3xl font-bold">target</span>
+<!-- Glowing Pulse Effect -->
+<div class="absolute inset-0 rounded-lg animate-ping bg-primary/20 pointer-events-none"></div>
+</div>
+<!-- Other Tools -->
+<button class="p-3 text-white/50 hover:text-white hover:bg-white/5 transition-all rounded-lg">
+<span class="material-symbols-outlined text-3xl">mouse</span>
+</button>
+<button class="p-3 text-white/50 hover:text-white hover:bg-white/5 transition-all rounded-lg">
+<span class="material-symbols-outlined text-3xl">language</span>
+</button>
+<button class="p-3 text-white/50 hover:text-white hover:bg-white/5 transition-all rounded-lg">
+<span class="material-symbols-outlined text-3xl">settings_ethernet</span>
+</button>
+<button class="p-3 text-white/50 hover:text-white hover:bg-white/5 transition-all rounded-lg border-t border-white/10 mt-2">
+<span class="material-symbols-outlined text-3xl">download</span>
+</button>
+</div>
+<!-- Onboarding Tooltip (Positioned relative to the spotlighted tool) -->
+<div class="ml-24 mt-4 max-w-sm">
+<!-- Tooltip Arrow -->
+<div class="flex items-center gap-0">
+<div class="w-0 h-0 border-t-[10px] border-t-transparent border-r-[15px] border-r-[#193322] border-b-[10px] border-b-transparent"></div>
+<div class="bg-[#193322] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+<!-- Card Content -->
+<div class="p-6">
+<div class="flex items-center gap-2 mb-3">
+<span class="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">Guide</span>
+<span class="text-white/40 text-xs font-medium">Step 2 of 4</span>
+</div>
+<h3 class="text-white text-xl font-bold leading-tight mb-2 tracking-tight">Step 1: Inspect Elements</h3>
+<p class="text-[#92c9a4] text-base font-normal leading-relaxed mb-6">
+                                Click the inspector tool to start selecting data from any website. You can pick text, images, or entire lists.
+                            </p>
+<!-- Progress Bar -->
+<div class="mb-6 space-y-2">
+<div class="h-1.5 w-full bg-[#326744] rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 50%;"></div>
+</div>
+</div>
+<!-- Button Group -->
+<div class="flex items-center justify-between">
+<button class="px-4 py-2 bg-transparent text-white/70 hover:text-white text-sm font-bold tracking-[0.015em] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+                                    Back
+                                </button>
+<button class="px-6 py-2.5 bg-primary text-[#112217] rounded-lg text-sm font-bold tracking-[0.015em] shadow-[0_4px_12px_rgba(19,236,91,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1">
+                                    Next Tool
+                                    <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer / Shortcuts -->
+<footer class="p-6 flex justify-between items-center text-white/30 text-xs border-t border-white/5 bg-background-dark">
+<div class="flex gap-4">
+<span>Press <kbd class="px-1.5 py-0.5 bg-white/10 rounded border border-white/10 text-white/60">ESC</kbd> to skip tour</span>
+<span>Press <kbd class="px-1.5 py-0.5 bg-white/10 rounded border border-white/10 text-white/60">ALT</kbd> + <kbd class="px-1.5 py-0.5 bg-white/10 rounded border border-white/10 text-white/60">I</kbd> to toggle inspector</span>
+</div>
+<div class="flex gap-4">
+<a class="hover:text-primary" href="#">Help Center</a>
+<a class="hover:text-primary" href="#">API Docs</a>
+</div>
+</footer>
+</div>
+</body></html>

@@ -99,7 +99,7 @@ export function createPatternRefinement(
   }
 
   function adjustBoundary(direction: 'expand' | 'contract'): void {
-    const parent = originalMatch.parent;
+    const parent = originalMatch.container;
     if (!parent) return;
 
     if (direction === 'expand') {
@@ -705,9 +705,9 @@ export async function applyStoredAdjustments(
  * Generate a selector for a pattern
  */
 function generatePatternSelector(match: PatternMatch): string {
-  const parts: string[] = [match.tag];
-  if (match.classes.length > 0) {
-    parts.push(`.${match.classes.join('.')}`);
+  const parts: string[] = [match.fingerprint.tag];
+  if (match.fingerprint.classes.length > 0) {
+    parts.push(`.${match.fingerprint.classes.join('.')}`);
   }
   return parts.join('');
 }

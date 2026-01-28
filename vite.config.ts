@@ -19,7 +19,7 @@ export default defineConfig({
     modulePreload: false,
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, 'src/ui/popup.html'),
+        sidepanel: resolve(__dirname, 'src/ui/sidepanel.html'),
         content: resolve(__dirname, 'src/content/index.ts'),
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
       },

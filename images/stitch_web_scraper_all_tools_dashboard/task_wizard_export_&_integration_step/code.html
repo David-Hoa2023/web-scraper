@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Wizard | Export &amp; Integration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Side Navigation Bar -->
+<aside class="w-72 border-r border-white/10 bg-[#112217] flex flex-col justify-between p-6">
+<div class="flex flex-col gap-8">
+<!-- Logo/Brand -->
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 rounded-lg p-2">
+<span class="material-symbols-outlined text-primary text-3xl">magic_button</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-lg font-bold leading-none">Task Wizard</h1>
+<p class="text-primary/70 text-xs font-medium uppercase tracking-wider">Dev Edition</p>
+</div>
+</div>
+<!-- Nav Items -->
+<nav class="flex flex-col gap-2">
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/50 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">link</span>
+<p class="text-sm font-medium">Target URL</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/50 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">frame_inspect</span>
+<p class="text-sm font-medium">Selection</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/50 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">terminal</span>
+<p class="text-sm font-medium">Logic</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined active-icon">ios_share</span>
+<p class="text-sm font-bold">Export</p>
+</div>
+</nav>
+</div>
+<!-- Footer Sidebar Info -->
+<div class="bg-white/5 rounded-xl p-4 border border-white/5">
+<div class="flex items-center justify-between mb-2">
+<p class="text-xs text-white/40 uppercase font-bold tracking-widest">Workspace</p>
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+</div>
+<p class="text-sm font-medium text-white">Production Cluster v2</p>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto flex flex-col">
+<!-- Page Heading -->
+<header class="flex items-center justify-between px-10 py-8 border-b border-white/5">
+<div class="flex flex-col gap-1">
+<h2 class="text-white text-3xl font-bold tracking-tight">Export &amp; Integration</h2>
+<p class="text-primary/60 text-base font-medium">Connect your scraper to your favorite data tools.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex h-2 w-32 bg-white/10 rounded-full overflow-hidden">
+<div class="bg-primary w-full h-full"></div>
+</div>
+<span class="text-xs font-bold text-white/60 uppercase">Step 4 of 4</span>
+</div>
+</header>
+<div class="p-10 max-w-5xl">
+<!-- Section Header: Destination -->
+<div class="mb-6">
+<h3 class="text-white text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">database</span>
+                        Destination
+                    </h3>
+</div>
+<!-- ImageGrid Styled Cards -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
+<!-- CSV -->
+<div class="group relative bg-[#193322] border border-white/10 rounded-xl p-5 aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-white/30 transition-all">
+<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white group-hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<p class="text-white text-sm font-bold">CSV</p>
+</div>
+<!-- JSON -->
+<div class="group relative bg-[#193322] border border-white/10 rounded-xl p-5 aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-white/30 transition-all">
+<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white group-hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-3xl">code</span>
+</div>
+<p class="text-white text-sm font-bold">JSON</p>
+</div>
+<!-- Google Sheets (Selected) -->
+<div class="relative bg-[#193322] border-2 border-primary rounded-xl p-5 aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer shadow-[0_0_20px_rgba(19,236,91,0.15)]">
+<div class="absolute top-2 right-2 text-primary">
+<span class="material-symbols-outlined fill-1">check_circle</span>
+</div>
+<div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">table_rows</span>
+</div>
+<p class="text-white text-sm font-bold text-center">Google Sheets</p>
+</div>
+<!-- Webhook -->
+<div class="group relative bg-[#193322] border border-white/10 rounded-xl p-5 aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-white/30 transition-all">
+<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white group-hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-3xl">webhook</span>
+</div>
+<p class="text-white text-sm font-bold">Webhook</p>
+</div>
+<!-- Airtable -->
+<div class="group relative bg-[#193322] border border-white/10 rounded-xl p-5 aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-white/30 transition-all">
+<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white group-hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-3xl">grid_view</span>
+</div>
+<p class="text-white text-sm font-bold">Airtable</p>
+</div>
+</div>
+<!-- Configuration Sub-Options (TextField) -->
+<div class="bg-white/5 rounded-2xl p-8 border border-white/10 mb-10">
+<div class="mb-6 flex items-center gap-3">
+<div class="p-2 bg-primary/20 rounded-lg">
+<span class="material-symbols-outlined text-primary">settings</span>
+</div>
+<div>
+<h4 class="text-white font-bold">Sheet Configuration</h4>
+<p class="text-white/40 text-xs">Authorize and map your extraction fields.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col gap-2">
+<p class="text-white text-sm font-bold flex items-center gap-1">
+                                Spreadsheet ID
+                                <span class="material-symbols-outlined text-xs text-white/40 cursor-help">help</span>
+</p>
+<input class="form-input w-full rounded-lg text-white border border-[#326744] bg-[#193322] focus:border-primary focus:ring-0 h-14 placeholder:text-white/20 px-4 text-base font-normal transition-all" placeholder="Enter ID e.g. 1a2b3c..." value="1qV7S-B8M2-xY9z0L_"/>
+</label>
+<label class="flex flex-col gap-2">
+<p class="text-white text-sm font-bold">Sheet Name</p>
+<input class="form-input w-full rounded-lg text-white border border-[#326744] bg-[#193322] focus:border-primary focus:ring-0 h-14 placeholder:text-white/20 px-4 text-base font-normal transition-all" placeholder="Sheet1" value="Property_Leads_v1"/>
+</label>
+</div>
+</div>
+<!-- Data Format Section -->
+<div class="mb-10">
+<h3 class="text-white text-xl font-bold flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                        Data Format
+                    </h3>
+<div class="flex p-1 bg-[#193322] rounded-xl border border-white/10 max-w-sm">
+<button class="flex-1 py-3 text-sm font-bold text-white/40 hover:text-white transition-colors">Raw</button>
+<button class="flex-1 py-3 text-sm font-bold text-background-dark bg-primary rounded-lg shadow-lg">Cleaned</button>
+</div>
+<p class="mt-3 text-white/40 text-sm italic">Cleaned format automatically removes duplicates and validates HTML entities.</p>
+</div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between pt-10 border-t border-white/5">
+<button class="px-6 py-3 rounded-lg border border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                        Back
+                    </button>
+<button class="bg-primary hover:bg-primary/90 text-background-dark font-display font-bold text-lg px-8 py-4 rounded-xl flex items-center gap-3 shadow-[0_10px_30px_rgba(19,236,91,0.2)] transition-transform active:scale-95">
+<span>Create &amp; Run Task</span>
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-[300px] h-[300px] bg-primary/5 blur-[100px] rounded-full"></div>
+</body></html>

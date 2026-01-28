@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Welcome &amp; Onboarding | ScraperPro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glow-soft {
+            box-shadow: 0 0 20px rgba(19, 236, 91, 0.15);
+        }
+        .sidebar-gradient {
+            background: linear-gradient(180deg, rgba(19, 236, 91, 0.05) 0%, rgba(16, 34, 22, 0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
+<!-- Main Onboarding Modal -->
+<div class="relative z-10 w-full max-w-[1000px] bg-background-light dark:bg-[#121212] rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col md:flex-row min-h-[600px]">
+<!-- Left Sidebar: Progress Stepper -->
+<div class="w-full md:w-[320px] sidebar-gradient border-r border-slate-200 dark:border-white/5 p-8 flex flex-col justify-between">
+<div>
+<!-- Brand Logo -->
+<div class="flex items-center gap-3 mb-12">
+<div class="bg-primary p-1.5 rounded-lg">
+<span class="material-symbols-outlined text-background-dark font-bold">rocket_launch</span>
+</div>
+<span class="text-xl font-bold tracking-tight">ScraperPro</span>
+</div>
+<!-- Timeline Component -->
+<div class="space-y-0">
+<!-- Step 1: Completed -->
+<div class="grid grid-cols-[40px_1fr] gap-x-3">
+<div class="flex flex-col items-center">
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</div>
+<div class="w-[2px] bg-primary/30 h-12"></div>
+</div>
+<div class="pt-1 pb-8">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Connect Browser</p>
+<p class="text-xs text-primary font-medium uppercase tracking-wider">Completed</p>
+</div>
+</div>
+<!-- Step 2: Active -->
+<div class="grid grid-cols-[40px_1fr] gap-x-3">
+<div class="flex flex-col items-center">
+<div class="size-8 rounded-full border-2 border-primary flex items-center justify-center text-primary glow-soft">
+<span class="material-symbols-outlined text-lg">ads_click</span>
+</div>
+<div class="w-[2px] bg-slate-200 dark:bg-white/10 h-12"></div>
+</div>
+<div class="pt-1 pb-8">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Pick your first tool</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Active</p>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="grid grid-cols-[40px_1fr] gap-x-3">
+<div class="flex flex-col items-center">
+<div class="size-8 rounded-full border-2 border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+</div>
+</div>
+<div class="pt-1">
+<p class="text-sm font-semibold text-slate-400">Run your first scrape</p>
+<p class="text-xs text-slate-500 dark:text-slate-600 font-medium uppercase tracking-wider">Pending</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Footer -->
+<div class="text-xs text-slate-500 dark:text-slate-500">
+                v2.4.0 • Enterprise Edition
+            </div>
+</div>
+<!-- Right Content Area -->
+<div class="flex-1 flex flex-col p-8 md:p-12">
+<!-- Header Section -->
+<div class="text-center md:text-left mb-8">
+<h1 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight mb-3">
+                    Welcome to ScraperPro <span class="inline-block animate-bounce">🚀</span>
+</h1>
+<p class="text-lg text-slate-600 dark:text-slate-400 font-normal max-w-md">
+                    The ultimate suite for developer-led data extraction. Automate your workflow in seconds, not hours.
+                </p>
+</div>
+<!-- Illustration / Feature Area -->
+<div class="flex-1 flex items-center justify-center mb-10">
+<div class="relative w-full max-w-sm aspect-video rounded-xl overflow-hidden glass-effect flex items-center justify-center border border-primary/20">
+<!-- Abstract Visualization -->
+<div class="absolute inset-0 opacity-20 pointer-events-none bg-center bg-cover" data-alt="Abstract dark green technical grid with data points" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAl0dCNk-wnWiPgVkMrXNTsEhGA1Gzxa2QNMeEcpxKCVDaQA7YKzcVFkGNd-O4baem9B8kL4ddZP1O9P6EXq--1RP18lDSo2r-YRHbui46H8F2OKcf0e7mTLpm6BXBTjaA96ZFoF89eEXCx91lFWLgZYnBmN75CG6Vfj11FBswCBhw4u1PGq9yGzsj7K0t2TzcmM2pEyqXI_S1T-VMhgO-_RzE8nsscWHEg8nyrkX9bLiqptXNGdGp7xT2G7sNfhzbb-l2P4qVq-jkQ');"></div>
+<div class="relative z-10 flex flex-col items-center gap-4 text-center px-6">
+<div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined text-4xl">database_search</span>
+</div>
+<h3 class="text-xl font-bold text-white">Visual Selector Ready</h3>
+<p class="text-sm text-slate-400">Our AI-powered engine is ready to help you map complex data structures with zero code.</p>
+</div>
+<!-- Floating UI elements representation -->
+<div class="absolute top-4 right-4 bg-primary/20 border border-primary/40 rounded px-2 py-1 text-[10px] text-primary font-bold uppercase tracking-widest">Live Preview</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="flex flex-col items-center gap-6 mt-auto">
+<button class="w-full max-w-xs bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-[1.02] flex items-center justify-center gap-2 glow-soft">
+<span>Start Interactive Tour</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<a class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors underline underline-offset-4 decoration-slate-400/30" href="#">
+                    Skip for now, I'm an expert
+                </a>
+</div>
+</div>
+</div>
+<!-- Small decorative background elements -->
+<div class="fixed top-20 right-20 size-64 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+<div class="fixed bottom-20 left-20 size-96 bg-primary/10 rounded-full blur-[120px] -z-10"></div>
+</body></html>

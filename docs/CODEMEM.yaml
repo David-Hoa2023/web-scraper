@@ -1,0 +1,310 @@
+# CODEMEM.yaml - Web Scraper Extension Module Registry
+# Last updated: 2026-01-27
+
+version: 2
+
+modules:
+  # ============================================
+  # Phase 1: AI Infrastructure (Critical Gaps)
+  # ============================================
+
+  src/types/ai.ts:
+    description: AI-related type definitions for the extension
+    exports:
+      - RateLimiterConfig
+      - RetryConfig
+      - RedactionResult
+      - RedactionType
+      - EncryptionConfig
+      - EncryptedData
+      - AIErrorCodes
+      - AIErrorCode
+      - StoredKeyEntry
+    invariants:
+      - All types are pure interfaces (no implementation)
+      - AIErrorCodes is a const object for type-safe error handling
+
+  src/utils/rateLimiter.ts:
+    description: Rate limiting for API calls (AI-1)
+    exports:
+      - RateLimiter (class)
+      - createRateLimitedFn
+      - DEFAULT_RATE_LIMIT_CONFIG
+    invariants:
+      - Minimum interval between calls is enforced via queue
+      - FIFO queue processing
+      - No external dependencies (uses setTimeout)
+    dependencies:
+      - src/types/ai.ts
+
+  src/utils/retry.ts:
+    description: Retry with exponential backoff for API calls (AI-2)
+    exports:
+      - APIError (class)
+      - withRetry
+      - createRetryingFn
+      - DEFAULT_RETRY_CONFIG
+      - isRateLimitError
+      - isNetworkError
+    invariants:
+      - Uses calculateBackoff from errors.ts
+      - Adds jitter to prevent thundering herd
+      - Respects Retry-After headers when present
+    dependencies:
+      - src/types/ai.ts
+      - src/utils/errors.ts
+
+  src/utils/redaction.ts:
+    description: Sensitive data redaction before LLM submission (AI-3)
+    exports:
+      - redact
+      - restore
+      - hasUnredactedSensitiveData
+      - detectSensitiveDataTypes
+      - withRedaction
+      - isValidLuhn
+    invariants:
+      - Patterns detect credit cards, SSN, email, API keys, JWT, etc.
+      - Redaction is reversible via placeholder mapping
+      - No false negatives preferred over false positives
+    dependencies:
+      - src/types/ai.ts
+
+  src/utils/encryption.ts:
+    description: API key encryption using Web Crypto API (AI-4)
+    exports:
+      - EncryptionError (class)
+      - KeyVault (class)
+      - getKeyVault
+      - isValidApiKeyFormat
+    invariants:
+      - AES-256-GCM encryption
+      - PBKDF2 key derivation with 100,000 iterations
+      - Random salt and IV per encryption
+      - Stores in chrome.storage.local (not sync)
+      - Minimum 8 character password required
+    dependencies:
+      - src/types/ai.ts
+      - src/utils/errors.ts
+
+  # ============================================
+  # Phase 2: Feature Parity
+  # ============================================
+
+  src/services/voiceover.ts:
+    description: AI Voiceover Service (FP-3) - ElevenLabs/OpenAI TTS
+    exports:
+      - VoiceoverService (class)
+      - getVoiceoverService
+      - splitTextForTTS
+      - VOICES
+      - TTSProvider
+      - VoiceConfig
+      - VoiceoverResult
+    invariants:
+      - Rate-limited API calls
+      - Supports ElevenLabs and OpenAI TTS
+      - Audio URL cleanup via cleanup() method
+    dependencies:
+      - src/utils/rateLimiter.ts
+      - src/utils/retry.ts
+      - src/utils/encryption.ts
+
+  src/i18n/index.ts:
+    description: Multi-language support (FP-4) - 25 languages
+    exports:
+      - t (translation function)
+      - getTranslations
+      - isRTL
+      - getLanguageInfo
+      - getSupportedLanguages
+      - detectLanguage
+      - getLanguagePromptSuffix
+      - formatNumber
+      - formatDate
+      - formatDuration
+      - LANGUAGES
+      - SupportedLanguage
+    invariants:
+      - 25 supported languages
+      - RTL support for Arabic and Hebrew
+      - Falls back to English for missing translations
+
+  # ============================================
+  # Phase 3: Differentiation
+  # ============================================
+
+  src/services/llmGateway.ts:
+    description: Multi-provider LLM Gateway (DIF-2) with fallback
+    exports:
+      - LLMGateway (class)
+      - getLLMGateway
+      - LLMProvider
+      - LLMRequestOptions
+      - LLMResponse
+    invariants:
+      - Supports Anthropic, OpenAI, Groq, Ollama
+      - Automatic fallback on provider failure
+      - Integrated rate limiting and retry
+      - Automatic sensitive data redaction
+    dependencies:
+      - src/utils/rateLimiter.ts
+      - src/utils/retry.ts
+      - src/utils/redaction.ts
+      - src/utils/encryption.ts
+
+  src/content/aiPatternDetector.ts:
+    description: AI-enhanced pattern detection (DIF-1/DIF-3)
+    exports:
+      - AIPatternDetector (class)
+      - getAIPatternDetector
+      - AIDetectedPattern
+    invariants:
+      - LLM-powered DOM analysis
+      - Hybrid processing (redact locally, process cloud)
+      - Validates detected patterns against actual DOM
+      - Emits events via EventBus
+    dependencies:
+      - src/services/llmGateway.ts
+      - src/utils/redaction.ts
+      - src/utils/retry.ts
+      - src/core/eventBus.ts
+
+  # ============================================
+  # Phase 4: Architecture Modernization
+  # ============================================
+
+  src/core/eventBus.ts:
+    description: Internal event system (ARCH-1) for cross-module communication
+    exports:
+      - EventBus (class)
+      - getEventBus
+      - createEvent
+      - EventType
+      - BaseEvent
+      - EventHandler
+    invariants:
+      - Typed events with wildcards
+      - Priority-based handler execution
+      - Error isolation per handler
+      - Event history tracking (max 100)
+
+  src/core/jobQueue.ts:
+    description: Background job processing (ARCH-2) with persistence
+    exports:
+      - JobQueue (class)
+      - getJobQueue
+      - initJobQueue
+      - Job
+      - JobStatus
+      - JobPriority
+      - JobHandler
+    invariants:
+      - Persists to chrome.storage.local
+      - Configurable concurrency (default 2)
+      - Priority scheduling (critical > high > normal > low)
+      - Auto-retry with exponential backoff
+      - Recovers running jobs as pending on restart
+    dependencies:
+      - src/core/eventBus.ts
+
+  src/core/storageManager.ts:
+    description: Storage quota management (ARCH-4) with LRU eviction
+    exports:
+      - StorageManager (class)
+      - getStorageManager
+      - initStorageManager
+      - formatBytes
+      - STORAGE_TYPES
+      - StorageStats
+    invariants:
+      - Monitors quota with warning (80%) and critical (95%) thresholds
+      - LRU eviction excludes settings and encrypted keys
+      - Metadata tracking for all items
+      - Auto-cleanup when threshold exceeded
+    dependencies:
+      - src/core/eventBus.ts
+
+  # ============================================
+  # Core Modules (Pre-existing)
+  # ============================================
+
+  src/utils/errors.ts:
+    description: Error handling utilities for the scraper
+    exports:
+      - ScraperError (class)
+      - ErrorCodes
+      - ErrorCode
+      - formatError
+      - getErrorMessage
+      - isRecoverableError
+      - wrapError
+      - calculateBackoff
+    invariants:
+      - All custom errors extend ScraperError
+      - ErrorCodes is exhaustive for scraper-specific errors
+      - calculateBackoff caps at maxDelayMs
+
+  src/content/patternDetector.ts:
+    description: Detects repeating DOM patterns for scraping
+    invariants:
+      - Matches by tag, class, id, data-*, aria-*
+      - Returns confidence score based on sibling count
+
+  src/content/autoScroller.ts:
+    description: Auto-scrolling with throttling and error handling
+    invariants:
+      - Respects throttle configuration
+      - Detects and clicks "load more" buttons
+      - Retries with exponential backoff on failure
+
+  src/content/dataExtractor.ts:
+    description: Extracts data using configurable selectors
+    invariants:
+      - Supports text, href, src, attr extraction
+      - Preserves hierarchy when configured
+
+  src/background/service-worker.ts:
+    description: Chrome extension background service worker
+    invariants:
+      - MV3 compliant
+      - Routes messages between popup and content scripts
+
+  src/ui/overlay.ts:
+    description: In-page UI overlay using Shadow DOM
+    invariants:
+      - Isolated from page styles via Shadow DOM
+      - Shows progress, preview, and error states
+
+  src/ui/popup.ts:
+    description: Extension popup UI logic
+    invariants:
+      - Controls scraping operations
+      - Manages settings and export
+
+  src/content/tutorial/exporters/markdown.ts:
+    description: Markdown exporter for tutorials (FP-1)
+    exports:
+      - exportToMarkdown
+      - generateMarkdown
+      - escapeMarkdown
+      - generateTable
+      - codeBlock
+      - markdownLink
+
+  src/content/tutorial/exporters/pdf.ts:
+    description: PDF exporter for tutorials (FP-2)
+    exports:
+      - exportToPdf
+      - generatePdf
+      - DEFAULT_PDF_CONFIG
+      - getPageDimensions
+      - addImageToPdf
+    dependencies:
+      - jspdf
+
+# Integration notes:
+# - Core systems: eventBus → jobQueue → storageManager (layered)
+# - AI pipeline: rateLimiter + retry + redaction → llmGateway → aiPatternDetector
+# - Services: voiceover uses encryption for key storage
+# - i18n: standalone, used by exporters and aiPatternDetector

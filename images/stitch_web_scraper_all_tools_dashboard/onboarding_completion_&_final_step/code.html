@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Onboarding Completion &amp; Final Step</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .spotlight-mask {
+            background: radial-gradient(circle 120px at 200px 240px, transparent 100%, rgba(0, 0, 0, 0.75) 0%);
+        }
+        .confetti-bg {
+            background-image: radial-gradient(circle, rgba(19, 236, 91, 0.1) 1px, transparent 1px);
+            background-size: 15px 15px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen relative overflow-hidden">
+<!-- Dashboard Content (Blurred for focus) -->
+<div class="flex h-screen w-full filter blur-sm">
+<!-- Sidebar Shell -->
+<aside class="w-64 border-r border-[#23482f] bg-[#112217] flex flex-col p-4 gap-6">
+<div class="flex flex-col">
+<h1 class="text-white text-base font-medium">Scraper Pro</h1>
+<p class="text-[#92c9a4] text-sm">Data Wizard</p>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3 px-3 py-2 text-white/50">
+<span class="material-symbols-outlined">drag_click</span>
+<span class="text-sm">Select Element</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#23482f] text-white">
+<span class="material-symbols-outlined">wand_stars</span>
+<span class="text-sm">Smart Pattern</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-white/50">
+<span class="material-symbols-outlined">layers</span>
+<span class="text-sm">Pagination</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-white/50">
+<span class="material-symbols-outlined">download</span>
+<span class="text-sm">Export Data</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace Shell -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="h-16 border-b border-[#23482f] bg-[#112217] flex items-center justify-between px-8">
+<h2 class="text-white text-lg font-bold">Data Extraction Wizard</h2>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-[#23482f]" data-alt="User profile placeholder"></div>
+</div>
+</header>
+<div class="p-8 space-y-6">
+<div class="h-12 w-full bg-[#193322] rounded-lg"></div>
+<div class="space-y-4">
+<div class="h-16 w-full bg-[#193322]/50 rounded-lg"></div>
+<div class="h-16 w-full bg-[#193322]/50 rounded-lg"></div>
+<div class="h-16 w-full bg-[#193322]/50 rounded-lg"></div>
+<div class="h-16 w-full bg-[#193322]/50 rounded-lg"></div>
+</div>
+</div>
+</main>
+</div>
+<!-- Spotlight Layer -->
+<div class="absolute inset-0 spotlight-mask z-10 pointer-events-none"></div>
+<!-- Interactive Layer (The real elements being showcased) -->
+<div class="absolute inset-0 z-20 pointer-events-none">
+<!-- Sidebar Item in Focus -->
+<div class="absolute top-[168px] left-[16px] w-[224px] pointer-events-auto">
+<div class="flex items-center justify-between px-3 py-3 rounded-lg bg-[#112217] border-2 border-primary shadow-[0_0_20px_rgba(19,236,91,0.4)]">
+<div class="flex items-center gap-3 text-white">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">wand_stars</span>
+<span class="text-sm font-bold">Smart Pattern</span>
+</div>
+<div class="w-10 h-5 bg-primary/20 rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-4 h-4 bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Tooltip and Celebration -->
+<div class="absolute top-[140px] left-[260px] w-[380px] pointer-events-auto">
+<!-- Connector Arrow -->
+<div class="absolute -left-2 top-10 w-4 h-4 bg-[#112217] border-l border-t border-[#326744] rotate-[-45deg]"></div>
+<div class="bg-[#112217] border border-[#326744] rounded-xl shadow-2xl overflow-hidden relative confetti-bg">
+<!-- Top celebration accent -->
+<div class="h-1 w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0"></div>
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">celebration</span>
+</div>
+<p class="text-white text-xl font-bold leading-tight">Almost there!</p>
+</div>
+<p class="text-[#92c9a4] text-base font-normal leading-relaxed">
+                        Enable <span class="text-primary font-medium">Smart Pattern</span> to automatically find similar items on the page. We'll build the table for you in seconds.
+                    </p>
+<div class="pt-2">
+<button class="w-full h-12 flex items-center justify-center rounded-lg bg-primary text-[#102216] text-base font-bold tracking-tight hover:brightness-110 transition-all shadow-[0_4px_14px_0_rgba(19,236,91,0.39)]">
+<span class="truncate">Finish Tour &amp; Scrape</span>
+</button>
+</div>
+</div>
+<!-- Footer-like confetti patterns (pure CSS/HTML deco) -->
+<div class="absolute bottom-2 right-2 flex gap-1 pointer-events-none opacity-40">
+<div class="w-2 h-2 rounded-full bg-primary rotate-45"></div>
+<div class="w-2 h-2 rounded bg-blue-400 -rotate-12"></div>
+<div class="w-2 h-2 rounded-full bg-yellow-400 rotate-12"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- UI Background Texture (Optional extra layer) -->
+<div class="fixed inset-0 pointer-events-none opacity-5 mix-blend-overlay">
+<div class="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" data-alt="Subtle dark carbon fiber texture"></div>
+</div>
+</body></html>

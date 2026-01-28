@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Data Extraction Selection Flow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .selection-overlay {
+            background-color: rgba(19, 236, 91, 0.15);
+            border: 2px dashed #13ec5b;
+        }
+        .browser-container {
+            scrollbar-width: thin;
+            scrollbar-color: #23482f #102216;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-white/10 bg-background-dark px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary">
+<span class="material-symbols-outlined text-3xl">api</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight">ScrapePro AI</h2>
+</div>
+<label class="flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#92c9a4] flex border-none bg-[#1d3525] items-center justify-center pl-4 rounded-l-lg" data-icon="search">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-[#1d3525] text-white focus:outline-0 focus:ring-0 h-full placeholder:text-[#92c9a4] px-4 rounded-r-lg pl-2 text-base font-normal" placeholder="Search workflows..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9">
+<a class="text-white/80 hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-white/80 hover:text-primary text-sm font-medium transition-colors" href="#">Workflows</a>
+<a class="text-white/80 hover:text-primary text-sm font-medium transition-colors" href="#">Proxies</a>
+<a class="text-white/80 hover:text-primary text-sm font-medium transition-colors" href="#">API</a>
+</div>
+<div class="flex gap-2">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold">
+<span>Account</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-lg bg-[#1d3525] text-white hover:bg-[#2a4d36] transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex h-[calc(100vh-64px)] overflow-hidden">
+<!-- Sidebar Navigation (Optional/Mini) -->
+<div class="w-16 border-r border-white/10 flex flex-col items-center py-6 gap-6 bg-background-dark">
+<span class="material-symbols-outlined text-primary bg-primary/20 p-2 rounded-lg cursor-pointer">mouse</span>
+<span class="material-symbols-outlined text-white/40 hover:text-white cursor-pointer">code</span>
+<span class="material-symbols-outlined text-white/40 hover:text-white cursor-pointer">data_object</span>
+<span class="material-symbols-outlined text-white/40 hover:text-white cursor-pointer">history</span>
+</div>
+<!-- Main Content Area: Browser Viewport + Wizard -->
+<div class="flex-1 flex flex-col relative">
+<!-- Breadcrumbs & Status Bar -->
+<div class="flex items-center justify-between px-6 py-4 bg-background-dark/50 border-b border-white/10">
+<div class="flex items-center gap-2">
+<a class="text-[#92c9a4] text-sm font-medium" href="#">Workflows</a>
+<span class="text-[#92c9a4] text-sm">/</span>
+<a class="text-[#92c9a4] text-sm font-medium" href="#">E-commerce Scraper</a>
+<span class="text-[#92c9a4] text-sm">/</span>
+<span class="text-white text-sm font-medium">Data Extraction Selection</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        LIVE SESSION
+                    </span>
+</div>
+</div>
+<!-- The "Browser" and "Wizard" Container -->
+<div class="flex-1 flex overflow-hidden relative">
+<!-- Browser Mockup -->
+<div class="flex-1 bg-white overflow-y-auto browser-container p-8 relative">
+<!-- Browser Address Bar Mock -->
+<div class="absolute top-0 left-0 right-0 h-12 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-4 z-10">
+<div class="flex gap-1.5">
+<div class="size-3 rounded-full bg-red-400"></div>
+<div class="size-3 rounded-full bg-yellow-400"></div>
+<div class="size-3 rounded-full bg-green-400"></div>
+</div>
+<div class="flex-1 bg-white h-7 rounded border border-gray-300 flex items-center px-3 gap-2">
+<span class="material-symbols-outlined text-gray-400 text-sm">lock</span>
+<span class="text-xs text-gray-600">https://store.example.com/electronics/headphones</span>
+</div>
+</div>
+<!-- Page Content Start -->
+<div class="mt-12 text-gray-900">
+<div class="max-w-4xl mx-auto">
+<h1 class="text-3xl font-bold mb-8">Premium Headphones</h1>
+<!-- Grid of Products -->
+<div class="grid grid-cols-2 gap-8">
+<!-- Product Card 1 (SELECTED) -->
+<div class="border border-gray-200 rounded-lg p-4 relative">
+<div class="w-full h-48 bg-gray-100 rounded-md mb-4 flex items-center justify-center">
+<img alt="Headphones" class="h-32 object-contain" data-alt="High-end over-ear headphones in black" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAasocoet01UKl7mzO8RSvskIrLa8ApPHLib7wDnrt8SXWJ6QaVlVQHqw6_Vi5Ap3lb0qLpi4zKnYmCDLaabGB080ks8YBkRulaHlOm82ouNrF3MJAtOYHs5cgYKL8ssit54r2VnyejaL0NgNvn13PvPWsoa3nK_L6OTTXnLIrcrmWNHut0mu402HLUzGtvd0RZzUzILdzfokglbCYlxPxKniX6_96koeCGIEq0X7m1vMRoPKljoSE0rj3eEnu-fYMCwjzOVY0q_MB-"/>
+</div>
+<div class="selection-overlay absolute -inset-1 rounded-lg z-10"></div>
+<div class="absolute -top-3 -left-3 bg-primary text-background-dark text-[10px] font-bold px-2 py-0.5 rounded-full z-20 shadow-lg">Pattern Match</div>
+<h3 class="text-xl font-bold mb-1 selection-overlay p-1">SonicMaster Elite Pro</h3>
+<p class="text-primary font-bold text-lg selection-overlay inline-block px-1">$299.00</p>
+<p class="text-sm text-gray-500 mt-2">Active noise cancellation and 40-hour battery life.</p>
+</div>
+<!-- Product Card 2 (SELECTED) -->
+<div class="border border-gray-200 rounded-lg p-4 relative">
+<div class="w-full h-48 bg-gray-100 rounded-md mb-4 flex items-center justify-center">
+<img alt="Headphones" class="h-32 object-contain" data-alt="Minimalist white wireless headphones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsOYjnCjyeiMM1dTNUGHLEiW8Dt5kQeVzBVcnOW9_ag47hIFIANKCCh1AG75IbIdh8Yl8aGfW6mBpM9DxnPWfvMvvfO0rRQtgLP_rI0ByqYByVZpJZ3SiB3ZEpo5pZJO0uyyLKVwllHMNZK9s6hfXhDRB8cshT3ggcKu_6Ap00M3O4d5Jb6Oz9T5BG8sOX2HJ8pUI4GVuE7ZlLJxlZ2kS24Og7Z6u_xSyh1q9eQ4jwwLPVOxpK-H61N3nDSU1gUjAYyVLQy39VDQci"/>
+</div>
+<div class="selection-overlay absolute -inset-1 rounded-lg z-10"></div>
+<h3 class="text-xl font-bold mb-1 selection-overlay p-1">CloudWalk Wireless</h3>
+<p class="text-primary font-bold text-lg selection-overlay inline-block px-1">$149.50</p>
+<p class="text-sm text-gray-500 mt-2">Ultra-lightweight design for all-day comfort.</p>
+</div>
+<!-- Product Card 3 (AUTO-HIGHLIGHTED) -->
+<div class="border border-gray-200 rounded-lg p-4 relative">
+<div class="w-full h-48 bg-gray-100 rounded-md mb-4 flex items-center justify-center">
+<img alt="Headphones" class="h-32 object-contain" data-alt="Retro style studio headphones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJGw14kp2h-f_UlVXrSjj4StGdf7JlGpoD8DVWe0sNb1RUPAXbo-O0kGTiAdhEDu2E95nmdfirz3N6XsmpWOruXoRpSwnXhPK-pRyyJy9LOit9bnGGU8ndSmjqWVxtC-JgWPk5Dp2Xv227ffe2PeBDoXlXch6eUdF0VRVqefOicO2NIrJ8TQa8BJVwIcRreNVlIHu98gyEoYwWPL8m0swwAGwvqfGVZ-GIteQQ4sof62C7x-y_1hNlFdCgUh07apvhzqAMP_9l-IDi"/>
+</div>
+<div class="selection-overlay absolute -inset-1 rounded-lg z-10"></div>
+<h3 class="text-xl font-bold mb-1 selection-overlay p-1">Studio Max Gold</h3>
+<p class="text-primary font-bold text-lg selection-overlay inline-block px-1">$399.99</p>
+<p class="text-sm text-gray-500 mt-2">Professional grade audio for mastering and mixing.</p>
+</div>
+<!-- Product Card 4 -->
+<div class="border border-gray-200 rounded-lg p-4 relative group">
+<div class="w-full h-48 bg-gray-100 rounded-md mb-4 flex items-center justify-center">
+<img alt="Headphones" class="h-32 object-contain" data-alt="Sports earbuds in lime green" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9KGk0XNpOqEmtJXtbFKxq8LL_A5TkvhUDSajZyopAPwBdwEidUR6wRVBGaW46giIzmfr0_VsOuPrtlNJ3Avv4aKsOmfQhPFjknKY4dG4NQOUlVfSZvvUaOBzN9oHIevs01h5DKt-4PDLmgAydQZa0SKyYY7Lm6FytGklKRMNYBTmZ6fbMkQHu1q0MyUsbLJnYvpqx7fNEw6e1Bd-XNmzS5m_vR8FWJ9rFNESystEYi5v3Mh2HTdIEOAHKQVCZNyUozrmEDEILnSRo"/>
+</div>
+<h3 class="text-xl font-bold mb-1 group-hover:bg-primary/5 transition-colors">SportSync Buds</h3>
+<p class="text-gray-900 font-bold text-lg group-hover:bg-primary/5 transition-colors">$89.00</p>
+<p class="text-sm text-gray-500 mt-2">Water-resistant with secure-fit ear hooks.</p>
+<!-- Hover selector tooltip -->
+<div class="hidden group-hover:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background-dark/90 text-white px-4 py-2 rounded-lg border border-primary items-center gap-2 shadow-2xl z-30">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+<span class="text-sm font-bold">Add to List</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Extraction Wizard Panel -->
+<div class="w-[420px] bg-background-dark border-l border-white/10 flex flex-col shadow-2xl">
+<div class="p-6 border-b border-white/10">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-xl font-bold">Extraction Wizard</h2>
+<span class="material-symbols-outlined text-white/40 cursor-pointer">close</span>
+</div>
+<p class="text-[#92c9a4] text-sm">Point and click on elements to extract from this page.</p>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Smart Pattern Toggle -->
+<div class="bg-primary/10 border border-primary/30 p-4 rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<span class="font-bold text-sm">Smart Pattern Detection</span>
+</div>
+<div class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary">
+<span class="inline-block h-4 w-4 transform rounded-full bg-background-dark transition translate-x-6"></span>
+</div>
+</div>
+<p class="text-xs text-[#92c9a4]">AI has identified 12 similar elements matching your current selection.</p>
+</div>
+<!-- Active Selectors List -->
+<div>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold uppercase tracking-wider text-white/50">Active Columns</h3>
+<button class="text-primary text-xs font-bold hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">add</span> New Column
+                                </button>
+</div>
+<div class="space-y-3">
+<!-- Column 1 -->
+<div class="bg-white/5 border border-white/10 p-3 rounded-lg flex items-center justify-between hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm">title</span>
+</div>
+<div>
+<div class="text-sm font-bold">Product Name</div>
+<div class="text-[10px] text-white/40">12 items found (h3.product-title)</div>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-white/40 hover:text-white cursor-pointer text-sm">edit</span>
+<span class="material-symbols-outlined text-white/40 hover:text-red-400 cursor-pointer text-sm">delete</span>
+</div>
+</div>
+<!-- Column 2 -->
+<div class="bg-white/5 border border-white/10 p-3 rounded-lg flex items-center justify-between hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm">payments</span>
+</div>
+<div>
+<div class="text-sm font-bold">Price</div>
+<div class="text-[10px] text-white/40">12 items found (span.price)</div>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-white/40 hover:text-white cursor-pointer text-sm">edit</span>
+<span class="material-symbols-outlined text-white/40 hover:text-red-400 cursor-pointer text-sm">delete</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Preview Mini -->
+<div>
+<h3 class="text-sm font-bold uppercase tracking-wider text-white/50 mb-3">Sample Output</h3>
+<div class="bg-black/40 rounded-lg p-3 font-mono text-[10px] text-primary/80 border border-white/5 leading-relaxed">
+                                [<br/>
+                                  { "name": "SonicMaster Elite Pro", "price": "$299.00" },<br/>
+                                  { "name": "CloudWalk Wireless", "price": "$149.50" }...<br/>
+                                ]
+                            </div>
+</div>
+</div>
+<!-- Wizard Footer -->
+<div class="p-6 border-t border-white/10 space-y-3 bg-background-dark/80">
+<div class="flex gap-3">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-11 border border-white/20 text-white font-bold text-sm hover:bg-white/5">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                Preview Data
+                            </button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-11 bg-primary text-background-dark font-bold text-sm hover:shadow-[0_0_20px_rgba(19,236,91,0.3)] transition-shadow">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                                Finish
+                            </button>
+</div>
+<button class="w-full text-white/40 text-xs font-medium py-2 hover:text-white transition-colors">
+                            Cancel Extraction
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Map Component Example (Embedded as a small interaction UI if needed) -->
+<!-- Not visible in the main description but included for component fulfillment -->
+<div class="hidden">
+<div class="bg-cover bg-center flex min-h-[320px] flex-1 flex-col justify-between px-4 pb-4 pt-5 rounded-lg" data-location="San Francisco" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDY76FXaD7HWGhQoYWcEUHvxLZ_r4iHB9XYedH3SZehPP6PnwQJ5_JtF0YKSQyIiYzNgDlusGFROE4w1Vs-k0iCWoKkV5FKe4b9lG2SFlH32vL9o8pVhLPUF-sYQbxqzHsOjTFXJkRfYGsobCREdR7oeiDhGeREsAlWx1Z4rx9QrWPrG6n-8KmRmXwOHr0a9TSQ7yRcXGlRhhKQYCCBQHafDCb7o_O0Usqgk_44iLa--uHD2DJITPWqKGG9tpTWgAZeqYAoEqd951Yz");'>
+<input class="form-input bg-[#193322] text-white border-none rounded-lg" placeholder="Enter URL to scrape" value=""/>
+</div>
+</div>
+</body></html>

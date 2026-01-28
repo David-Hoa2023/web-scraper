@@ -199,6 +199,49 @@ function countItems(): number {
   return maxCount;
 }
 
+const NEXT_PAGE_SELECTORS = [
+  '[rel="next"]',
+  '[aria-label="Next"]',
+  '[aria-label="Next Page"]',
+  '.next-page',
+  '.pagination-next',
+  'li.next a',
+  '.next',
+  'a[class*="next"]',
+  'button[class*="next"]'
+];
+
+/**
+ * Attempts to find and click a "Next Page" button/link
+ * @returns true if a button was found and clicked
+ */
+function tryClickNextPage(): boolean {
+  // 1. Try generic text matching first (often most reliable)
+  const links = Array.from(document.querySelectorAll('a, button'));
+  for (const link of links) {
+    const text = link.textContent?.trim().toLowerCase();
+    if (text === 'next' || text === '>' || text === 'next page' || text === 'next >') {
+      if (isElementVisible(link as HTMLElement)) {
+        console.log(`[AutoScroller] Clicked next page by text: "${text}"`);
+        (link as HTMLElement).click();
+        return true;
+      }
+    }
+  }
+
+  // 2. Try selectors
+  for (const selector of NEXT_PAGE_SELECTORS) {
+    const element = document.querySelector(selector) as HTMLElement | null;
+    if (element && isElementVisible(element)) {
+      console.log(`[AutoScroller] Clicked next page by selector: ${selector}`);
+      element.click();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Performs a single scroll iteration
  */
@@ -233,12 +276,25 @@ async function scrollIteration(): Promise<void> {
     if (currentScrollHeight === lastScrollHeight) {
       noChangeCount++;
 
-      // Try clicking load more button
+      // 1. Try clicking "Load More"
       if (tryClickLoadMore()) {
         noChangeCount = 0;
-        // Wait for content to load
         await delay(currentConfig.throttleMs);
         return;
+      }
+
+      // 2. Try clicking "Next Page" (Fallback)
+      // Only try next page if we've tried scrolling a few times with no result
+      // This prevents premature page jumping if network is just slow
+      if (noChangeCount >= 2) {
+        if (tryClickNextPage()) {
+          noChangeCount = 0;
+          // Wait longer for full page navigation/load
+          await delay(3000);
+          // Reset scroll mechanics for new page
+          lastScrollHeight = 0;
+          return;
+        }
       }
 
       // If no change after multiple iterations, attempt retry
@@ -291,8 +347,9 @@ async function scrollIteration(): Promise<void> {
         behavior: 'smooth',
       });
     } else {
-      // At bottom, try load more or wait
+      // At bottom, try load more -> next page -> wait
       if (!tryClickLoadMore()) {
+        // Don't immediately click next page at bottom, invoke wait loop to confirm no infinite scroll
         noChangeCount++;
       }
     }

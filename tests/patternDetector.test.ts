@@ -7,11 +7,10 @@ import {
   detectPattern,
   highlightPattern,
   hideHighlight,
-  removeOverlay,
   defaultConfig,
   _internal,
 } from '../src/content/patternDetector';
-import type { PatternDetectorConfig, PatternMatch } from '../src/types';
+import type { PatternDetectorConfig, PatternMatch, Fingerprint } from '../src/types';
 
 // Mock DOM environment setup
 function createMockElement(
@@ -22,6 +21,7 @@ function createMockElement(
     dataAttrs?: Record<string, string>;
     ariaAttrs?: Record<string, string>;
     children?: Element[];
+    parentElement?: Element;
   } = {}
 ): Element {
   const el = document.createElement(tag);
@@ -52,188 +52,73 @@ function createMockElement(
     }
   }
 
+  // Mock parentElement manually if needed for traversing up without appending to body
+  if (options.parentElement) {
+    Object.defineProperty(el, 'parentElement', {
+      get: () => options.parentElement,
+      configurable: true
+    });
+  }
+
   return el;
 }
 
 describe('patternDetector', () => {
-  describe('_internal.getDataAttributes', () => {
-    it('should extract data-* attributes', () => {
-      const el = createMockElement('div', {
-        dataAttrs: { testid: '123', value: 'abc' },
-      });
-
-      const result = _internal.getDataAttributes(el);
-
-      expect(result).toEqual({ testid: '123', value: 'abc' });
-    });
-
-    it('should return empty object when no data attributes', () => {
-      const el = createMockElement('div');
-
-      const result = _internal.getDataAttributes(el);
-
-      expect(result).toEqual({});
-    });
-  });
-
-  describe('_internal.getAriaAttributes', () => {
-    it('should extract aria-* attributes', () => {
-      const el = createMockElement('div', {
-        ariaAttrs: { label: 'Test Label', hidden: 'false' },
-      });
-
-      const result = _internal.getAriaAttributes(el);
-
-      expect(result).toEqual({ label: 'Test Label', hidden: 'false' });
-    });
-
-    it('should return empty object when no aria attributes', () => {
-      const el = createMockElement('div');
-
-      const result = _internal.getAriaAttributes(el);
-
-      expect(result).toEqual({});
-    });
-  });
-
-  describe('_internal.getElementSignature', () => {
-    it('should create signature based on tag', () => {
-      const el = createMockElement('article');
-
-      const signature = _internal.getElementSignature(el, ['tag']);
-
-      expect(signature).toBe('tag:article');
-    });
-
-    it('should create signature based on classes', () => {
+  describe('getFingerprint', () => {
+    it('should generate correct fingerprint for simple element', () => {
       const el = createMockElement('div', { classes: ['card', 'item'] });
+      const fp = _internal.getFingerprint(el);
 
-      const signature = _internal.getElementSignature(el, ['class']);
-
-      expect(signature).toBe('class:card,item');
+      expect(fp.tag).toBe('div');
+      expect(fp.classes).toContain('card');
+      expect(fp.classes).toContain('item');
+      expect(fp.childCount).toBe(0);
+      expect(fp.depth).toBe(0);
     });
 
-    it('should create signature with sorted classes', () => {
-      const el = createMockElement('div', { classes: ['zebra', 'alpha', 'beta'] });
-
-      const signature = _internal.getElementSignature(el, ['class']);
-
-      expect(signature).toBe('class:alpha,beta,zebra');
-    });
-
-    it('should create signature based on id pattern', () => {
-      const el = createMockElement('div', { id: 'item-123' });
-
-      const signature = _internal.getElementSignature(el, ['id']);
-
-      expect(signature).toBe('id:item-#');
-    });
-
-    it('should create signature based on data attributes', () => {
+    it('should include stable attributes', () => {
       const el = createMockElement('div', {
-        dataAttrs: { testid: 'card', index: '0' },
+        dataAttrs: { testid: 'product-card' },
+        ariaAttrs: { label: 'Product' }
       });
+      const fp = _internal.getFingerprint(el);
 
-      const signature = _internal.getElementSignature(el, ['data']);
-
-      expect(signature).toBe('data:index,testid');
+      expect(fp.attrs['data-testid']).toBe('product-card');
+      expect(fp.attrs['aria-label']).toBe('Product');
     });
 
-    it('should create combined signature with multiple criteria', () => {
-      const el = createMockElement('div', {
-        classes: ['card'],
-        dataAttrs: { testid: 'item' },
-      });
+    it('should count children', () => {
+      const child1 = createMockElement('span');
+      const child2 = createMockElement('img');
+      const el = createMockElement('div', { children: [child1, child2] });
 
-      const signature = _internal.getElementSignature(el, ['tag', 'class', 'data']);
-
-      expect(signature).toBe('tag:div|class:card|data:testid');
+      const fp = _internal.getFingerprint(el);
+      expect(fp.childCount).toBe(2);
     });
   });
 
-  describe('_internal.findMatchingSiblings', () => {
-    it('should find siblings with same signature', () => {
-      const child1 = createMockElement('div', { classes: ['item'] });
-      const child2 = createMockElement('div', { classes: ['item'] });
-      const child3 = createMockElement('div', { classes: ['item'] });
-      const parent = createMockElement('div', {
-        children: [child1, child2, child3],
-      });
-
-      const signature = _internal.getElementSignature(child1, ['tag', 'class']);
-      const siblings = _internal.findMatchingSiblings(
-        parent,
-        signature,
-        ['tag', 'class'],
-        child1
-      );
-
-      expect(siblings).toHaveLength(2);
-      expect(siblings).toContain(child2);
-      expect(siblings).toContain(child3);
-      expect(siblings).not.toContain(child1);
+  describe('calculateSimilarity', () => {
+    it('should return 0 for different tags', () => {
+      const fp1: Fingerprint = { tag: 'div', classes: [], attrs: {}, childCount: 0, depth: 0 };
+      const fp2: Fingerprint = { tag: 'span', classes: [], attrs: {}, childCount: 0, depth: 0 };
+      expect(_internal.calculateSimilarity(fp1, fp2)).toBe(0);
     });
 
-    it('should not include elements with different signature', () => {
-      const child1 = createMockElement('div', { classes: ['item'] });
-      const child2 = createMockElement('div', { classes: ['item'] });
-      const child3 = createMockElement('div', { classes: ['other'] });
-      const parent = createMockElement('div', {
-        children: [child1, child2, child3],
-      });
-
-      const signature = _internal.getElementSignature(child1, ['tag', 'class']);
-      const siblings = _internal.findMatchingSiblings(
-        parent,
-        signature,
-        ['tag', 'class'],
-        child1
-      );
-
-      expect(siblings).toHaveLength(1);
-      expect(siblings).toContain(child2);
-      expect(siblings).not.toContain(child3);
-    });
-  });
-
-  describe('_internal.calculateConfidence', () => {
-    it('should return score between 0 and 1', () => {
-      const el = createMockElement('div', { classes: ['item'] });
-      const siblings = [
-        createMockElement('div', { classes: ['item'] }),
-        createMockElement('div', { classes: ['item'] }),
-      ];
-      const config: PatternDetectorConfig = {
-        matchBy: ['tag', 'class'],
-        minSiblings: 2,
-        depthLimit: 3,
-      };
-
-      const confidence = _internal.calculateConfidence(el, siblings, config);
-
-      expect(confidence).toBeGreaterThanOrEqual(0);
-      expect(confidence).toBeLessThanOrEqual(1);
+    it('should return 1 for identical elements', () => {
+      const fp1: Fingerprint = { tag: 'div', classes: ['a', 'b'], attrs: { id: '1' }, childCount: 5, depth: 2 };
+      const fp2: Fingerprint = { tag: 'div', classes: ['a', 'b'], attrs: { id: '1' }, childCount: 5, depth: 2 };
+      expect(_internal.calculateSimilarity(fp1, fp2)).toBe(1);
     });
 
-    it('should give higher score with more matching attributes', () => {
-      // Element with more classes gets higher score with same config
-      const el1 = createMockElement('div', { classes: ['item'] });
-      const el2 = createMockElement('div', {
-        classes: ['item', 'card', 'featured'],
-      });
-      const siblings = [createMockElement('div')];
+    it('should calculate partial similarity for overlapping classes (Jaccard)', () => {
+      const fp1: Fingerprint = { tag: 'div', classes: ['a', 'b'], attrs: {}, childCount: 0, depth: 0 };
+      const fp2: Fingerprint = { tag: 'div', classes: ['a', 'c'], attrs: {}, childCount: 0, depth: 0 };
 
-      const config: PatternDetectorConfig = {
-        matchBy: ['tag', 'class'],
-        minSiblings: 1,
-        depthLimit: 3,
-      };
-
-      const confidence1 = _internal.calculateConfidence(el1, siblings, config);
-      const confidence2 = _internal.calculateConfidence(el2, siblings, config);
-
-      // Element with more classes should have higher or equal confidence
-      expect(confidence2).toBeGreaterThanOrEqual(confidence1);
+      // Class similarity: intersect(1) / union(3) = 0.33
+      // Weight 0.6. Score ~= 0.6 * 0.33 + 0.4 (other factors empty/equal)
+      const sim = _internal.calculateSimilarity(fp1, fp2);
+      expect(sim).toBeGreaterThan(0.3);
+      expect(sim).toBeLessThan(1);
     });
   });
 
@@ -248,129 +133,70 @@ describe('patternDetector', () => {
       expect(detectPattern(document.documentElement)).toBeNull();
     });
 
-    it('should detect pattern when siblings exist', () => {
-      const child1 = createMockElement('div', { classes: ['item'] });
-      const child2 = createMockElement('div', { classes: ['item'] });
-      const child3 = createMockElement('div', { classes: ['item'] });
-      const parent = createMockElement('div', {
-        children: [child1, child2, child3],
-      });
-      document.body.appendChild(parent);
+    it('should detect list container with similar children', () => {
+      const child1 = createMockElement('div', { classes: ['product-item'] });
+      const child2 = createMockElement('div', { classes: ['product-item'] });
+      const child3 = createMockElement('div', { classes: ['product-item'] });
+      const container = createMockElement('div', { children: [child1, child2, child3] });
+      document.body.appendChild(container);
 
       const config: PatternDetectorConfig = {
         matchBy: ['tag', 'class'],
-        minSiblings: 2,
-        depthLimit: 3,
+        minListItems: 3,
+        allowSingleFallback: false,
+        depthLimit: 5,
+        simThreshold: 0.6
       };
 
       const match = detectPattern(child1, config);
 
       expect(match).not.toBeNull();
-      expect(match?.tag).toBe('div');
-      expect(match?.classes).toContain('item');
-      expect(match?.siblings).toHaveLength(3);
-      expect(match?.parent).toBe(parent);
+      expect(match?.container).toBe(container);
+      expect(match?.siblings.length).toBe(3);
+      expect(match?.isSingle).toBe(false);
     });
 
-    it('should return null when not enough siblings', () => {
-      const child1 = createMockElement('div', { classes: ['item'] });
-      const child2 = createMockElement('div', { classes: ['other'] });
-      const parent = createMockElement('div', {
-        children: [child1, child2],
-      });
-      document.body.appendChild(parent);
+    it('should fallback to single item if configured', () => {
+      const child1 = createMockElement('div', { classes: ['unique-header'] });
+      const container = createMockElement('div', { children: [child1] });
+      document.body.appendChild(container);
 
       const config: PatternDetectorConfig = {
         matchBy: ['tag', 'class'],
-        minSiblings: 2,
-        depthLimit: 3,
+        minListItems: 3,
+        allowSingleFallback: true,
+        depthLimit: 2,
+        simThreshold: 0.6
       };
 
       const match = detectPattern(child1, config);
 
+      expect(match).not.toBeNull();
+      expect(match?.container).toBe(container);
+      expect(match?.isSingle).toBe(true);
+      expect(match?.siblings.length).toBe(1);
+    });
+
+    it('should respect simThreshold', () => {
+      const child1 = createMockElement('div', { classes: ['a'] });
+      const child2 = createMockElement('div', { classes: ['b'] }); // Completely different class
+      const container = createMockElement('div', { children: [child1, child2] });
+      document.body.appendChild(container); // Needed for parent traversal
+
+      const config: PatternDetectorConfig = {
+        matchBy: ['tag', 'class'],
+        minListItems: 2,
+        allowSingleFallback: false,
+        depthLimit: 5,
+        simThreshold: 0.9 // Very strict
+      };
+
+      // Jaccard for {a} vs {b} is 0. Similarity will be low.
+      const match = detectPattern(child1, config);
+
+      // Should capture only child1 as single fallback matches nothing else if threshold high
+      // If allowSingleFallback is false, it should return null
       expect(match).toBeNull();
-    });
-
-    it('should traverse up the DOM to find patterns', () => {
-      const innerChild = createMockElement('span', { classes: ['text'] });
-      const item1 = createMockElement('div', {
-        classes: ['item'],
-        children: [innerChild],
-      });
-      const item2 = createMockElement('div', { classes: ['item'] });
-      const item3 = createMockElement('div', { classes: ['item'] });
-      const parent = createMockElement('div', {
-        children: [item1, item2, item3],
-      });
-      document.body.appendChild(parent);
-
-      const config: PatternDetectorConfig = {
-        matchBy: ['tag', 'class'],
-        minSiblings: 2,
-        depthLimit: 3,
-      };
-
-      const match = detectPattern(innerChild, config);
-
-      expect(match).not.toBeNull();
-      expect(match?.tag).toBe('div');
-      expect(match?.classes).toContain('item');
-    });
-
-    it('should respect depthLimit', () => {
-      const deepChild = createMockElement('span');
-      const level2 = createMockElement('div', { children: [deepChild] });
-      const level1 = createMockElement('div', { children: [level2] });
-      const item1 = createMockElement('div', {
-        classes: ['item'],
-        children: [level1],
-      });
-      const item2 = createMockElement('div', { classes: ['item'] });
-      const parent = createMockElement('div', {
-        children: [item1, item2],
-      });
-      document.body.appendChild(parent);
-
-      const config: PatternDetectorConfig = {
-        matchBy: ['tag', 'class'],
-        minSiblings: 1,
-        depthLimit: 1, // Only check one level up
-      };
-
-      // With depth limit of 1, starting from deepChild, we won't reach the items
-      const match = detectPattern(deepChild, config);
-
-      // Should not find the pattern because depth limit prevents traversal
-      expect(match).toBeNull();
-    });
-
-    it('should include data and aria attributes in match', () => {
-      const child1 = createMockElement('div', {
-        classes: ['item'],
-        dataAttrs: { testid: 'card', index: '0' },
-        ariaAttrs: { label: 'Item 1' },
-      });
-      const child2 = createMockElement('div', {
-        classes: ['item'],
-        dataAttrs: { testid: 'card', index: '1' },
-        ariaAttrs: { label: 'Item 2' },
-      });
-      const parent = createMockElement('div', {
-        children: [child1, child2],
-      });
-      document.body.appendChild(parent);
-
-      const config: PatternDetectorConfig = {
-        matchBy: ['tag', 'class', 'data', 'aria'],
-        minSiblings: 1,
-        depthLimit: 3,
-      };
-
-      const match = detectPattern(child1, config);
-
-      expect(match).not.toBeNull();
-      expect(match?.dataAttrs).toEqual({ testid: 'card', index: '0' });
-      expect(match?.ariaAttrs).toEqual({ label: 'Item 1' });
     });
   });
 
@@ -380,10 +206,10 @@ describe('patternDetector', () => {
     });
 
     afterEach(() => {
-      removeOverlay();
+      hideHighlight();
     });
 
-    it('should create overlay and badge elements', () => {
+    it('should style matched elements and show badge', () => {
       const child1 = createMockElement('div', { classes: ['item'] });
       const child2 = createMockElement('div', { classes: ['item'] });
       const parent = createMockElement('div', {
@@ -401,141 +227,67 @@ describe('patternDetector', () => {
         height: 50,
         x: 10,
         y: 10,
-        toJSON: () => {},
-      });
-      vi.spyOn(child2, 'getBoundingClientRect').mockReturnValue({
-        left: 10,
-        top: 70,
-        right: 110,
-        bottom: 120,
-        width: 100,
-        height: 50,
-        x: 10,
-        y: 70,
-        toJSON: () => {},
+        toJSON: () => { },
       });
 
+      // Fingerprint mock not needed for styling, but PatternMatch requires it
+      const fp: Fingerprint = { tag: 'div', classes: ['item'], attrs: {}, childCount: 0, depth: 0 };
+
       const match: PatternMatch = {
-        tag: 'div',
-        classes: ['item'],
-        dataAttrs: {},
-        ariaAttrs: {},
-        parent: parent,
+        container: parent,
+        fingerprint: fp,
         siblings: [child1, child2],
+        isSingle: false,
         confidence: 0.8,
       };
 
       highlightPattern(match);
 
-      const overlay = document.getElementById('web-scraper-pattern-overlay');
       const badge = document.getElementById('web-scraper-pattern-badge');
 
-      expect(overlay).not.toBeNull();
       expect(badge).not.toBeNull();
-      expect(overlay?.style.display).toBe('block');
-      expect(badge?.style.display).toBe('block');
-      expect(badge?.textContent).toBe('2 items');
+      expect(badge?.textContent).toContain('Scrape 2 items');
+
+      // Check if element was highlighted
+      const el = child1 as HTMLElement;
+      expect(el.style.outline).toContain('solid');
     });
 
-    it('should hide overlay and badge', () => {
+    it('should remove highlights and badge', () => {
       const child1 = createMockElement('div');
-      const child2 = createMockElement('div');
-      const parent = createMockElement('div', {
-        children: [child1, child2],
-      });
+      const parent = createMockElement('div', { children: [child1] });
       document.body.appendChild(parent);
 
+      // Mock BB for badge placement
       vi.spyOn(child1, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        top: 0,
-        right: 100,
-        bottom: 50,
-        width: 100,
-        height: 50,
-        x: 0,
-        y: 0,
-        toJSON: () => {},
-      });
-      vi.spyOn(child2, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        top: 50,
-        right: 100,
-        bottom: 100,
-        width: 100,
-        height: 50,
-        x: 0,
-        y: 50,
-        toJSON: () => {},
+        left: 0, top: 0, right: 100, bottom: 50, width: 100, height: 50, x: 0, y: 0, toJSON: () => { }
       });
 
+      const fp: Fingerprint = { tag: 'div', classes: [], attrs: {}, childCount: 0, depth: 0 };
       const match: PatternMatch = {
-        tag: 'div',
-        classes: [],
-        dataAttrs: {},
-        ariaAttrs: {},
-        parent: parent,
-        siblings: [child1, child2],
+        container: parent,
+        fingerprint: fp,
+        siblings: [child1],
+        isSingle: true,
         confidence: 0.5,
       };
 
       highlightPattern(match);
       hideHighlight();
 
-      const overlay = document.getElementById('web-scraper-pattern-overlay');
       const badge = document.getElementById('web-scraper-pattern-badge');
+      const el = child1 as HTMLElement;
 
-      expect(overlay?.style.display).toBe('none');
-      expect(badge?.style.display).toBe('none');
-    });
-  });
-
-  describe('removeOverlay', () => {
-    it('should remove overlay elements from DOM', () => {
-      const child1 = createMockElement('div');
-      const parent = createMockElement('div', {
-        children: [child1],
-      });
-      document.body.appendChild(parent);
-
-      vi.spyOn(child1, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        top: 0,
-        right: 100,
-        bottom: 50,
-        width: 100,
-        height: 50,
-        x: 0,
-        y: 0,
-        toJSON: () => {},
-      });
-
-      const match: PatternMatch = {
-        tag: 'div',
-        classes: [],
-        dataAttrs: {},
-        ariaAttrs: {},
-        parent: parent,
-        siblings: [child1],
-        confidence: 0.5,
-      };
-
-      highlightPattern(match);
-
-      expect(document.getElementById('web-scraper-pattern-overlay')).not.toBeNull();
-      expect(document.getElementById('web-scraper-pattern-badge')).not.toBeNull();
-
-      removeOverlay();
-
-      expect(document.getElementById('web-scraper-pattern-overlay')).toBeNull();
-      expect(document.getElementById('web-scraper-pattern-badge')).toBeNull();
+      expect(badge).toBeNull();
+      expect(el.style.outline).toBe('');
     });
   });
 
   describe('defaultConfig', () => {
     it('should have expected default values', () => {
-      expect(defaultConfig.matchBy).toEqual(['tag', 'class']);
-      expect(defaultConfig.minSiblings).toBe(2);
-      expect(defaultConfig.depthLimit).toBe(3);
+      expect(defaultConfig.minListItems).toBe(3);
+      expect(defaultConfig.allowSingleFallback).toBe(true);
+      expect(defaultConfig.depthLimit).toBe(12);
     });
   });
 });

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Custom JS Transformation Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .code-editor {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .syntax-keyword { color: #13ec5b; }
+        .syntax-comment { color: #5c7a65; }
+        .syntax-string { color: #92c9a4; }
+        .syntax-variable { color: #ffffff; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-[#23482f] px-6 py-3 bg-background-dark/50 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">javascript</span>
+</div>
+<div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight">Custom JS Transformation Editor</h2>
+<p class="text-xs text-[#92c9a4] font-medium">Scraper Engine v4.2</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#92c9a4] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">history</span>
+                Versions
+            </button>
+<div class="h-6 w-px bg-[#23482f] mx-1"></div>
+<button class="size-10 flex items-center justify-center rounded-lg bg-[#23482f] text-white hover:bg-[#2e5d3d] transition-colors">
+<span class="material-symbols-outlined">bug_report</span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-lg bg-[#23482f] text-white hover:bg-[#2e5d3d] transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="flex min-w-[120px] items-center justify-center rounded-lg h-10 px-4 bg-primary text-[#112217] text-sm font-bold shadow-lg shadow-primary/10 hover:brightness-110 transition-all">
+<span>Save &amp; Apply</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Left Sidebar: Cheat Sheet -->
+<aside class="w-64 border-r border-[#23482f] bg-background-dark flex flex-col">
+<div class="p-4 border-b border-[#23482f]">
+<h1 class="text-white text-base font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">terminal</span>
+                    Cheat Sheet
+                </h1>
+<p class="text-[#92c9a4] text-xs font-normal mt-1">Ready-to-use snippets</p>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 border border-primary/20 text-white cursor-pointer hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-primary text-[20px]">api</span>
+<span class="text-sm font-medium">Fetch External API</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#92c9a4] hover:text-white hover:bg-[#23482f] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[20px]">regular_expression</span>
+<span class="text-sm font-medium">RegEx Matcher</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#92c9a4] hover:text-white hover:bg-[#23482f] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span class="text-sm font-medium">Date Formatting</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#92c9a4] hover:text-white hover:bg-[#23482f] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[20px]">data_object</span>
+<span class="text-sm font-medium">JSON Tools</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#92c9a4] hover:text-white hover:bg-[#23482f] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[20px]">cleaning_services</span>
+<span class="text-sm font-medium">HTML Cleanup</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#92c9a4] hover:text-white hover:bg-[#23482f] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[20px]">currency_exchange</span>
+<span class="text-sm font-medium">Currency Parser</span>
+</div>
+</div>
+<div class="p-4 bg-[#23482f]/30">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-sm text-primary">info</span>
+<span class="text-xs font-bold uppercase tracking-wider text-[#92c9a4]">Tip</span>
+</div>
+<p class="text-xs text-[#92c9a4] leading-relaxed">
+                    Use <code class="text-primary">await fetch()</code> for asynchronous data enrichment within your scripts.
+                </p>
+</div>
+</aside>
+<!-- Main Editor Area -->
+<main class="flex-1 flex flex-col bg-[#08110b]">
+<div class="flex items-center justify-between px-6 py-2 border-b border-[#23482f] bg-background-dark">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 border-b-2 border-primary px-1 py-2">
+<span class="material-symbols-outlined text-sm text-primary">description</span>
+<span class="text-sm font-medium text-white tracking-wide">transform.js</span>
+</div>
+<div class="flex items-center gap-2 px-1 py-2 text-[#92c9a4] opacity-50 cursor-pointer hover:opacity-100">
+<span class="material-symbols-outlined text-sm">description</span>
+<span class="text-sm font-medium tracking-wide">utils.js</span>
+</div>
+</div>
+<div class="flex items-center gap-4 text-[#92c9a4]">
+<span class="text-xs font-mono">UTF-8</span>
+<span class="text-xs font-mono">JavaScript (ES6+)</span>
+</div>
+</div>
+<div class="flex-1 relative code-editor text-base flex">
+<!-- Line Numbers -->
+<div class="w-12 bg-background-dark/50 border-r border-[#23482f] py-4 text-right pr-3 select-none text-[#5c7a65] text-sm">
+                    1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14
+                </div>
+<!-- Code content -->
+<div class="flex-1 p-4 overflow-auto bg-[#08110b]">
+<div class="whitespace-pre"><span class="syntax-keyword">function</span> <span class="syntax-variable">transform</span>(data) {</div>
+<div class="whitespace-pre"> <span class="syntax-comment">// Extract and format products from the raw scraping payload</span></div>
+<div class="whitespace-pre"> <span class="syntax-keyword">const</span> <span class="syntax-variable">results</span> = <span class="syntax-variable">data</span>.<span class="syntax-variable">map</span>(<span class="syntax-variable">item</span> <span class="syntax-keyword">=&gt;</span> {</div>
+<div class="whitespace-pre"> <span class="syntax-keyword">return</span> {</div>
+<div class="whitespace-pre"> <span class="syntax-variable">id</span>: <span class="syntax-variable">item</span>.<span class="syntax-variable">sku</span> || <span class="syntax-variable">Math</span>.<span class="syntax-variable">random</span>().<span class="syntax-variable">toString</span>(36),</div>
+<div class="whitespace-pre"> <span class="syntax-variable">name</span>: <span class="syntax-variable">item</span>.<span class="syntax-variable">title</span>.<span class="syntax-variable">trim</span>(),</div>
+<div class="whitespace-pre"> <span class="syntax-variable">price</span>: <span class="syntax-variable">parseFloat</span>(<span class="syntax-variable">item</span>.<span class="syntax-variable">price</span>.<span class="syntax-variable">replace</span>(<span class="syntax-string">/[^0-9.]/g</span>, <span class="syntax-string">''</span>)),</div>
+<div class="whitespace-pre"> <span class="syntax-variable">timestamp</span>: <span class="syntax-keyword">new</span> <span class="syntax-variable">Date</span>().<span class="syntax-variable">toISOString</span>()</div>
+<div class="whitespace-pre">    };</div>
+<div class="whitespace-pre">  });</div>
+<div class="whitespace-pre"></div>
+<div class="whitespace-pre"> <span class="syntax-keyword">return</span> <span class="syntax-variable">results</span>.<span class="syntax-variable">filter</span>(<span class="syntax-variable">p</span> <span class="syntax-keyword">=&gt;</span> <span class="syntax-variable">p</span>.<span class="syntax-variable">price</span> &gt; <span class="syntax-string">0</span>);</div>
+<div class="whitespace-pre">}</div>
+<!-- Cursor simulation -->
+<div class="inline-block w-0.5 h-5 bg-primary align-middle -mt-1 ml-0.5"></div>
+</div>
+</div>
+<!-- Bottom Status Bar -->
+<div class="h-8 bg-[#23482f] border-t border-[#2e5d3d] flex items-center justify-between px-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-xs font-medium text-white">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        Ready
+                    </div>
+<span class="text-xs text-[#92c9a4]">Line 13, Col 1</span>
+</div>
+<div class="flex items-center gap-4 text-xs font-medium text-[#92c9a4]">
+<span>Spaces: 2</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">bolt</span> Latency: 4ms</span>
+</div>
+</div>
+</main>
+<!-- Right Sidebar: Live Test Panel -->
+<aside class="w-80 border-l border-[#23482f] bg-background-dark flex flex-col">
+<div class="p-4 border-b border-[#23482f] flex items-center justify-between">
+<h3 class="text-white text-base font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">play_circle</span>
+                    Live Test
+                </h3>
+<button class="bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1 rounded text-xs font-bold border border-primary/20 transition-all uppercase tracking-wider">
+                    Run Script
+                </button>
+</div>
+<div class="flex-1 flex flex-col overflow-hidden">
+<!-- Sample Raw Data Section -->
+<div class="p-4 flex flex-col h-[45%]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#92c9a4] text-xs font-bold uppercase tracking-wider">Sample Raw Data</p>
+<span class="material-symbols-outlined text-xs text-[#92c9a4] cursor-pointer">content_copy</span>
+</div>
+<textarea class="flex-1 bg-[#23482f] rounded-lg border-none focus:ring-1 focus:ring-primary text-xs font-mono text-[#92c9a4] resize-none p-3 placeholder:text-[#5c7a65]">[
+  {
+    "title": "  Pro Mechanical Keyboard  ",
+    "price": "$129.99",
+    "sku": "KB-99"
+  },
+  {
+    "title": "Gaming Mouse",
+    "price": "N/A",
+    "sku": "MO-01"
+  }
+]</textarea>
+</div>
+<!-- Separator -->
+<div class="px-4">
+<div class="h-px bg-[#23482f]"></div>
+</div>
+<!-- Result Section -->
+<div class="p-4 flex flex-col h-[55%]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#92c9a4] text-xs font-bold uppercase tracking-wider">Execution Result</p>
+<span class="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20">SUCCESS</span>
+</div>
+<div class="flex-1 bg-[#08110b] rounded-lg border border-[#23482f] p-3 overflow-auto">
+<pre class="text-xs font-mono text-primary leading-relaxed">[
+  {
+    "id": "KB-99",
+    "name": "Pro Mechanical Keyboard",
+    "price": 129.99,
+    "timestamp": "2023-11-24T12:00:00Z"
+  }
+]</pre>
+</div>
+<div class="mt-3 bg-primary/5 rounded-lg border border-primary/10 p-3">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">visibility</span>
+<span class="text-xs font-bold text-white">Debugger Console</span>
+</div>
+<p class="text-[10px] text-[#92c9a4] font-mono leading-tight">
+                            &gt; Filtered 1 item with zero price.<br/>
+                            &gt; Script execution complete.
+                        </p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

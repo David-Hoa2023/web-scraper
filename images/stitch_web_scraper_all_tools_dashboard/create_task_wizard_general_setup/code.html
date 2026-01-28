@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Task Wizard - Scraper Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Dashboard Background Blur Simulation -->
+<div class="fixed inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#13ec5b22_0%,transparent_50%)]"></div>
+<div class="absolute top-20 left-40 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+<div class="absolute bottom-20 right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Main Navigation (Top Bar) -->
+<header class="relative z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#23482f] px-6 lg:px-10 py-3 bg-white/80 dark:bg-[#112217]/80 backdrop-blur-md">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Scraper Pro</h2>
+</div>
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Tasks</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Proxies</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">API</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-4 lg:gap-8 items-center">
+<label class="hidden sm:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full border border-slate-200 dark:border-transparent">
+<div class="text-slate-400 dark:text-[#92c9a4] flex bg-slate-50 dark:bg-[#23482f] items-center justify-center pl-4 rounded-l-lg" data-icon="search">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-1 focus:ring-primary border-none bg-slate-50 dark:bg-[#23482f] h-full placeholder:text-slate-400 dark:placeholder:text-[#92c9a4] px-4 pl-2 text-sm font-normal" placeholder="Search tasks..." value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-[#23482f] text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-[#23482f] text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-primary/20 transition-all relative">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAVy_6om9xrRywRCp_Bc1_y0YFNcY_3dOJw7qUbWg5SKKTKAhYT-LnzEHyOaS2rSCBjHRHMjexX_iYnHMzTI2AUDJu-z80d9BL2enfLthnYXIZ9mwxhnZ9l45Kqqm37np8rgGyeZHR6gZbdu8SS6odP0ccSivm8R7HmA-AP19JtKlui9jUVpCZ0vRv_jHQqugDNFhyWh1xnqClHWeazV_OenFGHd23vwb0rz7ZlJwaCyXh7-VJlowL6ZP2bT3lGDPTYpTOc3rTnJhyF");'></div>
+</div>
+</header>
+<!-- Wizard Modal Overlay -->
+<main class="relative z-20 flex-1 flex items-center justify-center p-4 lg:p-8 min-h-[calc(100vh-64px)]">
+<div class="w-full max-w-5xl bg-white dark:bg-[#112217] rounded-xl shadow-2xl border border-slate-200 dark:border-[#23482f] flex flex-col md:flex-row overflow-hidden min-h-[600px]">
+<!-- Left Sidebar Navigation -->
+<aside class="w-full md:w-72 bg-slate-50 dark:bg-[#0b1610] p-6 flex flex-col border-r border-slate-200 dark:border-[#23482f]">
+<div class="mb-8">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Create New Task</h3>
+<p class="text-slate-500 dark:text-[#92c9a4] text-xs font-medium uppercase tracking-wider mt-1">Step 1 of 4</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Step 1 (Active) -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-lg bg-primary/10 dark:bg-[#23482f] text-primary dark:text-white border border-primary/20 step-active">
+<span class="material-symbols-outlined">settings</span>
+<div class="flex flex-col">
+<span class="text-sm font-bold">General Setup</span>
+<span class="text-[10px] opacity-70">Define basics</span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">ads_click</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">Element Selection</span>
+<span class="text-[10px] opacity-70">Target data</span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">schedule</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">Schedule</span>
+<span class="text-[10px] opacity-70">Set frequency</span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">cloud_download</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">Export Rules</span>
+<span class="text-[10px] opacity-70">Destination</span>
+</div>
+</div>
+</nav>
+<div class="pt-6 border-t border-slate-200 dark:border-[#23482f] mt-auto">
+<div class="flex items-center gap-3 text-slate-500 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined text-sm">info</span>
+<p class="text-[11px] leading-relaxed">Your data is processed securely through high-performance residential proxies.</p>
+</div>
+</div>
+</aside>
+<!-- Right Content Area -->
+<section class="flex-1 flex flex-col bg-white dark:bg-[#112217]">
+<!-- Step Header -->
+<div class="p-6 lg:p-10 pb-0">
+<div class="flex items-start justify-between mb-2">
+<h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">General Setup</h1>
+<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="text-slate-500 dark:text-[#92c9a4] text-base font-normal leading-normal max-w-lg">Define the basic parameters for your scraping agent. This helps organize your dashboard and optimize crawl efficiency.</p>
+</div>
+<!-- Form Fields -->
+<div class="flex-1 p-6 lg:p-10 space-y-6">
+<div class="grid grid-cols-1 gap-6">
+<!-- Task Name -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-900 dark:text-white text-sm font-bold tracking-wide uppercase">Task Name</label>
+<input class="w-full rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary border border-slate-300 dark:border-[#326744] bg-white dark:bg-[#193322] h-14 placeholder:text-slate-400 dark:placeholder:text-[#92c9a4]/50 px-4 text-base font-normal transition-all" placeholder="e.g., Amazon Price Tracker - Electronics" type="text" value="Amazon Price Tracker"/>
+</div>
+<!-- Target URL -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="text-slate-900 dark:text-white text-sm font-bold tracking-wide uppercase">Target URL</label>
+<span class="text-[10px] text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">verified</span> 
+                                    VALID URL
+                                </span>
+</div>
+<div class="relative group">
+<input class="w-full rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary border border-primary/50 dark:border-primary/40 bg-white dark:bg-[#193322] h-14 placeholder:text-slate-400 dark:placeholder:text-[#92c9a4]/50 px-4 pl-12 text-base font-normal transition-all" placeholder="https://example.com/products" type="url" value="https://www.amazon.com/s?k=laptop"/>
+<span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 dark:text-[#92c9a4]">link</span>
+</div>
+</div>
+<!-- Project Category Dropdown -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-900 dark:text-white text-sm font-bold tracking-wide uppercase">Project Category</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary border border-slate-300 dark:border-[#326744] bg-white dark:bg-[#193322] h-14 px-4 text-base font-normal transition-all cursor-pointer">
+<option value="ecommerce">E-commerce Monitoring</option>
+<option value="realestate">Real Estate Data</option>
+<option value="leads">Lead Generation</option>
+<option value="market">Market Research</option>
+<option value="other">Other</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-4 pointer-events-none text-slate-400 dark:text-[#92c9a4]">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 lg:p-10 pt-0 flex items-center justify-between border-t border-slate-100 dark:border-[#23482f] bg-slate-50/50 dark:bg-[#112217]">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input class="peer appearance-none w-5 h-5 rounded border-2 border-slate-300 dark:border-[#326744] checked:bg-primary checked:border-primary transition-all" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white scale-0 peer-checked:scale-100 transition-transform pointer-events-none text-sm font-bold left-[2.5px]">check</span>
+</div>
+<span class="text-slate-600 dark:text-[#92c9a4] text-sm font-medium group-hover:text-primary transition-colors">Scrape now to test initial connection</span>
+</label>
+<div class="flex gap-4">
+<button class="hidden sm:flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 border border-slate-300 dark:border-[#326744] text-slate-700 dark:text-white text-sm font-bold hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                            Cancel
+                        </button>
+<button class="flex min-w-[160px] cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-primary text-background-dark text-sm font-black uppercase tracking-wider hover:brightness-110 shadow-[0_0_20px_rgba(19,236,91,0.3)] transition-all">
+                            Next: Selection
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- UI Background Decoration (Floating Elements) -->
+<div class="fixed bottom-10 left-10 text-[120px] font-black text-primary/5 select-none pointer-events-none rotate-12 hidden lg:block">
+        SCRAPE
+    </div>
+<div class="fixed top-40 right-10 text-[100px] font-black text-primary/5 select-none pointer-events-none -rotate-12 hidden lg:block">
+        V1.0.4
+    </div>
+</body></html>

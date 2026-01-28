@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Developer API Documentation Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .code-font {
+            font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", monospace;
+        }
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #102216;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #23482f;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #13ec5b;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-solid border-slate-200 dark:border-[#23482f] bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 lg:px-10 py-3">
+<div class="flex items-center justify-between gap-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold tracking-tight">ScrapeMaster <span class="text-primary">Docs</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Guide</a>
+<a class="text-primary text-sm font-medium border-b-2 border-primary pb-0.5" href="#">Reference</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Changelog</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Support</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4">
+<div class="relative w-full max-w-xs hidden sm:block">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-sm">search</span>
+</span>
+<input class="w-full rounded-lg bg-slate-100 dark:bg-[#23482f] border-none py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary placeholder:text-slate-400" placeholder="Search documentation... (⌘K)" type="text"/>
+</div>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold transition-all hover:opacity-90 active:scale-95">
+<span>API Keys</span>
+</button>
+<div class="size-10 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center overflow-hidden border border-slate-300 dark:border-primary/20">
+<img alt="User Profile" class="size-full object-cover" data-alt="User profile avatar icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApV0i7bmqLtogChsv9K_HCHIiXEVf8FloYOAwE6UHiygFRYMOFNxzMFiEGqqJQD0gyNiRwaxRL8ELb71AaLJqy3u8d_hljpupXwEwk1_w1eGDGnpWAcXYmvNgHBZ_rgeHQl3C4mrJs-JIxQ-05NBLNX2p7htb5Laac0M7mh8pPX0D7ORZYoCcQln8spUCDG2Kiqb7hpt7Yiaa5PX8ldalhs0WVbMKSPqa2DgVQ_gXcjDpJNo_YWUZrYCrIJZUxp2_Lr5a_RXHzhgfI"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 w-full max-w-[1600px] mx-auto">
+<!-- Left Sidebar Navigation -->
+<aside class="w-64 flex-shrink-0 hidden lg:flex flex-col border-r border-slate-200 dark:border-[#23482f] h-[calc(100vh-64px)] sticky top-16 p-6 overflow-y-auto">
+<div class="mb-8">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-[#92c9a4] mb-4">Introduction</h3>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-primary bg-primary/10 transition-colors" href="#"><span class="material-symbols-outlined text-base">rocket_launch</span>Getting Started</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-[#23482f] transition-colors" href="#"><span class="material-symbols-outlined text-base">lock</span>Authentication</a></li>
+</ul>
+</div>
+<div class="mb-8">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-[#92c9a4] mb-4">API Reference</h3>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-[#23482f] transition-colors" href="#"><span class="material-symbols-outlined text-base">terminal</span>Tasks API</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-[#23482f] transition-colors" href="#"><span class="material-symbols-outlined text-base">database</span>Data Extraction</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-[#23482f] transition-colors" href="#"><span class="material-symbols-outlined text-base">webhook</span>Webhooks</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-[#23482f] transition-colors" href="#"><span class="material-symbols-outlined text-base">warning</span>Error Codes</a></li>
+</ul>
+</div>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-[#23482f]">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs text-slate-500">API Version</span>
+<span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#23482f] text-primary">v2.4.0</span>
+</div>
+<button class="w-full flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+<span>System Operational</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area & Code Side -->
+<main class="flex-1 flex flex-col lg:flex-row min-w-0">
+<!-- Documentation Column (Center) -->
+<article class="flex-1 min-w-0 p-6 lg:p-12 lg:pr-8 overflow-y-auto">
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-[#92c9a4] mb-6">
+<a class="hover:text-primary" href="#">Reference</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-medium">Tasks API</span>
+</div>
+<div class="mb-10">
+<h1 class="text-4xl lg:text-5xl font-black tracking-tight mb-4">Tasks API</h1>
+<p class="text-lg text-slate-600 dark:text-[#92c9a4] leading-relaxed max-w-2xl">
+                        Create and manage asynchronous web scraping tasks at scale. The Tasks API allows you to submit URLs for scraping and retrieve structured data once processing is complete.
+                    </p>
+</div>
+<div class="space-y-12">
+<!-- Section: Create Task -->
+<section id="create-task">
+<div class="flex items-center justify-between gap-4 mb-4">
+<h2 class="text-2xl font-bold flex items-center gap-3">
+<span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded font-bold uppercase tracking-widest">POST</span>
+                                Create Scraping Task
+                            </h2>
+<button class="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-lg bg-slate-100 dark:bg-[#23482f] text-sm font-bold hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm">play_arrow</span> Try it out
+                            </button>
+</div>
+<p class="text-slate-600 dark:text-[#92c9a4] mb-6">
+                            Submit a new scraping request to the queue. You will receive a unique <code class="bg-slate-100 dark:bg-[#23482f] px-1.5 py-0.5 rounded text-primary text-sm">task_id</code> which can be used to poll for status.
+                        </p>
+<div class="border border-slate-200 dark:border-[#23482f] rounded-xl overflow-hidden mb-8">
+<div class="bg-slate-50 dark:bg-[#1a3323] px-4 py-2 border-b border-slate-200 dark:border-[#23482f] flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Request Body</span>
+<span class="text-xs text-slate-400">application/json</span>
+</div>
+<div class="p-4 space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-8 pb-4 border-b border-slate-100 dark:border-[#23482f]">
+<div class="w-32 flex-shrink-0">
+<span class="font-bold text-sm text-primary">url</span>
+<span class="block text-[10px] text-slate-400">string | required</span>
+</div>
+<p class="text-sm text-slate-600 dark:text-[#92c9a4]">The target URL to scrape. Must include protocol (http/https).</p>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-8 pb-4 border-b border-slate-100 dark:border-[#23482f]">
+<div class="w-32 flex-shrink-0">
+<span class="font-bold text-sm text-primary">render_js</span>
+<span class="block text-[10px] text-slate-400">boolean | optional</span>
+</div>
+<p class="text-sm text-slate-600 dark:text-[#92c9a4]">Whether to execute Javascript on the page before extraction.</p>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-8">
+<div class="w-32 flex-shrink-0">
+<span class="font-bold text-sm text-primary">proxy_type</span>
+<span class="block text-[10px] text-slate-400">string | default: 'shared'</span>
+</div>
+<p class="text-sm text-slate-600 dark:text-[#92c9a4]">Choose between <code class="text-xs">shared</code>, <code class="text-xs">residential</code>, or <code class="text-xs">mobile</code> proxies.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Get Task Status -->
+<section id="get-task">
+<div class="flex items-center justify-between gap-4 mb-4">
+<h2 class="text-2xl font-bold flex items-center gap-3">
+<span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold uppercase tracking-widest">GET</span>
+                                Retrieve Task Result
+                            </h2>
+<button class="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-lg bg-slate-100 dark:bg-[#23482f] text-sm font-bold hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm">play_arrow</span> Try it out
+                            </button>
+</div>
+<p class="text-slate-600 dark:text-[#92c9a4] mb-6">
+                            Fetch the status and final payload of a scraping task. Results are stored for 24 hours after completion.
+                        </p>
+</section>
+</div>
+</article>
+<!-- Code Panel Column (Right) -->
+<aside class="w-full lg:w-[480px] flex-shrink-0 bg-slate-100 dark:bg-[#0d1a11] border-l border-slate-200 dark:border-[#23482f] p-6 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto hidden lg:block">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Example Request</h3>
+<div class="flex items-center gap-1 bg-white dark:bg-[#112217] p-1 rounded-lg border border-slate-200 dark:border-[#23482f]">
+<button class="px-3 py-1 rounded-md text-xs font-bold bg-primary text-background-dark">cURL</button>
+<button class="px-3 py-1 rounded-md text-xs font-bold text-slate-500 dark:text-[#92c9a4] hover:bg-slate-50 dark:hover:bg-[#23482f]">Node.js</button>
+<button class="px-3 py-1 rounded-md text-xs font-bold text-slate-500 dark:text-[#92c9a4] hover:bg-slate-50 dark:hover:bg-[#23482f]">Python</button>
+</div>
+</div>
+<!-- Code Block -->
+<div class="relative group">
+<div class="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="size-8 flex items-center justify-center rounded bg-[#23482f] hover:bg-primary/20 text-white hover:text-primary transition-colors" title="Copy code">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+</button>
+</div>
+<pre class="bg-white dark:bg-[#112217] p-6 rounded-xl border border-slate-200 dark:border-[#23482f] text-sm overflow-x-auto code-font leading-relaxed"><span class="text-slate-400"># Initializing task</span>
+<span class="text-primary">curl</span> --request POST \
+  --url https://api.scrapemaster.com/v2/tasks \
+  --header <span class="text-primary">'Authorization: Bearer YOUR_API_KEY'</span> \
+  --header <span class="text-primary">'Content-Type: application/json'</span> \
+  --data <span class="text-primary">'{
+    "url": "https://example.com",
+    "render_js": true,
+    "proxy_type": "residential",
+    "wait_until": "networkidle"
+  }'</span></pre>
+</div>
+<div class="mt-8">
+<h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Response Sample</h3>
+<pre class="bg-white dark:bg-[#112217] p-6 rounded-xl border border-slate-200 dark:border-[#23482f] text-sm overflow-x-auto code-font leading-relaxed"><span class="text-slate-400">{</span>
+  <span class="text-primary">"status"</span>: <span class="text-slate-300">"success"</span>,
+  <span class="text-primary">"data"</span>: {
+    <span class="text-primary">"task_id"</span>: <span class="text-slate-300">"tsk_9a210b4f"</span>,
+    <span class="text-primary">"created_at"</span>: <span class="text-slate-300">"2023-11-04T12:00:00Z"</span>,
+    <span class="text-primary">"queue_position"</span>: <span class="text-slate-300">0</span>
+  }
+<span class="text-slate-400">}</span></pre>
+</div>
+<!-- Webhook Callout -->
+<div class="mt-8 p-4 rounded-xl bg-primary/10 border border-primary/20">
+<div class="flex items-center gap-2 text-primary font-bold text-sm mb-2">
+<span class="material-symbols-outlined text-lg">lightbulb</span>
+                        Pro Tip
+                    </div>
+<p class="text-xs text-slate-600 dark:text-[#92c9a4] leading-relaxed">
+                        Use Webhooks to get notified as soon as a task finishes. This is much more efficient than polling the API repeatedly.
+                    </p>
+<a class="inline-block mt-2 text-xs font-bold text-primary underline underline-offset-4 decoration-primary/30" href="#">Learn about Webhooks</a>
+</div>
+</aside>
+</main>
+</div>
+<!-- Mobile Navigation Overlay (Simplified Footer) -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-[#23482f] p-4 flex justify-around z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[10px] font-bold">Docs</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">code</span>
+<span class="text-[10px] font-bold">API</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">key</span>
+<span class="text-[10px] font-bold">Keys</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-bold">Search</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Live Execution Progress - ScrapePro AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #326744;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen">
+<div class="relative flex flex-col min-h-screen w-full overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#23482f] px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] font-display">ScrapePro AI</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Tasks</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Proxies</a>
+<a class="text-slate-600 dark:text-white text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">API</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-[#23482f] text-slate-700 dark:text-white hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-[#23482f] text-slate-700 dark:text-white hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/30" data-alt="User profile avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD0JTArrUaIMmTAvJvD96-paJVVf0JY5WwxZVK7CdRDgWX0rmQaUF5uPH81ekEuJz_Mhw_hM5Xfs1_7DkpGvco2kAPnj_pO6TGBhu5H4m9esuJtlFgU9u_V_lAcwtPtZ5rYGAMuVziHvPfTaNtoFWZqappyQ4J4iBoWtbH0BJQYUOGE_dEjt_XY66F8Lf9zfXQ8NLeui_kfUy0VTt08edBIXhdvd5ZeN0n1C9B1XTvgCYeofN3RDaUQkhdJCDy7YaiCiC4vENsnMH82");'></div>
+</div>
+</header>
+<main class="flex-1 flex flex-col max-w-6xl mx-auto w-full px-6 py-8">
+<!-- Success Message Header -->
+<div class="flex flex-col items-center mb-10">
+<div class="size-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-4xl font-bold">check</span>
+</div>
+<h1 class="text-slate-900 dark:text-white text-3xl font-bold leading-tight text-center font-display">Task Successfully Created!</h1>
+<p class="text-slate-500 dark:text-[#92c9a4] mt-2 text-center">Your data extraction pipeline is now running in the cloud.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Main Execution Column -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Progress Card -->
+<div class="bg-white dark:bg-[#162d1e] rounded-xl border border-slate-200 dark:border-[#326744] overflow-hidden">
+<div class="p-6">
+<div class="flex justify-between items-end mb-4">
+<div>
+<h3 class="text-slate-900 dark:text-white font-bold text-lg font-display">Live Execution Progress</h3>
+<p class="text-slate-500 dark:text-[#92c9a4] text-sm font-normal">Active Worker: #WP-9921-X</p>
+</div>
+<span class="text-primary text-2xl font-bold font-mono">45%</span>
+</div>
+<div class="h-4 w-full bg-slate-100 dark:bg-[#326744] rounded-full overflow-hidden mb-3">
+<div class="h-full bg-primary shadow-[0_0_15px_rgba(19,236,91,0.4)] transition-all duration-500" style="width: 45%;"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+<p class="text-slate-600 dark:text-[#92c9a4] text-sm">Current Stage: <span class="text-primary font-medium">Data Extraction &amp; Parsing</span></p>
+</div>
+</div>
+</div>
+<!-- Live Log Console -->
+<div class="bg-[#0a0a0a] rounded-xl border border-slate-700 dark:border-[#326744] flex flex-col h-[400px]">
+<div class="flex items-center justify-between px-4 py-3 border-b border-slate-700 dark:border-[#326744]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-slate-400">terminal</span>
+<h3 class="text-slate-300 text-sm font-bold font-display uppercase tracking-wider">Live Log Console</h3>
+</div>
+<div class="flex gap-4">
+<button class="text-slate-400 hover:text-white text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">content_copy</span> Copy
+                                </button>
+<div class="flex items-center gap-2">
+<div class="w-8 h-4 bg-slate-700 rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-primary rounded-full"></div>
+</div>
+<span class="text-slate-400 text-xs">Auto-scroll</span>
+</div>
+</div>
+</div>
+<div class="flex-1 p-4 font-mono text-sm overflow-y-auto custom-scrollbar space-y-2">
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:01]</span>
+<span class="text-[#0bda43]">Initializing browser instance (Chrome Headless)</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:01]</span>
+<span class="text-white">Setting up proxy rotate: US-East-1 Cluster</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:03]</span>
+<span class="text-[#13ec5b] font-semibold">SUCCESS:</span>
+<span class="text-white">Proxy connection established. Latency 42ms.</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:04]</span>
+<span class="text-white">Navigating to URL: https://target-marketplace.com/search?q=developer-tools</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:05]</span>
+<span class="text-primary">Detected Dynamic Content. Initializing auto-scroll.</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:07]</span>
+<span class="text-white">Waiting for selector: ".product-grid-item"</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:09]</span>
+<span class="text-[#0bda43]">Found 24 elements matching schema.</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:10]</span>
+<span class="text-primary font-bold">Extracting data: Row 1 of 24...</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:11]</span>
+<span class="text-white">Processing: Product Name, Price, Rating, Image URL</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:13]</span>
+<span class="text-primary font-bold">Extracting data: Row 5 of 24...</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:14]</span>
+<span class="text-white">Executing bypass for rate-limit protection...</span>
+</div>
+<div class="flex gap-3">
+<span class="text-slate-600 shrink-0">[14:02:16]</span>
+<span class="text-[#13ec5b]">Success. Continuing extraction...</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Stats & Actions -->
+<div class="flex flex-col gap-6">
+<!-- Stats Group -->
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-[#162d1e] border border-slate-200 dark:border-[#326744] shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-slate-500 dark:text-[#92c9a4] text-sm font-medium leading-normal">Rows Found</p>
+<span class="material-symbols-outlined text-primary text-xl">database</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-light text-3xl font-bold leading-tight font-mono">12</p>
+<p class="text-[#0bda43] text-sm font-medium leading-normal">+12</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-[#162d1e] border border-slate-200 dark:border-[#326744] shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-slate-500 dark:text-[#92c9a4] text-sm font-medium leading-normal">Pages Scanned</p>
+<span class="material-symbols-outlined text-primary text-xl">description</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-light text-3xl font-bold leading-tight font-mono">1</p>
+<p class="text-[#0bda43] text-sm font-medium leading-normal">+1</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-[#162d1e] border border-slate-200 dark:border-[#326744] shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-slate-500 dark:text-[#92c9a4] text-sm font-medium leading-normal">Estimated Time</p>
+<span class="material-symbols-outlined text-primary text-xl">timer</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-light text-3xl font-bold leading-tight font-mono">2m</p>
+<p class="text-slate-400 text-sm font-medium leading-normal">Left</p>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="bg-white dark:bg-[#162d1e] rounded-xl border border-slate-200 dark:border-[#326744] p-6 space-y-4 shadow-sm">
+<button class="w-full flex items-center justify-center gap-2 h-12 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed font-bold" disabled="">
+<span class="material-symbols-outlined">visibility</span>
+                            View Results
+                        </button>
+<button class="w-full flex items-center justify-center gap-2 h-12 rounded-lg border-2 border-red-500/50 text-red-500 hover:bg-red-500/10 transition-colors font-bold">
+<span class="material-symbols-outlined">stop_circle</span>
+                            Stop Task
+                        </button>
+<p class="text-center text-xs text-slate-400 dark:text-[#92c9a4]">
+                            Task ID: scrape_882_a1
+                        </p>
+</div>
+<!-- Config Quick Look -->
+<div class="rounded-lg p-4 bg-primary/5 border border-primary/20">
+<h4 class="text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest mb-2 font-display">Active Config</h4>
+<div class="space-y-1">
+<div class="flex justify-between text-xs">
+<span class="text-slate-500 dark:text-[#92c9a4]">Engine:</span>
+<span class="text-slate-700 dark:text-white">Puppeteer</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-500 dark:text-[#92c9a4]">Format:</span>
+<span class="text-slate-700 dark:text-white">CSV, JSON</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-500 dark:text-[#92c9a4]">Retries:</span>
+<span class="text-slate-700 dark:text-white">3</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-6 px-10 border-t border-slate-200 dark:border-[#23482f] flex justify-between items-center text-slate-400 dark:text-[#92c9a4] text-xs">
+<div>© 2024 ScrapePro AI. Industrial Grade Extraction.</div>
+<div class="flex gap-6">
+<a class="hover:text-primary" href="#">Docs</a>
+<a class="hover:text-primary" href="#">Support</a>
+<a class="hover:text-primary" href="#">System Status</a>
+</div>
+</footer>
+</div>
+</body></html>

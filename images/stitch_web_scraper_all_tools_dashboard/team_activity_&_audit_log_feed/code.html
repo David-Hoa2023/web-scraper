@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Team Activity &amp; Audit Log Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #112217;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #23482f;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#23482f] px-10 py-3 bg-white dark:bg-[#102216]">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-slate-900 dark:text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_535)">
+<path clip-rule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fill-rule="evenodd"></path>
+</g>
+<defs><clippath id="clip0_6_535"><rect fill="white" height="48" width="48"></rect></clippath></defs>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">ScrapePro Alpha</h2>
+</div>
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary text-sm font-medium transition-colors" href="#">Scrapers</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary text-sm font-medium transition-colors" href="#">Proxies</a>
+<a class="text-primary text-sm font-medium leading-normal" href="#">Team Audit</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<label class="flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-400 dark:text-[#92c9a4] flex border-none bg-slate-100 dark:bg-[#23482f] items-center justify-center pl-4 rounded-l-lg border-r-0">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white focus:ring-0 h-full placeholder:text-slate-400 dark:placeholder:text-[#92c9a4] px-4 rounded-r-lg pl-2 text-sm font-normal" placeholder="Search logs..." value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg size-10 bg-slate-100 dark:bg-[#23482f] text-slate-600 dark:text-white hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg size-10 bg-slate-100 dark:bg-[#23482f] text-slate-600 dark:text-white hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary" data-alt="User profile avatar of a developer" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA9AJJQX3HYp_KjzCOR2cuA4yzQZdUIxmpCKF7OoHmyFOn-8-BxLWeCdSLnWmbKmoEPPDKYRyHCn9Tj5a2DR22rDn_1QVgR2aZYGgGMb0CIeqUDRIJjKVxP3CoL8yqImKZwgpV0rZuImGLXiWVug67YZn6BmXwO4eubmJ6zg-gOZTprqoFDzfcBLjQSCbu1B-o5Mt5SLKLCztG_nvCagD2sTzShaZUDrhR-0WkgGpyEVKKngQkpZ8uyzAdfbrTKJMc6g3MwqWlMAub7");'></div>
+</div>
+</header>
+<main class="flex-1 flex flex-col px-4 md:px-10 lg:px-20 py-8 max-w-[1600px] mx-auto w-full gap-8">
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex flex-col gap-2">
+<p class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Team Audit Log</p>
+<p class="text-slate-500 dark:text-[#92c9a4] text-base font-normal leading-normal">Monitor team-wide activity and security events across all developer tools.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 h-10 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded-lg text-sm font-bold transition-all hover:opacity-80">
+<span class="material-symbols-outlined text-lg">download</span>
+<span>Export Logs</span>
+</button>
+<button class="flex items-center gap-2 px-4 h-10 bg-primary text-background-dark rounded-lg text-sm font-bold transition-all hover:brightness-110">
+<span class="material-symbols-outlined text-lg">refresh</span>
+<span>Live Refresh</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row gap-8">
+<!-- Main Content Area (Filters + Table) -->
+<div class="flex-1 flex flex-col gap-4">
+<!-- ToolBar & Chips -->
+<div class="bg-white dark:bg-[#193322] rounded-xl border border-slate-200 dark:border-[#326744] overflow-hidden shadow-sm">
+<div class="flex flex-wrap justify-between gap-2 px-4 py-3 border-b border-slate-200 dark:border-[#326744]">
+<div class="flex gap-4">
+<button class="flex items-center gap-2 p-2 text-slate-500 dark:text-white hover:text-primary transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-xs font-bold uppercase tracking-wider">Date Range</span>
+</button>
+<button class="flex items-center gap-2 p-2 text-slate-500 dark:text-white hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-xs font-bold uppercase tracking-wider">User</span>
+</button>
+</div>
+<button class="flex items-center gap-2 px-4 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-primary hover:text-background-dark">
+<span class="material-symbols-outlined text-lg">filter_alt</span>
+<span>Advanced Filters</span>
+</button>
+</div>
+<div class="flex gap-3 p-3 flex-wrap">
+<button class="flex h-8 items-center gap-x-2 rounded-lg bg-slate-100 dark:bg-[#23482f] px-3 border border-transparent hover:border-primary/50 transition-all">
+<p class="text-slate-700 dark:text-white text-xs font-medium">All Actions</p>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+<button class="flex h-8 items-center gap-x-2 rounded-lg bg-slate-100 dark:bg-[#23482f] px-3 border border-transparent hover:border-primary/50 transition-all">
+<p class="text-slate-700 dark:text-white text-xs font-medium">Deletions</p>
+<span class="material-symbols-outlined text-sm text-red-400">warning</span>
+</button>
+<button class="flex h-8 items-center gap-x-2 rounded-lg bg-slate-100 dark:bg-[#23482f] px-3 border border-transparent hover:border-primary/50 transition-all">
+<p class="text-slate-700 dark:text-white text-xs font-medium">Exports</p>
+<span class="material-symbols-outlined text-sm">output</span>
+</button>
+<button class="flex h-8 items-center gap-x-2 rounded-lg bg-slate-100 dark:bg-[#23482f] px-3 border border-transparent hover:border-primary/50 transition-all">
+<p class="text-slate-700 dark:text-white text-xs font-medium">Login Events</p>
+<span class="material-symbols-outlined text-sm">login</span>
+</button>
+</div>
+</div>
+<!-- Activity Table -->
+<div class="rounded-xl border border-slate-200 dark:border-[#326744] bg-white dark:bg-[#112217] overflow-hidden shadow-lg">
+<div class="@container overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-slate-50 dark:bg-[#193322] border-b border-slate-200 dark:border-[#326744]">
+<th class="px-6 py-4 text-slate-500 dark:text-white text-xs font-bold uppercase tracking-widest w-48">Timestamp</th>
+<th class="px-6 py-4 text-slate-500 dark:text-white text-xs font-bold uppercase tracking-widest w-48">User</th>
+<th class="px-6 py-4 text-slate-500 dark:text-white text-xs font-bold uppercase tracking-widest w-40">Action</th>
+<th class="px-6 py-4 text-slate-500 dark:text-white text-xs font-bold uppercase tracking-widest">Entity</th>
+<th class="px-6 py-4 text-slate-500 dark:text-white text-xs font-bold uppercase tracking-widest w-40">IP Address</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-[#326744]">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-[#1a2e20] transition-colors group cursor-pointer">
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-sm font-mono">2023-10-24 14:22:10</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-cover bg-center border border-primary/20" data-alt="Avatar for Alex Dev" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBAH68JhMQalJ4kHU1hVYffX34GIoZSiRSYMiBrMPkfY03-bUdlA9A29V3fSkeH14Q7tgN_RHAq6kZebf9aXOcb75M-ip3-WkkEOnadQ18Sc0vOHaiSgYXJ4SH5sQFEZWsqxL_4mo0axxStJQmRS1fJ83gb3x6fdvzN4PP3HP8d6gp-T6LOjU0RryaCrg_Hlnz6_gwj9xeOXoCVK72oIbbYwbLRuFXQ1WFh-_0k7Hjh3b-t4paOC5-XlNPPxpkWW0_XDRAzoIcS-W1i");'></div>
+<span class="text-slate-900 dark:text-white text-sm font-medium">Alex Dev</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/20">Edited Task</span>
+</td>
+<td class="px-6 py-4 text-slate-700 dark:text-white text-sm font-medium underline underline-offset-4 decoration-primary/30">Amazon_Scraper_v2</td>
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-xs font-mono">192.168.1.1</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-[#1a2e20] transition-colors group cursor-pointer">
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-sm font-mono">2023-10-24 14:15:05</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-cover bg-center border border-primary/20" data-alt="Avatar for Sarah Chen" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDZ9b7zCqD9QKyB1W54JEB5JtxZi3WfJw-6tfx4ERSnofCdwuy_iUMhiud9lZIUrdWlG1RCO_1UJ4tvYwdaD0eIxTXuca-Th7bT_mD1zoQmVeOhTxai_yKvpz4b3rU54c0XYmoDVjGJ7qFmrKiV7nRl81BipbWsTZKt25wzPEWpg4Xk1D3YVUjkLmAVu_IYS8BIXRI5ZwSuuYA70p7KVinBFxrpK-8BabV_z0PvdHESIHP2dPD3QdCq5P0TX-iD7K9BaDIuxqmvWnN-");'></div>
+<span class="text-slate-900 dark:text-white text-sm font-medium">Sarah Chen</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-lg bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-500/20">Deleted Column</span>
+</td>
+<td class="px-6 py-4 text-slate-700 dark:text-white text-sm font-medium underline underline-offset-4 decoration-primary/30">eBay_Pricing_Feed</td>
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-xs font-mono">172.16.254.1</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-[#1a2e20] transition-colors group cursor-pointer">
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-sm font-mono">2023-10-24 13:50:22</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-cover bg-center border border-primary/20" data-alt="Avatar for Alex Dev" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBFAO-3mL6sCFXtMavhyR29N6UP3X4jxIwKEKgAGXJNImJjA2Mdbnf7e5283xn_bsGsTcdyWZ3MLoUhLXNh89IZZ9tUaV1WvXpvPIHFlSgJZZbYi-oeyZR_cPznPokS2zGPHv2dukK7VCW_vdFgfjmNWOIE6L6YRsqbhAfRgp-M-4GR1z572IypUJbqimS1W0EFrxrd2a_diFg1Txw-iBQcmeT-Btx7LWseyi2GvOUUse6_gQkLZK-OwBw6mHwiFNbaRn43CUDezF0h");'></div>
+<span class="text-slate-900 dark:text-white text-sm font-medium">Alex Dev</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-lg bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-bold border border-orange-200 dark:border-orange-500/20">Exported CSV</span>
+</td>
+<td class="px-6 py-4 text-slate-700 dark:text-white text-sm font-medium underline underline-offset-4 decoration-primary/30">LinkedIn_Profiles_Full</td>
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-xs font-mono">192.168.1.1</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-[#1a2e20] transition-colors group cursor-pointer">
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-sm font-mono">2023-10-24 13:44:10</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-[#23482f] flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-sm">terminal</span>
+</div>
+<span class="text-slate-900 dark:text-white text-sm font-medium">System</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-lg bg-primary/20 dark:bg-primary/10 text-primary text-xs font-bold border border-primary/30">Created Project</span>
+</td>
+<td class="px-6 py-4 text-slate-700 dark:text-white text-sm font-medium underline underline-offset-4 decoration-primary/30">Walmart_Weekly_Deals</td>
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-xs font-mono">0.0.0.0</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-[#1a2e20] transition-colors group cursor-pointer">
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-sm font-mono">2023-10-24 12:10:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-cover bg-center border border-primary/20" data-alt="Avatar for Michael K" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAVyAZEsJHUrZyjCNWcq0Eb_8bNEf6PRdfSa0tyxOFizTHuMe8uIHaDNxPiHuCHaiK0PCrHPRNDUeYul_XHsliUtpfBTBW8E9izg12tVbLjnFhL2IzEz6MnR2HDDhL_LKkkbIj6GQk5WhwiIf80PcB16lTTHYOxNtH2h8QI_HfFF39N3lMOSTWqrCGfm8RCywLHQBROkpumkwZLhz8eYxcjeHCmE1PYaceFeP1_UaiGcC7ZNQQHjhkMAb0REaI2NpDNSEl0q18w8gFh");'></div>
+<span class="text-slate-900 dark:text-white text-sm font-medium">Michael K.</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-500/20">Login Success</span>
+</td>
+<td class="px-6 py-4 text-slate-700 dark:text-white text-sm font-medium underline underline-offset-4 decoration-primary/30">Developer Console</td>
+<td class="px-6 py-4 text-slate-500 dark:text-[#92c9a4] text-xs font-mono">203.0.113.42</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between py-4">
+<p class="text-slate-500 dark:text-[#92c9a4] text-sm font-medium">Showing 1-10 of 1,240 entries</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded border border-slate-200 dark:border-[#326744] hover:border-primary/50 transition-all text-sm">Prev</button>
+<button class="px-3 py-1 bg-primary text-background-dark font-bold rounded border border-primary hover:brightness-110 transition-all text-sm">1</button>
+<button class="px-3 py-1 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded border border-slate-200 dark:border-[#326744] hover:border-primary/50 transition-all text-sm">2</button>
+<button class="px-3 py-1 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded border border-slate-200 dark:border-[#326744] hover:border-primary/50 transition-all text-sm">3</button>
+<span class="text-slate-500 dark:text-[#92c9a4] px-2 self-center">...</span>
+<button class="px-3 py-1 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded border border-slate-200 dark:border-[#326744] hover:border-primary/50 transition-all text-sm">124</button>
+<button class="px-3 py-1 bg-slate-100 dark:bg-[#23482f] text-slate-900 dark:text-white rounded border border-slate-200 dark:border-[#326744] hover:border-primary/50 transition-all text-sm">Next</button>
+</div>
+</div>
+</div>
+<!-- Sidebar: Security Summary -->
+<aside class="w-full lg:w-80 flex flex-col gap-6">
+<div class="p-6 rounded-xl border border-slate-200 dark:border-[#326744] bg-white dark:bg-[#193322] shadow-lg">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">security</span>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Security Summary</h3>
+</div>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-[#92c9a4] text-sm">Login Attempts (24h)</span>
+<span class="text-slate-900 dark:text-white font-bold font-mono">142</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-[#112217] rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-4/5"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-[#92c9a4] text-sm">Sensitive Exports</span>
+<span class="text-red-500 font-bold font-mono">12</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-[#112217] rounded-full h-1.5 overflow-hidden">
+<div class="bg-red-500 h-full w-1/3"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-[#92c9a4] text-sm">Active Sessions</span>
+<span class="text-slate-900 dark:text-white font-bold font-mono">4</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-[#112217] rounded-full h-1.5 overflow-hidden">
+<div class="bg-emerald-500 h-full w-1/4"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-slate-100 dark:border-[#326744]">
+<p class="text-slate-500 dark:text-[#92c9a4] text-xs font-bold uppercase tracking-widest mb-4">Risk Level</p>
+<div class="flex items-center gap-4">
+<div class="size-16 rounded-full border-4 border-slate-100 dark:border-[#112217] flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 border-4 border-primary border-t-transparent -rotate-45"></div>
+<span class="text-primary font-bold">Low</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 text-sm leading-tight">No unusual activity detected in the last 4 hours.</p>
+</div>
+</div>
+</div>
+<!-- Additional Stats Card -->
+<div class="p-6 rounded-xl border border-slate-200 dark:border-[#326744] bg-white dark:bg-[#112217] bg-opacity-50">
+<h4 class="text-slate-500 dark:text-[#92c9a4] text-xs font-bold uppercase tracking-widest mb-4">Integrations Pulse</h4>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="size-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-slate-700 dark:text-white text-sm">Chrome Extension API</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-2 rounded-full bg-primary"></div>
+<span class="text-slate-700 dark:text-white text-sm">Cloud Storage Sync</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-2 rounded-full bg-yellow-500"></div>
+<span class="text-slate-700 dark:text-white text-sm">Proxy Node Status</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<footer class="mt-auto py-10 px-10 border-t border-slate-200 dark:border-[#23482f] bg-white dark:bg-[#102216]">
+<div class="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 text-slate-400 dark:text-[#92c9a4]">
+<span class="material-symbols-outlined">verified_user</span>
+<p class="text-sm">Compliance status: SOC2 Certified</p>
+</div>
+<div class="flex gap-8 text-slate-400 dark:text-[#92c9a4] text-sm font-medium">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">API Docs</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+<p class="text-slate-500 dark:text-slate-500 text-xs">© 2023 ScrapePro Alpha. All rights reserved.</p>
+</div>
+</footer>
+</body></html>

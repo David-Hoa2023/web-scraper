@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Data Preview &amp; Export | ScraperPro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #112217; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #23482f; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #13ec5b; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#23482f] bg-background-light dark:bg-background-dark px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary">
+<span class="material-symbols-outlined text-3xl">terminal</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] font-display">ScraperPro</h2>
+</div>
+<div class="flex items-center gap-9">
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Dashboard</a>
+<a class="text-white text-sm font-medium leading-normal border-b-2 border-primary pb-1" href="#">Recipes</a>
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Proxies</a>
+<a class="text-white/70 hover:text-primary text-sm font-medium leading-normal transition-colors" href="#">Settings</a>
+</div>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<label class="flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#92c9a4] flex border-none bg-[#23482f] items-center justify-center pl-4 rounded-l-lg" data-icon="search">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-[#23482f] text-white focus:ring-0 h-full placeholder:text-[#92c9a4] px-4 rounded-r-lg text-sm font-normal" placeholder="Search data..."/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#23482f] text-white hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#23482f] text-white hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-primary/30" data-alt="User avatar profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBma3dg99sM2xDl8VJaMOTbxXFQMD7tofCXG4gfME29ceqRdg2qKCWviZ5aGXtITMy_hSxy9EybXebP8ETBHoFfq0GD_zngIpHeA9ot-xDGCJOmzX8SFHXWzr4558l4YAyHmeefaTwg1_qgckMX5a7vzvDLy0rqqyA49W7CopA_NecXS2fdTINbjYyXiXWgw_sIKXsmAA-RtAfaXgEPnCM3QSb0cFEx8f93VA49fcwRTM3s4sbw940TJozLfgk_3I_R0C-XLc3h4tnS");'></div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<!-- Content Area -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Summary Bar & Controls -->
+<div class="px-6 py-4 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-white text-2xl font-bold font-display">Data Preview &amp; Export</h1>
+<p class="text-[#92c9a4] text-sm mt-1">Review your extracted data before exporting to your preferred format.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-[#23482f] hover:bg-[#2d5d3d] text-white rounded-lg text-sm font-medium transition-all">
+<span class="material-symbols-outlined text-sm">brush</span>
+                            Clean Data
+                        </button>
+<button class="flex items-center justify-center h-10 w-10 bg-[#23482f] hover:bg-primary/20 text-white rounded-lg transition-all" title="Refresh Data">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-4">
+<!-- Stats Card -->
+<div class="flex items-center gap-4 px-5 py-3 rounded-xl border border-[#326744] bg-[#112217]/50 min-w-[200px]">
+<div class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">database</span>
+</div>
+<div>
+<p class="text-[#92c9a4] text-xs font-medium uppercase tracking-wider">Rows Extracted</p>
+<div class="flex items-baseline gap-2">
+<p class="text-white text-xl font-bold font-display">324</p>
+<p class="text-primary text-xs font-bold">+100%</p>
+</div>
+</div>
+</div>
+<!-- Toggle Control -->
+<div class="flex-1">
+<div class="flex items-center justify-end gap-6 px-5 py-3 rounded-xl border border-[#326744] bg-[#112217]/50">
+<div class="flex flex-col">
+<p class="text-white text-sm font-bold leading-tight">Automatic column detection</p>
+<p class="text-[#92c9a4] text-xs font-normal">Identify headers &amp; types</p>
+</div>
+<label class="relative flex h-[28px] w-[50px] cursor-pointer items-center rounded-full border-none bg-[#23482f] p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-all">
+<div class="h-full w-[24px] rounded-full bg-white shadow-md"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="flex-1 px-6 pb-6 overflow-hidden">
+<div class="h-full border border-[#326744] rounded-xl overflow-hidden bg-[#112217]/30 flex flex-col">
+<div class="overflow-auto custom-scrollbar flex-1">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="sticky top-0 z-10 bg-[#1a3323] border-b border-[#326744]">
+<tr>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">ID</th>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">Product Name</th>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">Price (USD)</th>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">Source URL</th>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">Stock Status</th>
+<th class="px-4 py-3 text-xs font-bold text-primary uppercase tracking-wider">Last Scraped</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#23482f]">
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#001</td>
+<td class="px-4 py-3 text-sm font-medium text-white">HyperX Cloud II Gaming Headset</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$99.00</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">amazon.com/dp/B00SAYCXWG</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">In Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">2 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#002</td>
+<td class="px-4 py-3 text-sm font-medium text-white">Logitech G Pro X Wireless</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$129.99</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">bestbuy.com/site/logitech-g-pro</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">In Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">5 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#003</td>
+<td class="px-4 py-3 text-sm font-medium text-white">Razer DeathAdder V2 Pro</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$69.50</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">razer.com/gaming-mice/deathadder</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">Out of Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">8 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#004</td>
+<td class="px-4 py-3 text-sm font-medium text-white">SteelSeries Apex Pro TKL</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$179.99</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">amazon.com/dp/B07SVJJ5PX</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">In Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">12 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#005</td>
+<td class="px-4 py-3 text-sm font-medium text-white">ZOWIE EC2-C Ergonomic Mouse</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$69.00</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">zowie.benq.com/mice/ec2-c</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">In Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">15 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#006</td>
+<td class="px-4 py-3 text-sm font-medium text-white">BenQ ZOWIE XL2546K 240Hz</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$499.00</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">amazon.com/dp/B08G8G9VML</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30">In Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">18 mins ago</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-4 py-3 text-sm text-[#92c9a4] font-mono">#007</td>
+<td class="px-4 py-3 text-sm font-medium text-white">Secretlab Titan Evo 2022</td>
+<td class="px-4 py-3 text-sm text-primary font-bold">$549.00</td>
+<td class="px-4 py-3 text-sm text-[#92c9a4] truncate max-w-[200px]">secretlab.co/titan-evo</td>
+<td class="px-4 py-3 text-xs">
+<span class="px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Low Stock</span>
+</td>
+<td class="px-4 py-3 text-xs text-[#92c9a4]">22 mins ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer -->
+<div class="px-4 py-3 bg-[#112217] border-t border-[#326744] flex items-center justify-between">
+<p class="text-xs text-[#92c9a4]">Showing 7 of 324 results</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 bg-[#23482f] text-white rounded text-xs hover:bg-primary/20">Previous</button>
+<button class="px-3 py-1 bg-[#23482f] text-white rounded text-xs hover:bg-primary/20">Next</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Export Options -->
+<aside class="w-80 border-l border-[#23482f] bg-[#112217]/80 backdrop-blur-md p-6 flex flex-col gap-6">
+<div>
+<h3 class="text-white text-lg font-bold font-display flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">download_for_offline</span>
+                    Export Data
+                </h3>
+<div class="space-y-3">
+<p class="text-[#92c9a4] text-xs font-bold uppercase tracking-wider mb-2">Select Format</p>
+<!-- Format Card: CSV -->
+<label class="flex items-center gap-3 p-3 rounded-xl border border-[#326744] bg-[#23482f]/50 cursor-pointer hover:border-primary group transition-all">
+<input checked="" class="text-primary focus:ring-primary bg-transparent border-[#326744]" name="format" type="radio"/>
+<div class="flex-1">
+<p class="text-white text-sm font-bold">CSV</p>
+<p class="text-[#92c9a4] text-[10px]">Comma Separated Values</p>
+</div>
+<span class="material-symbols-outlined text-[#92c9a4] group-hover:text-primary">description</span>
+</label>
+<!-- Format Card: JSON -->
+<label class="flex items-center gap-3 p-3 rounded-xl border border-[#326744] bg-[#23482f]/50 cursor-pointer hover:border-primary group transition-all">
+<input class="text-primary focus:ring-primary bg-transparent border-[#326744]" name="format" type="radio"/>
+<div class="flex-1">
+<p class="text-white text-sm font-bold">JSON</p>
+<p class="text-[#92c9a4] text-[10px]">JavaScript Object Notation</p>
+</div>
+<span class="material-symbols-outlined text-[#92c9a4] group-hover:text-primary">data_object</span>
+</label>
+<!-- Format Card: Excel -->
+<label class="flex items-center gap-3 p-3 rounded-xl border border-[#326744] bg-[#23482f]/50 cursor-pointer hover:border-primary group transition-all">
+<input class="text-primary focus:ring-primary bg-transparent border-[#326744]" name="format" type="radio"/>
+<div class="flex-1">
+<p class="text-white text-sm font-bold">Excel</p>
+<p class="text-[#92c9a4] text-[10px]">Microsoft Excel Spreadsheet</p>
+</div>
+<span class="material-symbols-outlined text-[#92c9a4] group-hover:text-primary">table_view</span>
+</label>
+</div>
+</div>
+<div class="space-y-3">
+<p class="text-[#92c9a4] text-xs font-bold uppercase tracking-wider mb-2">Destinations</p>
+<button class="w-full flex items-center justify-between p-3 rounded-xl border border-[#326744] bg-[#1a3323] hover:border-primary transition-all">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 flex items-center justify-center">
+<span class="material-symbols-outlined text-green-400">table_chart</span>
+</div>
+<span class="text-white text-sm">Google Sheets</span>
+</div>
+<span class="material-symbols-outlined text-sm text-[#92c9a4]">link</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-xl border border-[#326744] bg-[#1a3323] hover:border-primary transition-all">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-400">webhook</span>
+</div>
+<span class="text-white text-sm">Send to Webhook</span>
+</div>
+<span class="material-symbols-outlined text-sm text-[#92c9a4]">settings</span>
+</button>
+</div>
+<div class="mt-auto space-y-4">
+<div class="p-4 rounded-xl bg-primary/10 border border-primary/20">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">info</span>
+<p class="text-white text-xs font-bold">Export Summary</p>
+</div>
+<p class="text-[#92c9a4] text-[11px]">324 items found across 6 columns. Total estimated size: 45KB.</p>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-[#102216] font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(19,236,91,0.3)] transition-all transform active:scale-[0.98]">
+<span class="material-symbols-outlined">download</span>
+                    Download Now
+                </button>
+</div>
+</aside>
+</main>
+</body></html>
