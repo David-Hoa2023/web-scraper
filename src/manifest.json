@@ -8,7 +8,10 @@
     "storage",
     "scripting",
     "alarms",
-    "notifications"
+    "notifications",
+    "sidePanel",
+    "contextMenus",
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -19,14 +22,20 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "src/ui/popup.html",
     "default_title": "Web Scraper Pro"
+  },
+  "side_panel": {
+    "default_path": "src/ui/sidepanel.html"
   },
   "icons": {
     "16": "icons/icon16.png",

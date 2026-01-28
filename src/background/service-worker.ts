@@ -2,6 +2,13 @@
 // Handles extension lifecycle, message routing, and scheduled task execution
 
 import type { ScraperMessage, ScraperResponse, ExtractedItem } from '../types';
+import {
+  exportToExcel,
+  exportToCSV,
+  analyzeData,
+  generateTextReport,
+  type ExcelExportOptions,
+} from '../export';
 
 console.log('[Web Scraper] Service worker initialized');
 
@@ -447,6 +454,108 @@ chrome.runtime.onMessage.addListener(
         case 'RESCHEDULE_ALL':
           await rescheduleAllTasks();
           return { success: true };
+
+        case 'EXPORT_EXCEL': {
+          const { items, options } = message.payload as {
+            items: ExtractedItem[];
+            options?: ExcelExportOptions;
+          };
+
+          if (!items || items.length === 0) {
+            return { success: false, error: 'No items to export' };
+          }
+
+          try {
+            const result = await exportToExcel(items, {
+              filename: options?.filename || `scrape-export-${Date.now()}.xlsx`,
+              includeAnalysis: options?.includeAnalysis ?? true,
+              ...options,
+            });
+
+            // Convert blob to base64 for download
+            const buffer = await result.blob.arrayBuffer();
+            const base64 = btoa(
+              new Uint8Array(buffer).reduce(
+                (data, byte) => data + String.fromCharCode(byte),
+                ''
+              )
+            );
+
+            // Trigger download
+            await chrome.downloads.download({
+              url: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`,
+              filename: result.filename,
+              saveAs: true,
+            });
+
+            return {
+              success: true,
+              data: {
+                filename: result.filename,
+                rowCount: result.rowCount,
+                columnCount: result.columnCount,
+              },
+            };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Export failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'EXPORT_CSV': {
+          const { items, filename } = message.payload as {
+            items: ExtractedItem[];
+            filename?: string;
+          };
+
+          if (!items || items.length === 0) {
+            return { success: false, error: 'No items to export' };
+          }
+
+          try {
+            const csv = exportToCSV(items);
+            const base64 = btoa(unescape(encodeURIComponent(csv)));
+            const outputFilename = filename || `scrape-export-${Date.now()}.csv`;
+
+            await chrome.downloads.download({
+              url: `data:text/csv;base64,${base64}`,
+              filename: outputFilename,
+              saveAs: true,
+            });
+
+            return {
+              success: true,
+              data: { filename: outputFilename, rowCount: items.length },
+            };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Export failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'ANALYZE_DATA': {
+          const { items } = message.payload as { items: ExtractedItem[] };
+
+          if (!items || items.length === 0) {
+            return { success: false, error: 'No items to analyze' };
+          }
+
+          try {
+            const analysis = analyzeData(items);
+            const textReport = generateTextReport(analysis);
+
+            return {
+              success: true,
+              data: {
+                analysis,
+                textReport,
+              },
+            };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
+            return { success: false, error: errorMessage };
+          }
+        }
 
         default:
           return { success: false, error: 'Unknown message type' };

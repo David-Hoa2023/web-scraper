@@ -3,20 +3,27 @@ export * from './types/recording';
 export * from './types/tutorial';
 
 // Pattern Detection Types
-export interface PatternMatch {
+export interface Fingerprint {
   tag: string;
-  classes: string[];
-  id?: string;
-  dataAttrs: Record<string, string>;
-  ariaAttrs: Record<string, string>;
-  parent: Element;
-  siblings: Element[];
+  classes: string[]; // For debugging/fallback, not strict match
+  attrs: Record<string, string>; // Stable attributes like data-id prefix
+  depth: number; // Depth relative to container
+  childCount: number;
+}
+
+export interface PatternMatch {
+  container: Element;
+  fingerprint: Fingerprint;
+  siblings: Element[]; // All matches in container
+  isSingle: boolean;
   confidence: number;
 }
 
 export interface PatternDetectorConfig {
   matchBy: ('tag' | 'class' | 'id' | 'data' | 'aria')[];
-  minSiblings: number;
+  minListItems: number; // Formerly minSiblings
+  allowSingleFallback: boolean;
+  simThreshold: number; // Jaccard/structure similarity threshold
   depthLimit: number;
 }
 
@@ -81,6 +88,9 @@ export type MessageType =
   | 'STOP_SCRAPE'
   | 'GET_STATUS'
   | 'EXPORT_DATA'
+  | 'EXPORT_EXCEL'
+  | 'EXPORT_CSV'
+  | 'ANALYZE_DATA'
   | 'CLEAR_DATA'
   | 'UPDATE_CONFIG'
   // Recording messages
@@ -99,7 +109,12 @@ export type MessageType =
   | 'RUN_TASK_NOW'
   | 'GET_SCHEDULED_TASKS'
   | 'GET_TASK_HISTORY'
-  | 'RESCHEDULE_ALL';
+  | 'RESCHEDULE_ALL'
+  | 'START_SCRAPE_SELECTION'
+  | 'UPDATE_STATUS'
+  | 'UPDATE_PROGRESS'
+  | 'SHOW_ERROR'
+  | 'UPDATE_PREVIEW';
 
 export interface ScraperMessage {
   type: MessageType;

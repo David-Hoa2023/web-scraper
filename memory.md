@@ -4,44 +4,52 @@
 
 ## Overview
 
-Chrome Extension (Manifest V3) for web scraping + tutorial generation. Records browser interactions and auto-generates instructional guides using LLM.
+Chrome Extension (Manifest V3) for web scraping with data analysis and Excel export.
 
 ## Key Features
 
-- **Scraping:** Pattern detection with locking, auto-scroll, JSON/CSV export
+- **Scraping:** Pattern detection with locking, auto-scroll, SPA navigation support
 - **Preview:** Visual cards with image thumbnails + text
-- **Scheduled Tasks:** Background scheduler with chrome.alarms, webhook notifications
-- **UI:** Chrome Side Panel with Stitch design system
+- **Export:** JSON, CSV, Excel (.xlsx) with analysis sheet
+- **Analysis:** Statistics, aggregations, pivot tables, pattern detection
+- **Scheduling:** Background tasks with webhooks
 
 ## Architecture
 
 | Layer | Components |
 |-------|------------|
 | Content | `patternDetector`, `autoScroller`, `dataExtractor` |
-| UI | `sidepanel` (dashboard, settings, history, preview cards) |
-| Background | `service-worker` (scheduler, message forwarding, webhooks) |
+| UI | `sidepanel` (dashboard, preview cards, settings) |
+| Background | `service-worker` (scheduler, export, webhooks) |
+| Export | `src/export/` (ExcelJS + simple-statistics) |
 
 ## Commands
 
 ```bash
 bun install && bun run build
-bun run typecheck && bun run lint
-bun run test
+bun run typecheck && bun run test
 ```
 
-## Build Notes
+## Claude Code Skills
 
-- Post-build script fixes content script for Chrome compatibility
-- Copies manifest.json and icons to dist/
+| Skill | Purpose |
+|-------|---------|
+| `scraper-data-analysis` | Analyze data, generate insights, create reports |
+| `frontend-slides` | Create HTML presentations from data |
 
-## Documentation
+## Key APIs
 
-- `docs/use-cases.md` - User stories and guides
-- `docs/lesson.md` - Pattern detection lessons learned
+```typescript
+// Export
+await exportToExcel(items, { includeAnalysis: true });
 
-## Recent Updates (Jan 2026)
+// Analysis
+const analysis = analyzeData(items);
+const totals = aggregate(items, 'price', 'sum', 'category');
+```
 
-- **Side Panel UI:** Full-height panel with preview cards showing images + text
-- **Pattern Locking:** Click to lock pattern, then freely click Start Scanning
-- **SPA Navigation:** Pattern detection works across paginated pages
-- **Message Forwarding:** Service worker forwards preview updates to sidepanel
+## Message Types
+
+- `EXPORT_EXCEL` / `EXPORT_CSV` - Export data
+- `ANALYZE_DATA` - Get statistics without export
+- `UPDATE_PREVIEW` - Send preview to sidepanel

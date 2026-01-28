@@ -928,7 +928,7 @@ ui.mainActionBtn?.addEventListener('click', async () => {
 ui.exportBtn?.addEventListener('click', async () => {
   const response = await sendToContentScript({ type: 'EXPORT_DATA' });
   if (response.success && response.data) {
-    const data = response.data as any[];
+    const data = response.data as ExtractedItem[];
     if (data.length === 0) {
       addLogEntry('Export failed: No data');
       return;
@@ -936,47 +936,56 @@ ui.exportBtn?.addEventListener('click', async () => {
 
     const formatSelector = document.getElementById('export-format-selector') as HTMLSelectElement;
     const format = formatSelector ? formatSelector.value : 'json';
+    const dateStr = new Date().toISOString().slice(0, 10);
 
-    let content = '';
-    let mimeType = 'application/json';
-    let extension = 'json';
+    if (format === 'excel') {
+      // Use ExcelJS via service worker for proper .xlsx export
+      addLogEntry('Generating Excel file...');
+      const excelResponse = await chrome.runtime.sendMessage({
+        type: 'EXPORT_EXCEL',
+        payload: {
+          items: data,
+          options: {
+            filename: `scrape-${dateStr}.xlsx`,
+            includeAnalysis: true,
+          },
+        },
+      });
 
-    if (format === 'csv' || format === 'excel') {
-      // Convert to CSV
-      const headers = Array.from(new Set(data.flatMap(Object.keys)));
-      const csvContent = [
-        headers.join(','),
-        ...data.map(row => headers.map(fieldName => {
-          const value = row[fieldName] || '';
-          const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-          // Escape quotes and wrap in quotes
-          return `"${stringValue.replace(/"/g, '""')}"`;
-        }).join(','))
-      ].join('\n');
-
-      if (format === 'excel') {
-        // Add BOM for Excel UTF-8 support
-        content = '\uFEFF' + csvContent;
-        extension = 'csv'; // Using .csv for Excel is standard, or could use .xls (XML/HTML hack) but CSV is safer
+      if (excelResponse.success) {
+        addLogEntry(`Exported ${excelResponse.data.rowCount} items to Excel with analysis`);
       } else {
-        content = csvContent;
-        extension = 'csv';
+        addLogEntry(`Excel export failed: ${excelResponse.error}`);
       }
-      mimeType = 'text/csv;charset=utf-8;';
-    } else {
-      content = JSON.stringify(data, null, 2);
-    }
+    } else if (format === 'csv') {
+      // Use CSV export via service worker
+      const csvResponse = await chrome.runtime.sendMessage({
+        type: 'EXPORT_CSV',
+        payload: {
+          items: data,
+          filename: `scrape-${dateStr}.csv`,
+        },
+      });
 
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `scrape-${new Date().toISOString().slice(0, 10)}.${extension}`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addLogEntry(`Exported ${data.length} items as ${format.toUpperCase()}`);
+      if (csvResponse.success) {
+        addLogEntry(`Exported ${csvResponse.data.rowCount} items as CSV`);
+      } else {
+        addLogEntry(`CSV export failed: ${csvResponse.error}`);
+      }
+    } else {
+      // JSON export (client-side)
+      const content = JSON.stringify(data, null, 2);
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scrape-${dateStr}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addLogEntry(`Exported ${data.length} items as JSON`);
+    }
   } else {
-    addLogEntry('Export failed');
+    addLogEntry('Export failed: No data available');
   }
 });
 

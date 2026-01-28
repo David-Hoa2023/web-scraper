@@ -12,7 +12,9 @@
     "test:watch": "bunx vitest"
   },
   "dependencies": {
-    "jspdf": "^2.5.1"
+    "exceljs": "^4.4.0",
+    "jspdf": "^2.5.1",
+    "simple-statistics": "^7.8.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
