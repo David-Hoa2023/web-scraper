@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phân Tích Dữ Liệu Son Môi - Shopee Vietnam</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #ee4d2d;
+      --primary-dark: #d73211;
+      --secondary: #ff6633;
+      --bg-dark: #1a1a2e;
+      --bg-card: #16213e;
+      --text-primary: #ffffff;
+      --text-secondary: #a0aec0;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-yellow: #f59e0b;
+      --accent-pink: #ec4899;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #0f0f23 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(238, 77, 45, 0.3);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    .header .meta {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .stat-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent-yellow) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card .label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding-left: 1rem;
+      border-left: 4px solid var(--primary);
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .chart-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* Insights Section */
+    .insights-section {
+      margin-bottom: 3rem;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .insight-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border-left: 4px solid var(--primary);
+    }
+
+    .insight-card h4 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .insight-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .insight-card .highlight {
+      color: var(--accent-yellow);
+      font-weight: 600;
+    }
+
+    /* Top Products Table */
+    .table-section {
+      margin-bottom: 3rem;
+    }
+
+    .table-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .table-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      padding: 1rem 1.5rem;
+    }
+
+    .table-header h3 {
+      font-size: 1.1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    th {
+      background: rgba(0,0,0,0.2);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .rank {
+      background: var(--primary);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .sales-badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Location Bars */
+    .location-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .location-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .location-name {
+      width: 140px;
+      font-size: 0.9rem;
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 24px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: width 1s ease-out;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-card, .chart-card, .insight-card, .table-card {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+    .stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      .header h1 {
+        font-size: 1.75rem;
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .stat-card .value {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Phân Tích Dữ Liệu Son Môi</h1>
+      <p>Báo cáo chi tiết từ dữ liệu thu thập trên Shopee Vietnam</p>
+      <div class="meta">Ngày phân tích: 28/01/2026 | Nguồn: shopee.vn | Danh mục: Son môi & Sản phẩm chăm sóc môi</div>
+    </header>
+
+    <!-- Key Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="icon">📦</div>
+        <div class="value">182</div>
+        <div class="label">Tổng sản phẩm</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">💰</div>
+        <div class="value">139.330₫</div>
+        <div class="label">Giá trung bình</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">⭐</div>
+        <div class="value">4.80</div>
+        <div class="label">Đánh giá TB / 5.0</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🛒</div>
+        <div class="value">2.58M+</div>
+        <div class="label">Tổng đã bán</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🏷️</div>
+        <div class="value">75%</div>
+        <div class="label">Sản phẩm giảm giá</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">📉</div>
+        <div class="value">-25%</div>
+        <div class="label">Giảm giá trung bình</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <h2 class="section-title">Phân Tích Chi Tiết</h2>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 Phân Bố Giá Sản Phẩm</h3>
+        <div class="chart-container">
+          <canvas id="priceChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3">⭐ Phân Bố Đánh Giá</h3>
+        <div class="chart-container">
+          <canvas id="ratingChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>💄 Loại Sản Phẩm</h3>
+        <div class="chart-container">
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>🏢 Thương Hiệu Nổi Bật</h3>
+        <div class="chart-container">
+          <canvas id="brandChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Analysis -->
+    <h2 class="section-title">Phân Bố Người Bán Theo Khu Vực</h2>
+    <div class="chart-card" style="margin-bottom: 3rem;">
+      <div class="location-bars">
+        <div class="location-bar">
+          <span class="location-name">🏙️ Hà Nội</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: 36.3%; background: linear-gradient(90deg, #ee4d2d, #ff6633);">36.3%</div>
+          </div>
+        </div>
+        <div class="location-bar">
+          <span class="location-name">🌆 TP. Hồ Chí Minh</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: 24.7%; background: linear-gradient(90deg, #3b82f6, #60a5fa);">24.7%</div>
+          </div>
+        </div>
+        <div class="location-bar">
+          <span class="location-name">🌏 Nước ngoài</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: 22%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);">22.0%</div>
+          </div>
+        </div>
+        <div class="location-bar">
+          <span class="location-name">📍 Khu vực khác</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: 17%; background: linear-gradient(90deg, #10b981, #34d399);">17.0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Sellers Table -->
+    <h2 class="section-title">Top 10 Sản Phẩm Bán Chạy Nhất</h2>
+    <div class="table-section">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>🏆 Bảng Xếp Hạng Doanh Số</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Hạng</th>
+              <th>Tên Sản Phẩm</th>
+              <th>Đã Bán</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="rank">1</span></td>
+              <td>Son Môi Màu CmaaDu15 - Matte Dưỡng Ẩm Lâu Dài</td>
+              <td><span class="sales-badge">500.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">2</span></td>
+              <td>Son kem PERFECT DIARY DreamMatte màu lì siêu mịn</td>
+              <td><span class="sales-badge">400.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">3</span></td>
+              <td>Son Romand Juicy Tint 23 Nucadamia căng mọng môi</td>
+              <td><span class="sales-badge">100.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">4</span></td>
+              <td>Son Tint Bóng Romand Juicy Lasting Tint màu 25</td>
+              <td><span class="sales-badge">100.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">5</span></td>
+              <td>Son Kem Siêu Lì Merzy Hàn Quốc</td>
+              <td><span class="sales-badge">100.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">6</span></td>
+              <td>Son môi Gege Bear/PINKCOCO có dưỡng</td>
+              <td><span class="sales-badge">80.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">7</span></td>
+              <td>Son môi Ice Velvet Matte chống mồ hôi</td>
+              <td><span class="sales-badge">80.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">8</span></td>
+              <td>PERIPERA Son Tint Mịn Lì Siêu Lâu Trôi</td>
+              <td><span class="sales-badge">80.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">9</span></td>
+              <td>Gegebear Son Bóng Màu Nhung Lì Dưỡng Ẩm</td>
+              <td><span class="sales-badge">70.000+</span></td>
+            </tr>
+            <tr>
+              <td><span class="rank">10</span></td>
+              <td>ANDAIYAN 6 màu Matte Son môi không dính</td>
+              <td><span class="sales-badge">70.000+</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Key Insights -->
+    <h2 class="section-title">Nhận Định Chính</h2>
+    <div class="insights-section">
+      <div class="insights-grid">
+        <div class="insight-card">
+          <h4>💸 Thị Trường Giá Rẻ</h4>
+          <p><span class="highlight">51%</span> sản phẩm có giá dưới 100.000₫. Giá trung vị chỉ <span class="highlight">99.000₫</span>, cho thấy thị trường son môi Việt Nam tập trung vào phân khúc bình dân.</p>
+        </div>
+        <div class="insight-card">
+          <h4>⭐ Chất Lượng Cao</h4>
+          <p><span class="highlight">77%</span> sản phẩm được đánh giá 4.8 sao trở lên. Mức đánh giá trung bình <span class="highlight">4.80/5.0</span> cho thấy sự hài lòng của khách hàng rất cao.</p>
+        </div>
+        <div class="insight-card">
+          <h4>💄 Son Lì Thống Trị</h4>
+          <p><span class="highlight">63%</span> sản phẩm là son lì (matte). Người tiêu dùng Việt Nam ưa chuộng finish lì hơn các loại son bóng hay dưỡng.</p>
+        </div>
+        <div class="insight-card">
+          <h4>🏷️ Khuyến Mãi Mạnh</h4>
+          <p><span class="highlight">75%</span> sản phẩm đang được giảm giá với mức giảm trung bình <span class="highlight">25%</span>. Cao nhất lên đến <span class="highlight">73%</span>. Cạnh tranh về giá rất khốc liệt.</p>
+        </div>
+        <div class="insight-card">
+          <h4>🏙️ Hà Nội Dẫn Đầu</h4>
+          <p>Hà Nội chiếm <span class="highlight">36.3%</span> số lượng người bán, tiếp theo là TP.HCM với <span class="highlight">24.7%</span>. <span class="highlight">22%</span> hàng từ nước ngoài (chủ yếu Trung Quốc, Hàn Quốc).</p>
+        </div>
+        <div class="insight-card">
+          <h4>🏆 Thương Hiệu Nổi Bật</h4>
+          <p><span class="highlight">Herorange</span> dẫn đầu với 13 sản phẩm, tiếp theo là <span class="highlight">Romand</span> (7) và <span class="highlight">MAC</span> (6). Thương hiệu Hàn Quốc và local được ưa chuộng.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Báo cáo được tạo bởi <strong>Web Scraper Pro</strong> | Dữ liệu từ <a href="https://shopee.vn" target="_blank">Shopee Vietnam</a></p>
+      <p style="margin-top: 0.5rem;">© 2026 - Phân tích tự động bằng AI</p>
+    </footer>
+  </div>
+
+  <script>
+    // Chart.js defaults
+    Chart.defaults.color = '#a0aec0';
+    Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+    // Price Distribution Chart
+    new Chart(document.getElementById('priceChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Dưới 50k', '50k-100k', '100k-200k', '200k-500k', 'Trên 500k'],
+        datasets: [{
+          label: 'Số sản phẩm',
+          data: [66, 25, 48, 36, 5],
+          backgroundColor: [
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(236, 72, 153, 0.8)'
+          ],
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    // Rating Distribution Chart
+    new Chart(document.getElementById('ratingChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['5.0 sao', '4.8-4.9 sao', '4.5-4.7 sao', '4.0-4.4 sao', 'Dưới 4.0'],
+        datasets: [{
+          data: [30, 107, 35, 4, 2],
+          backgroundColor: [
+            'rgba(238, 77, 45, 0.9)',
+            'rgba(245, 158, 11, 0.9)',
+            'rgba(59, 130, 246, 0.9)',
+            'rgba(139, 92, 246, 0.9)',
+            'rgba(107, 114, 128, 0.9)'
+          ],
+          borderWidth: 0,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { padding: 15 }
+          }
+        }
+      }
+    });
+
+    // Product Type Chart
+    new Chart(document.getElementById('typeChart'), {
+      type: 'polarArea',
+      data: {
+        labels: ['Son lì (Matte)', 'Son kem (Liquid)', 'Son dưỡng', 'Son thỏi', 'Son bóng', 'Chì kẻ môi'],
+        datasets: [{
+          data: [114, 62, 49, 32, 23, 11],
+          backgroundColor: [
+            'rgba(238, 77, 45, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(139, 92, 246, 0.8)'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { padding: 10, font: { size: 11 } }
+          }
+        }
+      }
+    });
+
+    // Brand Chart
+    new Chart(document.getElementById('brandChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Herorange', 'Romand', 'MAC', 'M.O.I', 'Beana', '3CE', 'O.two.o', 'Embisu', 'YSL'],
+        datasets: [{
+          label: 'Số sản phẩm',
+          data: [13, 7, 6, 5, 5, 2, 2, 2, 2],
+          backgroundColor: 'rgba(238, 77, 45, 0.8)',
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          y: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
