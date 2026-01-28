@@ -33,8 +33,17 @@ bun run typecheck && bun run test
 
 | Skill | Purpose |
 |-------|---------|
-| `scraper-data-analysis` | Analyze CSV/JSON, generate insights & reports |
+| `scraper-data-analysis` | Text analysis (word cloud, sentiment, themes), statistics & reports |
 | `frontend-slides` | Create HTML presentations from data |
+
+### Text Analysis Capabilities (New)
+
+| Analysis | Description |
+|----------|-------------|
+| **Word Cloud** | Vietnamese text preprocessing, stop words, frequency visualization |
+| **Sentiment** | E-commerce lexicon (30+ terms), intensifiers/negators, batch scoring |
+| **Thematic** | 6 theme rules, brand extraction (20+ brands), price/location segmentation |
+| **Dashboard** | Combined HTML dashboard with Chart.js visualizations |
 
 ## Documentation
 
@@ -45,6 +54,7 @@ bun run typecheck && bun run test
 
 ## Recent Updates
 
+- **Text Analysis Skill** - Word cloud, sentiment analysis, thematic analysis with Vietnamese NLP support
 - Vietnamese user stories covering 8 use cases (scraping, analysis, visualization)
 - HTML report generator with Chart.js (dark mode, responsive)
 - Shopee e-commerce data analysis example
