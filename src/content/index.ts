@@ -9,7 +9,6 @@ import type {
   ScraperResponse,
   ScrollerConfig,
   ExtractionConfig,
-  RecordingSession,
 } from '../types';
 import {
   detectPattern,
@@ -17,34 +16,13 @@ import {
   hideHighlight,
   defaultConfig as defaultPatternConfig,
   setOnPatternClick,
+  lockPattern,
+  unlockPattern,
+  isLocked,
 } from './patternDetector';
 import * as AutoScroller from './autoScroller';
-import {
-  createOverlay,
-  updateProgress,
-  updateStatus,
-  updatePreview,
-  showError,
-  setButtonHandlers,
-  isOverlayVisible,
-} from '../ui/overlay';
+// Overlay imports removed
 import { extractData } from './dataExtractor';
-import {
-  createCaptureOrchestrator,
-  type CaptureOrchestrator,
-} from './recorder/captureOrchestrator';
-import {
-  showRecordingPanel,
-  updateRecordingState,
-  type RecordingPanelHandlers,
-} from '../ui/recordingPanel';
-import { showSettingsPanel } from '../ui/settingsPanel';
-import { createContentGenerator } from './tutorial/contentGenerator';
-import { exportToMarkdown } from './tutorial/exporters/markdown';
-import { exportToPdf } from './tutorial/exporters/pdf';
-import { exportToVideo } from './tutorial/exporters/video';
-import type { GeneratedTutorial, ActionType } from '../types/tutorial';
-import { DEFAULT_EXPORT_CONFIG } from '../types/tutorial';
 
 console.log('[Web Scraper] Content script loaded');
 
@@ -69,8 +47,11 @@ let appConfig = {
 };
 
 // --- Recording State ---
-let captureOrchestrator: CaptureOrchestrator | null = null;
-let currentRecordingSession: RecordingSession | null = null;
+// Recording logic temporarily disabled during refactor
+// let captureOrchestrator: CaptureOrchestrator | null = null;
+// let currentRecordingSession: RecordingSession | null = null;
+
+// --- Helper Functions ---
 
 // --- Helper Functions ---
 
@@ -89,6 +70,9 @@ function debounce<T extends (...args: Parameters<T>) => void>(
 
 const handleMouseOver = debounce((event: MouseEvent) => {
   if (!isPatternDetectionEnabled) return;
+
+  // Don't change highlight if pattern is locked
+  if (isLocked()) return;
 
   const target = event.target as Element;
   if (!target || target.nodeType !== Node.ELEMENT_NODE) return;
@@ -110,6 +94,9 @@ const handleMouseOver = debounce((event: MouseEvent) => {
 }, 50);
 
 function handleMouseOut(event: MouseEvent) {
+  // Don't hide if pattern is locked
+  if (isLocked()) return;
+
   const relatedTarget = event.relatedTarget as Element | null;
   if (!relatedTarget || !document.body.contains(relatedTarget)) {
     hideHighlight();
@@ -117,14 +104,23 @@ function handleMouseOut(event: MouseEvent) {
 }
 
 function initPatternDetection() {
-  document.addEventListener('mouseover', handleMouseOver, { passive: true });
-  document.addEventListener('mouseout', handleMouseOut, { passive: true });
+  document.addEventListener('mouseover', handleMouseOver, { passive: true, capture: true });
+  document.addEventListener('mouseout', handleMouseOut, { passive: true, capture: true });
 
-  // Register click handler for pattern overlay
+  // Register click handler for pattern overlay - locks the pattern
   setOnPatternClick(() => {
     if (currentPattern) {
-      console.log('[Web Scraper] Pattern clicked, starting scrape');
-      handleStartScrape();
+      if (isLocked()) {
+        // Already locked - unlock it
+        console.log('[Web Scraper] Pattern unlocked');
+        unlockPattern();
+        hideHighlight(true);
+        currentPattern = null;
+      } else {
+        // Lock the current pattern
+        console.log('[Web Scraper] Pattern locked! Click "Start Scanning" in sidepanel or right-click for context menu.');
+        lockPattern();
+      }
     }
   });
 
@@ -141,20 +137,69 @@ function cleanupPatternDetection() {
 
 // --- Data Storage ---
 let collectedData: ExtractedItem[] = [];
-let seenElements = new WeakSet<Element>();
 
 // --- Scraper Integration ---
+
+import { _internal } from './patternDetector';
+const { getFingerprint, calculateSimilarity } = _internal;
+
+/**
+ * Re-finds items in the container that match the fingerprint.
+ * Critical for handling dynamic DOM updates during scrolling.
+ */
+function getCurrentItemsFromPattern(pattern: PatternMatch): Element[] {
+  if (!pattern?.container) return [];
+
+  // Re-query children to get current state of DOM
+  const children = Array.from(pattern.container.children).filter((node): node is Element => {
+    const el = node as Element;
+    // Filter invisible or irrelevant elements
+    if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return false;
+    return true;
+  });
+
+  const items: Element[] = [];
+  const fpTarget = pattern.fingerprint;
+
+  for (const child of children) {
+    const fpChild = getFingerprint(child);
+    const sim = calculateSimilarity(fpTarget, fpChild);
+    // Use same threshold as detection
+    if (sim >= (appConfig.patternConfig.simThreshold || 0.62)) {
+      items.push(child);
+    }
+  }
+  return items;
+}
 
 function extractFromCurrentPattern() {
   if (!currentPattern) return;
 
-  // Extract data from all siblings that haven't been processed yet
-  for (const element of currentPattern.siblings) {
-    if (!seenElements.has(element)) {
-      seenElements.add(element);
-      const extracted = extractData(element, appConfig.extractionConfig);
+  // Dynamic re-query of items
+  const currentItems = getCurrentItemsFromPattern(currentPattern);
+  const seenKeys = new Set(collectedData.map(item => item.link || item.title || JSON.stringify(item)));
+  let newItemsAdded = false;
+
+  for (const element of currentItems) {
+    const extracted = extractData(element, appConfig.extractionConfig);
+
+    // Deduplication key: prefer stable identifiers
+    const key = (extracted.link as string) || (extracted.image as string) || (extracted.text as string) || JSON.stringify(extracted);
+
+    if (key && !seenKeys.has(key)) {
+      seenKeys.add(key);
       collectedData.push(extracted);
+      newItemsAdded = true;
     }
+  }
+
+  // Send preview update if new items were added
+  if (newItemsAdded) {
+    console.log('[Web Scraper] Extracted', collectedData.length, 'total items');
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_PREVIEW',
+      payload: { items: collectedData.slice(-5) }
+    }).catch(() => {});
   }
 }
 
@@ -176,10 +221,11 @@ function extractWithHeuristics() {
       const elements = document.querySelectorAll(selector);
       if (elements.length > 3) {
         elements.forEach((el) => {
-          if (!seenElements.has(el)) {
-            seenElements.add(el);
-            const extracted = extractData(el, appConfig.extractionConfig);
-            if (extracted.text || extracted.link || extracted.title) {
+          const extracted = extractData(el, appConfig.extractionConfig);
+          if (extracted.text || extracted.link || extracted.title) {
+            // Simple dedupe
+            const key = JSON.stringify(extracted);
+            if (!collectedData.some(d => JSON.stringify(d) === key)) {
               collectedData.push(extracted);
             }
           }
@@ -193,12 +239,25 @@ function extractWithHeuristics() {
 }
 
 function onScrollerProgress(state: ScrollerState) {
-  // Update UI
-  updateStatus(state.status);
-  updateProgress(state.itemsCollected, appConfig.scrollerConfig.maxItems || 0);
+  // Update UI via Messages
+  chrome.runtime.sendMessage({
+    type: 'UPDATE_STATUS',
+    payload: { status: state.status }
+  }).catch(() => { });
+
+  chrome.runtime.sendMessage({
+    type: 'UPDATE_PROGRESS',
+    payload: {
+      current: collectedData.length, // Report unique items collected
+      max: appConfig.scrollerConfig.maxItems || 0
+    }
+  }).catch(() => { });
 
   if (state.errors.length > 0) {
-    showError(state.errors[state.errors.length - 1]);
+    chrome.runtime.sendMessage({
+      type: 'SHOW_ERROR',
+      payload: { message: state.errors[state.errors.length - 1] }
+    }).catch(() => { });
   }
 
   // Extract data based on pattern or heuristics
@@ -209,7 +268,10 @@ function onScrollerProgress(state: ScrollerState) {
   }
 
   // Update preview with last 5 items
-  updatePreview(collectedData.slice(-5));
+  chrome.runtime.sendMessage({
+    type: 'UPDATE_PREVIEW',
+    payload: { items: collectedData.slice(-5) }
+  }).catch(() => { });
 }
 
 // --- Message Handling ---
@@ -220,6 +282,17 @@ chrome.runtime.onMessage.addListener(
 
     try {
       switch (message.type) {
+        case 'START_SCRAPE_SELECTION':
+          console.log('[Content] Received context menu scrape command');
+          if (currentPattern) {
+            handleStartScrape();
+            sendResponse({ success: true, data: { status: 'running' } });
+          } else {
+            console.warn('[Content] No pattern selected when context menu clicked');
+            sendResponse({ success: false, error: 'No pattern selected' });
+          }
+          break;
+
         case 'START_SCRAPE':
           handleStartScrape();
           sendResponse({ success: true, data: { status: 'running' } });
@@ -270,53 +343,10 @@ chrome.runtime.onMessage.addListener(
 
         case 'CLEAR_DATA':
           collectedData = [];
-          seenElements = new WeakSet<Element>();
+
           console.log('[Content] Data cleared');
           sendResponse({ success: true });
           break;
-
-        // --- Recording Messages ---
-        case 'START_RECORDING':
-          handleStartRecording(message.payload as any)
-            .then(() => sendResponse({ success: true, data: { status: 'recording' } }))
-            .catch((err) => sendResponse({ success: false, error: err.message }));
-          return true; // Async response
-
-        case 'PAUSE_RECORDING':
-          handlePauseRecording();
-          sendResponse({ success: true, data: { status: 'paused' } });
-          break;
-
-        case 'RESUME_RECORDING':
-          handleResumeRecording();
-          sendResponse({ success: true, data: { status: 'recording' } });
-          break;
-
-        case 'STOP_RECORDING':
-          handleStopRecording()
-            .then((session) => sendResponse({ success: true, data: session }))
-            .catch((err) => sendResponse({ success: false, error: err.message }));
-          return true; // Async response
-
-        case 'GET_RECORDING_STATUS':
-          sendResponse({
-            success: true,
-            data: captureOrchestrator?.getState() || { status: 'idle' }
-          });
-          break;
-
-        // --- Tutorial Messages ---
-        case 'GENERATE_TUTORIAL':
-          handleGenerateTutorial(message.payload as any)
-            .then((content) => sendResponse({ success: true, data: content }))
-            .catch((err) => sendResponse({ success: false, error: err.message }));
-          return true; // Async response
-
-        case 'EXPORT_TUTORIAL':
-          handleExportTutorial(message.payload as any)
-            .then(() => sendResponse({ success: true }))
-            .catch((err) => sendResponse({ success: false, error: err.message }));
-          return true; // Async response
 
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
@@ -341,24 +371,17 @@ function handleStartScrape() {
     console.log('[Content] Starting scrape with heuristic detection (no pattern selected)');
   }
 
-  // 1. Disable hover detection so it doesn't interfere
+  // 1. Unlock pattern and disable hover detection
+  unlockPattern();
+  hideHighlight(true);
   isPatternDetectionEnabled = false;
   cleanupPatternDetection();
 
-  // 2. Initialize and show Overlay
-  if (!isOverlayVisible()) {
-    createOverlay();
-
-    // Wire up Overlay Buttons to Logic
-    setButtonHandlers({
-      onStart: () => { }, // Disabled loops
-      onPause: () => AutoScroller.pauseScroll(),
-      onResume: () => AutoScroller.resumeScroll(),
-      onStop: handleStopScrape
-    });
-  }
-
-  updateStatus('running');
+  // 2. Notify UI
+  chrome.runtime.sendMessage({
+    type: 'UPDATE_STATUS',
+    payload: { status: 'running' }
+  }).catch(() => { });
 
   // 3. Start Scroller
   // Hook up progress
@@ -367,8 +390,15 @@ function handleStartScrape() {
   try {
     AutoScroller.startScroll(appConfig.scrollerConfig);
   } catch (e: any) {
-    showError(e.message);
-    updateStatus('error');
+    chrome.runtime.sendMessage({
+      type: 'SHOW_ERROR',
+      payload: { message: e.message }
+    }).catch(() => { });
+
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_STATUS',
+      payload: { status: 'error' }
+    }).catch(() => { });
   }
 }
 
@@ -383,251 +413,86 @@ function handleStopScrape() {
   console.log('[Content] Scrape stopped');
 }
 
-// --- Recording Handlers ---
-
-async function handleStartRecording(config?: any): Promise<void> {
-  console.log('[Content] Starting recording...');
-
-  // Create capture orchestrator if not exists
-  if (!captureOrchestrator) {
-    captureOrchestrator = createCaptureOrchestrator();
-  }
-
-  // Subscribe to state changes and update UI
-  captureOrchestrator.onStateChange((state) => {
-    updateRecordingState(state);
-  });
-
-  // Show recording panel with handlers
-  const panelHandlers: RecordingPanelHandlers = {
-    onStart: async (cfg) => {
-      await captureOrchestrator?.start(cfg);
-    },
-    onPause: () => {
-      captureOrchestrator?.pause();
-    },
-    onResume: () => {
-      captureOrchestrator?.resume();
-    },
-    onStop: async () => {
-      await handleStopRecording();
-    },
-    onExport: async (format) => {
-      await handleExportTutorial({ format });
-    },
-    onSettingsOpen: () => {
-      showSettingsPanel({
-        onSave: (settings) => {
-          console.log('[Content] Settings saved:', settings);
-        },
-        onClose: () => {
-          console.log('[Content] Settings closed');
-        },
-      });
-    },
-  };
-
-  showRecordingPanel(panelHandlers);
-
-  // Start the capture
-  await captureOrchestrator.start(config);
-  console.log('[Content] Recording started');
-}
-
-function handlePauseRecording(): void {
-  if (captureOrchestrator?.isRecording()) {
-    captureOrchestrator.pause();
-    console.log('[Content] Recording paused');
-  }
-}
-
-function handleResumeRecording(): void {
-  if (captureOrchestrator?.isPaused()) {
-    captureOrchestrator.resume();
-    console.log('[Content] Recording resumed');
-  }
-}
-
-async function handleStopRecording(): Promise<RecordingSession | null> {
-  if (!captureOrchestrator) {
-    return null;
-  }
-
-  try {
-    const session = await captureOrchestrator.stop();
-    currentRecordingSession = session;
-    console.log('[Content] Recording stopped, session:', session.id);
-    console.log('[Content] Events captured:', session.domEvents.length);
-    console.log('[Content] Cursor frames:', session.cursorFrames.length);
-    return session;
-  } catch (error) {
-    console.error('[Content] Error stopping recording:', error);
-    throw error;
-  }
-}
-
-// --- Tutorial Handlers ---
-
-async function handleGenerateTutorial(options?: {
-  llmConfig?: any;
-}): Promise<GeneratedTutorial> {
-  if (!currentRecordingSession) {
-    throw new Error('No recording session available');
-  }
-
-  console.log('[Content] Generating tutorial content...');
-
-  // Get LLM config from storage
-  const stored = await chrome.storage.local.get('web-scraper-settings');
-  const settings = stored['web-scraper-settings'];
-  const llmConfig = options?.llmConfig || settings?.llm;
-
-  if (!llmConfig?.apiKey) {
-    // Generate without LLM - use basic template
-    console.log('[Content] No LLM API key, using template-based generation');
-    return generateBasicTutorial(currentRecordingSession);
-  }
-
-  const generator = createContentGenerator();
-  const result = await generator.generate(currentRecordingSession, llmConfig);
-
-  if (!result.tutorial) {
-    throw new Error('Failed to generate tutorial');
-  }
-
-  console.log('[Content] Tutorial content generated');
-  return result.tutorial;
-}
-
-function mapEventTypeToActionType(eventType: string): ActionType {
-  switch (eventType) {
-    case 'click':
-    case 'dblclick':
-      return 'click';
-    case 'input':
-    case 'change':
-      return 'type';
-    case 'scroll':
-      return 'scroll';
-    case 'hover':
-      return 'hover';
-    case 'select':
-      return 'select';
-    default:
-      return 'click';
-  }
-}
-
-function generateBasicTutorial(session: RecordingSession): GeneratedTutorial {
-  const steps = session.domEvents.map((event, index) => {
-    let action = '';
-    const targetText = event.target.textContent || event.target.selector;
-    const actionType = mapEventTypeToActionType(event.type);
-
-    switch (event.type) {
-      case 'click':
-        action = `Click on **${targetText}**`;
-        break;
-      case 'input':
-      case 'change':
-        action = `Enter "${event.target.value || ''}" in the ${event.target.selector} field`;
-        break;
-      case 'scroll':
-        action = 'Scroll the page';
-        break;
-      default:
-        action = `${event.type} on ${event.target.selector}`;
-    }
-
-    return {
-      stepNumber: index + 1,
-      action,
-      actionType,
-      targetSelector: event.target.selector,
-      timestamp: event.timestamp,
-    };
-  });
-
-  return {
-    id: `tutorial_${session.id}`,
-    title: session.metadata.title,
-    description: `Tutorial recorded from ${session.metadata.url}`,
-    steps,
-    sourceRecording: session.id,
-    generatedAt: new Date().toISOString(),
-    tags: ['auto-generated'],
-  };
-}
-
-async function handleExportTutorial(options: {
-  format: 'markdown' | 'pdf' | 'video';
-}): Promise<void> {
-  if (!currentRecordingSession) {
-    throw new Error('No recording session available');
-  }
-
-  console.log('[Content] Exporting tutorial as:', options.format);
-
-  const exportConfig = {
-    ...DEFAULT_EXPORT_CONFIG,
-    format: options.format,
-  };
-
-  switch (options.format) {
-    case 'markdown': {
-      const tutorial = await handleGenerateTutorial();
-      const result = exportToMarkdown(tutorial, exportConfig);
-      const blob = new Blob([result.content], { type: result.mimeType });
-      downloadBlob(blob, result.filename);
-      break;
-    }
-    case 'pdf': {
-      const tutorial = await handleGenerateTutorial();
-      const result = await exportToPdf(tutorial, exportConfig);
-      const blob = new Blob([result.content], { type: result.mimeType });
-      downloadBlob(blob, result.filename);
-      break;
-    }
-    case 'video': {
-      if (!currentRecordingSession.videoBlob) {
-        throw new Error('No video recorded');
-      }
-      const tutorial = await handleGenerateTutorial();
-      const result = await exportToVideo(currentRecordingSession, tutorial, exportConfig);
-      const blob = new Blob([result.content], { type: result.mimeType });
-      downloadBlob(blob, result.filename);
-      break;
-    }
-  }
-
-  console.log('[Content] Export complete');
-}
-
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // --- Initialization ---
 
 async function init() {
   // Load saved config
   const saved = await chrome.storage.local.get('scraperConfig');
   if (saved.scraperConfig) {
-    appConfig = { ...appConfig, ...saved.scraperConfig };
+    appConfig = {
+      ...appConfig,
+      ...saved.scraperConfig,
+      patternConfig: {
+        ...appConfig.patternConfig,
+        ...(saved.scraperConfig.patternConfig || {}),
+        minListItems: 3, // Default for lists
+        allowSingleFallback: true // Allow single items too
+      }
+    };
   }
 
   initPatternDetection();
 }
 
-init();
+// Ensure init is called after DOMContentLoaded if not already loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 // Cleanup on unload
 window.addEventListener('unload', () => {
   cleanupPatternDetection();
   AutoScroller.stopScroll();
 });
+
+// --- SPA Navigation Detection ---
+// Handle URL changes in Single Page Applications (e.g., pagination)
+
+let lastUrl = location.href;
+
+function handleUrlChange() {
+  const currentUrl = location.href;
+  if (currentUrl !== lastUrl) {
+    console.log('[Web Scraper] URL changed, re-initializing pattern detection');
+    lastUrl = currentUrl;
+
+    // Reset state for new page
+    unlockPattern();
+    currentPattern = null;
+    hideHighlight(true);
+
+    // Re-enable pattern detection if it was disabled
+    if (!isPatternDetectionEnabled) {
+      isPatternDetectionEnabled = true;
+      initPatternDetection();
+    }
+
+    // Notify UI of URL change
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_STATUS',
+      payload: { status: 'idle', message: 'New page detected' }
+    }).catch(() => {});
+  }
+}
+
+// Listen for popstate (browser back/forward)
+window.addEventListener('popstate', handleUrlChange);
+
+// Observe URL changes via History API (pushState/replaceState)
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function(...args) {
+  originalPushState.apply(this, args);
+  handleUrlChange();
+};
+
+history.replaceState = function(...args) {
+  originalReplaceState.apply(this, args);
+  handleUrlChange();
+};
+
+// Also check periodically for hash changes or other modifications
+setInterval(handleUrlChange, 1000);

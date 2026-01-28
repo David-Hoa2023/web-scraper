@@ -40,3 +40,11 @@ bun run test
 - `docs/use-cases.md` - User stories and step-by-step guides
 - `docs/STITCH_UI_MAPPING.md` - UI component mapping to Stitch designs
 - `docs/backlog/` - Feature backlogs and demo gaps plan
+
+## Recent Updates (Jan 2026)
+
+- **UI Unification:** Merged Popup and Overlay into a single **Chrome Side Panel**. Removed `overlay.ts` and updated `manifest.json`.
+- **Pattern Detection:**
+  - Enhanced with **Fuzzy Matching** (Jaccard similarity > 0.3) for dynamic classes.
+  - Implemented **Deep Traversal** (depth 5) with "Best Match" prioritization.
+  - **Status:** working for single items, but "List Detection" still failing on complex sites like Shopee (see `docs/lesson.md`).

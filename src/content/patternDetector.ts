@@ -1,456 +1,253 @@
 /**
- * Enhanced Pattern Detection Module
- * Detects repeating patterns in DOM elements based on configurable matching criteria
+ * Enhanced Pattern Detection Module with Fingerprinting
+ * Detects structural list patterns robustly, refactored for dynamic sites.
  */
 
-import type { PatternMatch, PatternDetectorConfig } from '../types';
+import type { PatternMatch, PatternDetectorConfig, Fingerprint } from '../types';
 
 // Constants for overlay styling
 const OVERLAY_ID = 'web-scraper-pattern-overlay';
 const BADGE_ID = 'web-scraper-pattern-badge';
-const OVERLAY_BORDER_COLOR = '#22c55e'; // Green
-const OVERLAY_BORDER_WIDTH = '2px';
-const OVERLAY_BACKGROUND = 'rgba(34, 197, 94, 0.1)';
-const BADGE_BACKGROUND = '#22c55e';
-const BADGE_TEXT_COLOR = '#ffffff';
 
-/**
- * Default configuration for pattern detection
- */
+// Configuration
 export const defaultConfig: PatternDetectorConfig = {
-  matchBy: ['tag', 'class'],
-  minSiblings: 2,
-  depthLimit: 3,
+  matchBy: ['tag', 'class'], // kept for compat, moving towards fingerprint
+  minListItems: 3,
+  allowSingleFallback: true,
+  simThreshold: 0.62,
+  depthLimit: 12,
 };
 
+// --- Fingerprinting Logic ---
+
 /**
- * Extracts element signature based on configured matching criteria
+ * Generates a structural fingerprint for an element
  */
-function getElementSignature(
-  element: Element,
-  matchBy: PatternDetectorConfig['matchBy']
-): string {
-  const parts: string[] = [];
-
-  for (const criterion of matchBy) {
-    switch (criterion) {
-      case 'tag':
-        parts.push(`tag:${element.tagName.toLowerCase()}`);
-        break;
-      case 'class':
-        if (element.classList.length > 0) {
-          const sortedClasses = Array.from(element.classList).sort();
-          parts.push(`class:${sortedClasses.join(',')}`);
-        }
-        break;
-      case 'id':
-        // ID matching checks for patterns (e.g., item-1, item-2)
-        if (element.id) {
-          const idPattern = element.id.replace(/\d+/g, '#');
-          parts.push(`id:${idPattern}`);
-        }
-        break;
-      case 'data': {
-        const dataAttrs = getDataAttributes(element);
-        if (Object.keys(dataAttrs).length > 0) {
-          const dataKeys = Object.keys(dataAttrs).sort();
-          parts.push(`data:${dataKeys.join(',')}`);
-        }
-        break;
-      }
-      case 'aria': {
-        const ariaAttrs = getAriaAttributes(element);
-        if (Object.keys(ariaAttrs).length > 0) {
-          const ariaKeys = Object.keys(ariaAttrs).sort();
-          parts.push(`aria:${ariaKeys.join(',')}`);
-        }
-        break;
-      }
-    }
-  }
-
-  return parts.join('|');
+function getFingerprint(element: Element): Fingerprint {
+  return {
+    tag: element.tagName.toLowerCase(),
+    classes: Array.from(element.classList),
+    attrs: getStableAttributes(element),
+    depth: 0, // Assigned relative to container later
+    childCount: element.children.length
+  };
 }
 
 /**
- * Extracts all data-* attributes from an element
+ * Extracts attributes likely to be stable (data-*, aria-*, etc)
  */
-function getDataAttributes(element: Element): Record<string, string> {
-  const dataAttrs: Record<string, string> = {};
+function getStableAttributes(element: Element): Record<string, string> {
+  const attrs: Record<string, string> = {};
   for (const attr of element.attributes) {
-    if (attr.name.startsWith('data-')) {
-      const key = attr.name.slice(5); // Remove 'data-' prefix
-      dataAttrs[key] = attr.value;
+    if (attr.name.startsWith('data-') || attr.name.startsWith('aria-') || attr.name === 'role') {
+      attrs[attr.name] = attr.value;
     }
   }
-  return dataAttrs;
+  return attrs;
 }
 
 /**
- * Extracts all aria-* attributes from an element
+ * Calculates similarity between two fingerprints (0 to 1)
  */
-function getAriaAttributes(element: Element): Record<string, string> {
-  const ariaAttrs: Record<string, string> = {};
-  for (const attr of element.attributes) {
-    if (attr.name.startsWith('aria-')) {
-      const key = attr.name.slice(5); // Remove 'aria-' prefix
-      ariaAttrs[key] = attr.value;
-    }
-  }
-  return ariaAttrs;
+function calculateSimilarity(fp1: Fingerprint, fp2: Fingerprint): number {
+  if (fp1.tag !== fp2.tag) return 0;
+
+  // Jaccard for structure/classes (classes not strict)
+  const classSim = getJaccardSimilarity(fp1.classes, fp2.classes);
+
+  // Attribute match score
+  const attrs1 = Object.keys(fp1.attrs);
+  const attrs2 = Object.keys(fp2.attrs);
+  const attrSim = getJaccardSimilarity(attrs1, attrs2);
+
+  // Child count similarity (allow small variance)
+  const childSim = Math.min(fp1.childCount, fp2.childCount) / (Math.max(fp1.childCount, fp2.childCount) || 1);
+
+  // Weighted score: Tag is mandatory (already checked). Structure matters most.
+  // 30% Class, 30% Attr keys, 40% Child Structure
+  return (classSim * 0.3) + (attrSim * 0.3) + (childSim * 0.4);
 }
 
-/**
- * Calculates confidence score based on match quality
- * @returns Score between 0 and 1
- */
-function calculateConfidence(
-  element: Element,
-  siblings: Element[],
-  config: PatternDetectorConfig
-): number {
-  let score = 0;
-  const maxScore = config.matchBy.length * 2;
-
-  // Base score for each matching criterion
-  for (const criterion of config.matchBy) {
-    switch (criterion) {
-      case 'tag':
-        // Tag match is most reliable
-        score += 2;
-        break;
-      case 'class':
-        // Class match depends on number of classes
-        if (element.classList.length > 0) {
-          score += Math.min(element.classList.length, 2);
-        }
-        break;
-      case 'id':
-        // ID pattern match is valuable
-        if (element.id) {
-          score += 1.5;
-        }
-        break;
-      case 'data': {
-        // Data attributes indicate semantic structure
-        const dataCount = Object.keys(getDataAttributes(element)).length;
-        if (dataCount > 0) {
-          score += Math.min(dataCount * 0.5, 1.5);
-        }
-        break;
-      }
-      case 'aria': {
-        // ARIA attributes indicate interactive elements
-        const ariaCount = Object.keys(getAriaAttributes(element)).length;
-        if (ariaCount > 0) {
-          score += Math.min(ariaCount * 0.5, 1);
-        }
-        break;
-      }
-    }
-  }
-
-  // Bonus for more siblings (capped)
-  const siblingBonus = Math.min(siblings.length / 10, 0.3);
-  score += siblingBonus * maxScore;
-
-  // Normalize to 0-1 range
-  return Math.min(score / maxScore, 1);
+function getJaccardSimilarity(set1: string[], set2: string[]): number {
+  if (set1.length === 0 && set2.length === 0) return 1;
+  const intersection = set1.filter(x => set2.includes(x));
+  const union = new Set([...set1, ...set2]);
+  return union.size === 0 ? 0 : intersection.length / union.size;
 }
 
-/**
- * Finds sibling elements with the same signature
- */
-function findMatchingSiblings(
-  parent: Element,
-  signature: string,
-  matchBy: PatternDetectorConfig['matchBy'],
-  originalElement: Element
-): Element[] {
-  const siblings: Element[] = [];
-
-  for (const child of parent.children) {
-    if (child === originalElement) continue;
-
-    const childSignature = getElementSignature(child, matchBy);
-    if (childSignature === signature) {
-      siblings.push(child);
-    }
-  }
-
-  return siblings;
-}
+// --- Detection Logic ---
 
 /**
- * Detects a repeating pattern for the given element
- * @param element - The element to analyze
- * @param config - Pattern detection configuration
- * @returns PatternMatch if a pattern is found, null otherwise
+ * Detects patterns starting from the hovered element
  */
 export function detectPattern(
-  element: Element,
+  target: Element, // Was 'element'
   config: PatternDetectorConfig = defaultConfig
 ): PatternMatch | null {
-  // Skip non-element nodes and special elements
-  if (
-    !element ||
-    element.nodeType !== Node.ELEMENT_NODE ||
-    element.tagName === 'BODY' ||
-    element.tagName === 'HTML' ||
-    element.tagName === 'HEAD'
-  ) {
-    return null;
-  }
+  if (!(target instanceof Element)) return null;
 
-  // Try to find patterns at increasing depth levels
-  let currentElement = element;
+  let currentElement: Element | null = target;
   let depth = 0;
+  let bestMatch: PatternMatch | null = null;
 
   while (currentElement && depth < config.depthLimit) {
-    const parent = currentElement.parentElement;
-    if (!parent || parent.tagName === 'BODY' || parent.tagName === 'HTML') {
-      // Try current element's parent one more time before giving up
-      if (parent && parent.children.length > 1) {
-        const signature = getElementSignature(currentElement, config.matchBy);
-        const siblings = findMatchingSiblings(
-          parent,
-          signature,
-          config.matchBy,
-          currentElement
-        );
+    const container = currentElement.parentElement as Element | null;
+    if (!container || container.tagName === 'BODY' || container.tagName === 'HTML') break;
 
-        if (siblings.length >= config.minSiblings) {
-          const confidence = calculateConfidence(
-            currentElement,
-            siblings,
-            config
-          );
+    const fpTarget = getFingerprint(currentElement);
+    const siblings = Array.from(container.children).filter((node): node is Element => {
+      const el = node as Element;
+      if (el === currentElement) return true; // Include self
+      if (el.id === OVERLAY_ID || el.id === BADGE_ID) return false;
+      if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return false;
 
-          return {
-            tag: currentElement.tagName.toLowerCase(),
-            classes: Array.from(currentElement.classList),
-            id: currentElement.id || undefined,
-            dataAttrs: getDataAttributes(currentElement),
-            ariaAttrs: getAriaAttributes(currentElement),
-            parent: parent,
-            siblings: [currentElement, ...siblings],
-            confidence,
-          };
-        }
-      }
-      break;
-    }
+      const fpSib = getFingerprint(el);
+      return calculateSimilarity(fpTarget, fpSib) >= config.simThreshold;
+    });
 
-    const signature = getElementSignature(currentElement, config.matchBy);
-    const siblings = findMatchingSiblings(
-      parent,
-      signature,
-      config.matchBy,
-      currentElement
-    );
+    const isList = siblings.length >= config.minListItems;
 
-    if (siblings.length >= config.minSiblings) {
-      const confidence = calculateConfidence(currentElement, siblings, config);
-
-      return {
-        tag: currentElement.tagName.toLowerCase(),
-        classes: Array.from(currentElement.classList),
-        id: currentElement.id || undefined,
-        dataAttrs: getDataAttributes(currentElement),
-        ariaAttrs: getAriaAttributes(currentElement),
-        parent: parent,
-        siblings: [currentElement, ...siblings],
-        confidence,
+    // We found a list OR we allow single item fallback
+    if (isList || config.allowSingleFallback) {
+      const match: PatternMatch = {
+        container: container,
+        fingerprint: fpTarget,
+        siblings: siblings,
+        isSingle: !isList,
+        confidence: isList ? 0.9 : 0.5
       };
+
+      // Prioritize lists over single items, then deeper (more specific) lists
+      if (isList) {
+        if (!bestMatch || bestMatch.isSingle || siblings.length > bestMatch.siblings.length) {
+          bestMatch = match;
+        }
+      } else if (!bestMatch) {
+        bestMatch = match;
+      }
     }
 
-    // Move up the DOM tree
-    currentElement = parent;
+    currentElement = container;
     depth++;
   }
 
-  return null;
+  return bestMatch;
 }
 
-// Click handler callback
+// --- Highlighting ---
+
+let lastHighlighted: HTMLElement[] = [];
+let isPatternLocked = false;
+
+export function isLocked(): boolean {
+  return isPatternLocked;
+}
+
+export function lockPattern(): void {
+  isPatternLocked = true;
+  // Update badge to show locked state
+  const badge = document.getElementById(BADGE_ID);
+  if (badge) {
+    badge.style.backgroundColor = '#3b82f6'; // Blue for locked
+    badge.textContent = '✓ Pattern Locked - Click Start Scanning';
+  }
+  // Update highlight style to show locked
+  for (const el of lastHighlighted) {
+    el.style.outline = '3px solid #3b82f6';
+    el.style.backgroundColor = 'rgba(59, 130, 246, 0.15)';
+  }
+}
+
+export function unlockPattern(): void {
+  isPatternLocked = false;
+}
+
+export function highlightPattern(match: PatternMatch): void {
+  // Clear old
+  hideHighlight();
+
+  const outline = match.isSingle ? "2px solid #facc15" : "2px solid #22c55e"; // Yellow vs Green
+  const bg = match.isSingle ? "rgba(250, 204, 21, 0.08)" : "rgba(34, 197, 94, 0.08)";
+
+  for (const el of match.siblings) {
+    if (el instanceof HTMLElement) {
+      el.style.outline = outline;
+      el.style.backgroundColor = bg;
+      el.style.cursor = 'pointer';
+      // Add data-attribute to mark as scraped candidate
+      el.setAttribute('data-scraper-highlight', 'true');
+      lastHighlighted.push(el);
+    }
+  }
+
+  // Show Badge on first item
+  const first = match.siblings[0];
+  if (first) {
+    showBadge(first, match.siblings.length);
+  }
+}
+
+export function hideHighlight(force: boolean = false): void {
+  // Don't hide if pattern is locked (unless forced)
+  if (isPatternLocked && !force) return;
+
+  for (const el of lastHighlighted) {
+    el.style.outline = "";
+    el.style.backgroundColor = "";
+    el.style.cursor = "";
+    el.removeAttribute('data-scraper-highlight');
+  }
+  lastHighlighted = [];
+  isPatternLocked = false;
+  const badge = document.getElementById(BADGE_ID);
+  if (badge) badge.remove();
+}
+
+function showBadge(anchor: Element, count: number) {
+  let badge = document.getElementById(BADGE_ID);
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = BADGE_ID;
+    Object.assign(badge.style, {
+      position: 'fixed',
+      zIndex: '2147483647',
+      padding: '4px 8px',
+      backgroundColor: '#22c55e',
+      color: 'white',
+      borderRadius: '4px',
+      fontSize: '12px',
+      pointerEvents: 'none',
+      fontWeight: 'bold'
+    });
+    document.body.appendChild(badge);
+  }
+
+  const rect = anchor.getBoundingClientRect();
+  badge.textContent = `Scrape ${count} items`;
+  badge.style.top = `${Math.max(0, rect.top - 30)}px`;
+  badge.style.left = `${rect.left}px`;
+}
+
+// Click Handler State
 let onPatternClickCallback: (() => void) | null = null;
 
-/**
- * Sets a callback to be called when the pattern overlay is clicked
- */
+// Allow click on highlighted items to trigger
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (onPatternClickCallback && target.hasAttribute('data-scraper-highlight')) {
+    e.preventDefault();
+    e.stopPropagation();
+    onPatternClickCallback();
+  }
+}, true);
+
 export function setOnPatternClick(callback: (() => void) | null): void {
   onPatternClickCallback = callback;
 }
 
-/**
- * Creates or gets the overlay element
- */
-function getOrCreateOverlay(): HTMLDivElement {
-  let overlay = document.getElementById(OVERLAY_ID) as HTMLDivElement | null;
-
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = OVERLAY_ID;
-    overlay.style.cssText = `
-      position: fixed;
-      pointer-events: auto;
-      cursor: pointer;
-      border: ${OVERLAY_BORDER_WIDTH} solid ${OVERLAY_BORDER_COLOR};
-      background: ${OVERLAY_BACKGROUND};
-      z-index: 2147483647;
-      transition: all 0.15s ease-out;
-      box-sizing: border-box;
-    `;
-
-    // Add click handler
-    overlay.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onPatternClickCallback) {
-        onPatternClickCallback();
-      }
-    });
-
-    document.body.appendChild(overlay);
-  }
-
-  return overlay;
-}
-
-/**
- * Creates or gets the badge element
- */
-function getOrCreateBadge(): HTMLDivElement {
-  let badge = document.getElementById(BADGE_ID) as HTMLDivElement | null;
-
-  if (!badge) {
-    badge = document.createElement('div');
-    badge.id = BADGE_ID;
-    badge.style.cssText = `
-      position: fixed;
-      pointer-events: auto;
-      cursor: pointer;
-      background: ${BADGE_BACKGROUND};
-      color: ${BADGE_TEXT_COLOR};
-      padding: 4px 12px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: bold;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      z-index: 2147483647;
-      transition: all 0.15s ease-out;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    `;
-
-    // Add click handler
-    badge.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onPatternClickCallback) {
-        onPatternClickCallback();
-      }
-    });
-
-    document.body.appendChild(badge);
-  }
-
-  return badge;
-}
-
-/**
- * Calculates the bounding rect that encompasses all matched elements
- */
-function getCombinedBounds(elements: Element[]): DOMRect {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  for (const el of elements) {
-    const rect = el.getBoundingClientRect();
-    minX = Math.min(minX, rect.left);
-    minY = Math.min(minY, rect.top);
-    maxX = Math.max(maxX, rect.right);
-    maxY = Math.max(maxY, rect.bottom);
-  }
-
-  return new DOMRect(minX, minY, maxX - minX, maxY - minY);
-}
-
-/**
- * Highlights the detected pattern with an overlay and count badge
- * @param match - The pattern match to highlight
- */
-export function highlightPattern(match: PatternMatch): void {
-  const overlay = getOrCreateOverlay();
-  const badge = getOrCreateBadge();
-
-  // Get bounds of all matched elements
-  const bounds = getCombinedBounds(match.siblings);
-
-  // Position overlay
-  overlay.style.left = `${bounds.left}px`;
-  overlay.style.top = `${bounds.top}px`;
-  overlay.style.width = `${bounds.width}px`;
-  overlay.style.height = `${bounds.height}px`;
-  overlay.style.display = 'block';
-
-  // Update and position badge
-  const count = match.siblings.length;
-  badge.textContent = `▶ Scrape ${count} items`;
-  badge.style.left = `${bounds.right - 120}px`;
-  badge.style.top = `${bounds.top - 28}px`;
-  badge.style.display = 'block';
-
-  // Ensure badge stays in viewport
-  const badgeRect = badge.getBoundingClientRect();
-  if (badgeRect.top < 0) {
-    badge.style.top = `${bounds.top + 4}px`;
-  }
-  if (badgeRect.right > window.innerWidth) {
-    badge.style.left = `${window.innerWidth - 130}px`;
-  }
-  if (badgeRect.left < 0) {
-    badge.style.left = '10px';
-  }
-}
-
-/**
- * Hides the pattern highlight overlay
- */
-export function hideHighlight(): void {
-  const overlay = document.getElementById(OVERLAY_ID);
-  const badge = document.getElementById(BADGE_ID);
-
-  if (overlay) {
-    overlay.style.display = 'none';
-  }
-  if (badge) {
-    badge.style.display = 'none';
-  }
-}
-
-/**
- * Removes the overlay elements from the DOM
- */
-export function removeOverlay(): void {
-  const overlay = document.getElementById(OVERLAY_ID);
-  const badge = document.getElementById(BADGE_ID);
-
-  if (overlay) {
-    overlay.remove();
-  }
-  if (badge) {
-    badge.remove();
-  }
-}
-
-// Export for testing
+// Exports for testing
 export const _internal = {
-  getElementSignature,
-  getDataAttributes,
-  getAriaAttributes,
-  calculateConfidence,
-  findMatchingSiblings,
-  getCombinedBounds,
+  getFingerprint,
+  calculateSimilarity,
+  getJaccardSimilarity
 };

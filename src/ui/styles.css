@@ -26,9 +26,15 @@
   padding: 0;
 }
 
+html {
+  height: 100%;
+}
+
 body {
-  width: 520px;
-  height: 600px;
+  width: 100%;
+  min-width: 320px;
+  max-width: 520px;
+  height: 100vh;
   background-color: var(--color-background-dark);
   color: var(--color-text-main);
   font-family: var(--font-family-display);
@@ -490,7 +496,7 @@ input[type="text"]:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 128px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
@@ -974,4 +980,112 @@ input:checked + .slider:before {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+/* Preview Cards */
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.preview-header h3 {
+  margin-bottom: 0;
+}
+
+.preview-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.preview-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-color);
+  transition: all 0.2s;
+}
+
+.preview-card:hover {
+  border-color: var(--color-primary);
+  background: rgba(19, 236, 91, 0.05);
+}
+
+.preview-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--color-ui-dark);
+}
+
+.preview-img-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--color-ui-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.preview-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-text {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.preview-link {
+  font-size: 11px;
+  color: var(--color-primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.preview-link:hover {
+  text-decoration: underline;
 }

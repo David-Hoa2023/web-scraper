@@ -393,8 +393,18 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // --- Message Listener ---
 
 chrome.runtime.onMessage.addListener(
-  (message: ScraperMessage, _sender, sendResponse: (response: ScraperResponse) => void) => {
+  (message: ScraperMessage, sender, sendResponse: (response: ScraperResponse) => void) => {
     console.log('[Service Worker] Received message:', message.type);
+
+    // Forward UI-related messages from content scripts to all extension pages
+    if (sender.tab && ['UPDATE_STATUS', 'UPDATE_PROGRESS', 'UPDATE_PREVIEW', 'SHOW_ERROR'].includes(message.type)) {
+      // Broadcast to all extension views (sidepanel, popup, etc.)
+      chrome.runtime.sendMessage(message).catch(() => {
+        // No receivers - that's fine, sidepanel might be closed
+      });
+      sendResponse({ success: true });
+      return true;
+    }
 
     const handleMessage = async () => {
       switch (message.type) {
@@ -454,6 +464,27 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
+// --- Context Menu ---
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'scrape-similar',
+    title: 'Scrape Similar Items',
+    contexts: ['all']
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'scrape-similar' && tab?.id) {
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'START_SCRAPE_SELECTION'
+    }).catch(() => {
+      // Content script might not be ready or injected
+      console.log('[Service Worker] Could not send message to tab');
+    });
+  }
+});
+
 // --- Extension Lifecycle ---
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -461,6 +492,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
   // Reschedule all tasks on install/update
   await rescheduleAllTasks();
+
+  // Enable Side Panel on Action Click
+  // @ts-ignore - sidePanel types might be missing in older definitions
+  if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  }
 });
 
 // Reschedule tasks when service worker starts
