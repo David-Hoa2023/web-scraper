@@ -43,6 +43,10 @@
           <span class="material-symbols-outlined">dashboard</span>
           <span>Dashboard</span>
         </button>
+        <button class="nav-item" data-tab="arbitrage" id="nav-arbitrage">
+          <span class="material-symbols-outlined">trending_up</span>
+          <span>Arbitrage</span>
+        </button>
         <button class="nav-item" data-tab="match" id="nav-match">
           <span class="material-symbols-outlined">hub</span>
           <span>Match Strategy</span>
@@ -54,6 +58,10 @@
         <button class="nav-item" data-tab="history" id="nav-history">
           <span class="material-symbols-outlined">history</span>
           <span>History</span>
+        </button>
+        <button class="nav-item" data-tab="templates" id="nav-templates">
+          <span class="material-symbols-outlined">content_copy</span>
+          <span>Templates</span>
         </button>
         <button class="nav-item" data-tab="settings" id="nav-settings">
           <span class="material-symbols-outlined">settings</span>
@@ -121,6 +129,22 @@
               <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span>
               <span id="items-trend">+0 today</span>
             </span>
+          </div>
+        </div>
+
+        <!-- Saved URLs Section -->
+        <div class="saved-urls-section" style="margin-top: 16px;">
+          <div class="saved-urls-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;">Saved URLs</h3>
+            <button id="add-current-url-btn" class="btn-text" title="Save current page URL">
+              <span class="material-symbols-outlined" style="font-size: 16px;">add_link</span>
+            </button>
+          </div>
+          <div id="saved-urls-list" class="saved-urls-list custom-scrollbar" style="max-height: 150px; overflow-y: auto;">
+            <div class="saved-url-empty" style="text-align: center; padding: 16px; color: var(--color-text-muted); font-size: 12px;">
+              <span class="material-symbols-outlined" style="font-size: 24px; display: block; margin-bottom: 4px;">bookmark_border</span>
+              No saved URLs yet. Right-click any page and select "Save to Scraping List".
+            </div>
           </div>
         </div>
 
@@ -203,6 +227,157 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arbitrage Tab -->
+      <div id="tab-arbitrage" class="tab-pane">
+        <header class="dashboard-header">
+          <div>
+            <h2>Arbitrage Scanner</h2>
+            <p class="subtitle">Find profitable opportunities across platforms.</p>
+          </div>
+          <button class="btn-secondary" id="scan-arbitrage-btn">
+            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">radar</span>
+            Scan Products
+          </button>
+        </header>
+
+        <!-- Platform Detection Banner -->
+        <div class="platform-detection-banner" id="platform-banner" style="
+          display: none;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, var(--color-primary-alpha) 0%, transparent 100%);
+          border: 1px solid var(--color-primary);
+          border-radius: var(--radius-md);
+          margin-bottom: 16px;
+        ">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="material-symbols-outlined" style="color: var(--color-primary); font-size: 24px;">storefront</span>
+            <div>
+              <p style="font-weight: 600; margin: 0;" id="platform-name">Platform Detected</p>
+              <p style="font-size: 12px; color: var(--color-text-muted); margin: 4px 0 0 0;" id="platform-info">
+                Ready to extract products
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arbitrage Stats -->
+        <div class="stats-overview stats-3col">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Opportunities</span>
+              <span class="material-symbols-outlined stat-icon">local_offer</span>
+            </div>
+            <span class="stat-value" id="arb-opportunities">0</span>
+            <span class="stat-trend">
+              <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span>
+              <span id="arb-opportunities-trend">Buy signals</span>
+            </span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Avg Margin</span>
+              <span class="material-symbols-outlined stat-icon">percent</span>
+            </div>
+            <span class="stat-value" id="arb-avg-margin">0%</span>
+            <span class="stat-trend">
+              <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span>
+              <span id="arb-margin-trend">Profit potential</span>
+            </span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Products Tracked</span>
+              <span class="material-symbols-outlined stat-icon">inventory_2</span>
+            </div>
+            <span class="stat-value" id="arb-products">0</span>
+            <span class="stat-trend">
+              <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span>
+              <span id="arb-products-trend">Across platforms</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Platform Filters -->
+        <div class="option-card" style="margin-top: 16px;">
+          <h3>Platforms</h3>
+          <div class="platform-filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+            <label class="platform-chip active" data-platform="temu">
+              <input type="checkbox" checked style="display: none;">
+              <span>Temu</span>
+            </label>
+            <label class="platform-chip active" data-platform="shein">
+              <input type="checkbox" checked style="display: none;">
+              <span>Shein</span>
+            </label>
+            <label class="platform-chip active" data-platform="aliexpress">
+              <input type="checkbox" checked style="display: none;">
+              <span>AliExpress</span>
+            </label>
+            <label class="platform-chip active" data-platform="shopee">
+              <input type="checkbox" checked style="display: none;">
+              <span>Shopee</span>
+            </label>
+            <label class="platform-chip active" data-platform="lazada">
+              <input type="checkbox" checked style="display: none;">
+              <span>Lazada</span>
+            </label>
+            <label class="platform-chip active" data-platform="tiktokshop">
+              <input type="checkbox" checked style="display: none;">
+              <span>TikTok Shop</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Opportunities List -->
+        <div class="option-card" style="margin-top: 16px; padding: 0; overflow: hidden;">
+          <div style="padding: 12px 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Opportunities</h3>
+            <div style="display: flex; gap: 8px;">
+              <select id="arb-sort" class="form-select" style="height: 32px; font-size: 12px; padding: 0 8px;">
+                <option value="margin">Sort by Margin</option>
+                <option value="confidence">Sort by Confidence</option>
+                <option value="date">Sort by Date</option>
+              </select>
+              <button id="refresh-opportunities-btn" class="btn-icon-sm" title="Refresh">
+                <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
+              </button>
+            </div>
+          </div>
+          <div id="opportunities-list" class="opportunities-list custom-scrollbar" style="max-height: 400px; overflow-y: auto;">
+            <div class="empty-placeholder" style="padding: 32px; text-align: center;">
+              <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.3; display: block; margin-bottom: 8px;">search_off</span>
+              <p style="margin: 0; color: var(--color-text-muted);">No opportunities found yet</p>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--color-text-muted);">
+                Navigate to a supported e-commerce site and click "Scan Products"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arbitrage Settings -->
+        <div class="option-card" style="margin-top: 16px;">
+          <h3>Settings</h3>
+          <div class="input-group" style="margin-top: 12px;">
+            <label style="font-size: 12px;">Minimum Profit Margin (%)</label>
+            <input type="number" id="arb-min-margin" value="20" min="0" max="100" style="margin-top: 4px;">
+          </div>
+          <div class="option-row" style="padding: 12px 0;">
+            <span>Auto-match products</span>
+            <label class="switch">
+              <input type="checkbox" id="arb-auto-match" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="option-row" style="padding: 12px 0;">
+            <span>Alert on new opportunities</span>
+            <label class="switch">
+              <input type="checkbox" id="arb-alerts" checked>
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -345,6 +520,57 @@
         </div>
       </div>
 
+      <!-- Templates Tab -->
+      <div id="tab-templates" class="tab-pane">
+        <header class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>Scraping Templates</h2>
+          <button class="btn-secondary" id="save-current-as-template-btn">
+            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">add</span>
+            Save Current
+          </button>
+        </header>
+
+        <!-- Template Suggestion Banner (hidden by default) -->
+        <div id="template-suggestion-banner" class="template-suggestion-banner" style="display: none; background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span class="material-symbols-outlined" style="color: var(--color-accent);">lightbulb</span>
+            <strong>Template Found!</strong>
+          </div>
+          <p id="template-suggestion-text" style="font-size: 13px; margin-bottom: 8px;">A saved template matches this page.</p>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-primary" id="apply-suggested-template-btn" style="font-size: 12px; padding: 6px 12px;">
+              Apply Template
+            </button>
+            <button class="btn-text" id="dismiss-template-suggestion-btn" style="font-size: 12px;">
+              Dismiss
+            </button>
+          </div>
+        </div>
+
+        <!-- Templates List -->
+        <div class="option-card">
+          <h3>Saved Templates</h3>
+          <div id="templates-list" class="templates-list custom-scrollbar" style="max-height: 400px; overflow-y: auto;">
+            <div class="templates-empty" style="text-align: center; padding: 32px; color: var(--color-text-muted);">
+              <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">content_copy</span>
+              <p style="margin-bottom: 8px;">No templates saved yet.</p>
+              <p style="font-size: 12px;">Configure a scraping task and click "Save Current" to create a reusable template.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Info Card -->
+        <div class="option-card" style="margin-top: 16px;">
+          <h3>How Templates Work</h3>
+          <div style="font-size: 13px; color: var(--color-text-muted);">
+            <p style="margin-bottom: 8px;"><strong>1. Configure once:</strong> Set up pattern detection and extraction fields for a site.</p>
+            <p style="margin-bottom: 8px;"><strong>2. Save template:</strong> Click "Save Current" to store your configuration.</p>
+            <p style="margin-bottom: 8px;"><strong>3. Auto-detect:</strong> When you visit a matching URL, we'll suggest applying the template.</p>
+            <p><strong>4. One-click apply:</strong> Instantly load your saved configuration.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Settings Tab -->
       <div id="tab-settings" class="tab-pane">
         <header class="section-header">
@@ -457,9 +683,38 @@
               <label class="form-label">Task Name</label>
               <input type="text" class="form-input" id="wizard-task-name" placeholder="My Scraping Task">
             </div>
+            <!-- Quick Pick from Saved URLs -->
+            <div class="form-field" id="wizard-saved-urls-picker">
+              <label class="form-label">Quick Pick from Saved URLs</label>
+              <select class="form-select" id="wizard-url-select" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); font-size: 13px;">
+                <option value="">-- Select a saved URL (or enter manually below) --</option>
+              </select>
+              <span class="form-hint" style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px; display: block;">
+                Select a URL to auto-fill, or enter manually below
+              </span>
+            </div>
             <div class="form-field">
-              <label class="form-label">Target URL</label>
-              <input type="text" class="form-input" id="wizard-target-url" placeholder="https://example.com">
+              <label class="form-label">Target URL(s)</label>
+              <textarea class="form-textarea" id="wizard-target-urls" rows="3"
+                placeholder="https://example.com/page1&#10;https://example.com/page2&#10;(one URL per line for batch scraping)"></textarea>
+              <span class="form-hint" style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px; display: block;">
+                Enter one URL per line for batch scraping
+              </span>
+            </div>
+            <!-- Batch options (shown when multiple URLs) -->
+            <div class="form-field" id="batch-options" style="display: none;">
+              <label class="form-label">Batch Options</label>
+              <div class="option-row" style="padding: 8px 0;">
+                <span style="font-size: 13px;">Continue on error</span>
+                <label class="switch">
+                  <input type="checkbox" id="wizard-continue-on-error" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="input-group" style="margin-top: 8px;">
+                <label style="font-size: 12px;">Delay between URLs (ms)</label>
+                <input type="number" class="form-input" id="wizard-batch-delay" value="2000" min="500" style="margin-top: 4px;">
+              </div>
             </div>
             <div class="form-field">
               <label class="form-label">Description (optional)</label>
@@ -482,7 +737,48 @@
                 <option value="hourly">Every Hour</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
               </select>
+            </div>
+            <!-- Cron time picker (shown for daily/weekly/monthly) -->
+            <div class="form-field" id="cron-time-field" style="display: none;">
+              <label class="form-label">Run at Time</label>
+              <input type="time" class="form-input" id="wizard-cron-time" value="09:00">
+            </div>
+            <!-- Day of week checkboxes (shown for weekly) -->
+            <div class="form-field" id="cron-days-field" style="display: none;">
+              <label class="form-label">Run on Days</label>
+              <div class="checkbox-group" id="wizard-days-group" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="1" style="width: 16px; height: 16px;"> Mon
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="2" style="width: 16px; height: 16px;"> Tue
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="3" style="width: 16px; height: 16px;"> Wed
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="4" style="width: 16px; height: 16px;"> Thu
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="5" style="width: 16px; height: 16px;"> Fri
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="6" style="width: 16px; height: 16px;"> Sat
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" value="0" style="width: 16px; height: 16px;"> Sun
+                </label>
+              </div>
+            </div>
+            <!-- Day of month input (shown for monthly) -->
+            <div class="form-field" id="cron-month-days-field" style="display: none;">
+              <label class="form-label">Run on Day(s) of Month</label>
+              <input type="text" class="form-input" id="wizard-month-days" placeholder="1, 15 (comma-separated)">
+              <span class="form-hint" style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px; display: block;">
+                Enter day numbers (1-31), comma-separated
+              </span>
             </div>
             <div class="form-field">
               <label class="form-label">Max Items to Collect</label>
@@ -520,6 +816,27 @@
                 <input type="checkbox" id="wizard-auto-export">
                 <span class="slider"></span>
               </label>
+            </div>
+            <!-- Change Detection Section -->
+            <div style="border-top: 1px solid var(--color-border); margin-top: 12px; padding-top: 12px;">
+              <label class="form-label" style="margin-bottom: 8px;">Change Detection</label>
+              <div class="option-row" style="padding: 8px 0;">
+                <span style="font-size: 14px;">Enable change detection</span>
+                <label class="switch">
+                  <input type="checkbox" id="wizard-change-detection">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option-row" id="webhook-on-change-row" style="padding: 8px 0; display: none;">
+                <span style="font-size: 14px;">Webhook only on changes</span>
+                <label class="switch">
+                  <input type="checkbox" id="wizard-webhook-on-change">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <span class="form-hint" style="font-size: 11px; color: var(--color-text-muted); display: block; margin-top: 4px;">
+                Detect when scraped data has changed since last run
+              </span>
             </div>
           </div>
         </div>

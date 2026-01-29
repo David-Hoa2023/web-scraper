@@ -1,6 +1,7 @@
-// Re-export recording and tutorial types
+// Re-export recording, tutorial, and arbitrage types
 export * from './types/recording';
 export * from './types/tutorial';
+export * from './types/arbitrage';
 
 // Pattern Detection Types
 export interface Fingerprint {
@@ -65,6 +66,29 @@ export interface ExtractedItem {
   [key: string]: string | ExtractedItem | ExtractedItem[] | undefined;
 }
 
+// Scraping Template Types
+export interface ScrapingTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  // URL matching
+  urlPattern: string;           // Regex pattern for URL matching
+  siteHostname: string;         // For quick hostname matching
+  // Scraping configuration
+  containerSelector: string;    // CSS selector for the repeating container
+  extractionConfig: ExtractionConfig;
+  patternConfig: PatternDetectorConfig;
+  scrollerConfig?: ScrollerConfig;
+  // Metadata
+  createdAt: string;
+  updatedAt?: string;
+  lastUsedAt?: string;
+  useCount: number;
+  // Optional settings
+  webhookUrl?: string;
+  autoApply?: boolean;          // Auto-apply when visiting matching URL
+}
+
 // UI Types
 export interface OverlayState {
   visible: boolean;
@@ -115,7 +139,38 @@ export type MessageType =
   | 'UPDATE_PROGRESS'
   | 'SHOW_ERROR'
   | 'UPDATE_PREVIEW'
-  | 'SET_EXTENSION_ENABLED';
+  | 'SET_EXTENSION_ENABLED'
+  // Saved URLs messages
+  | 'GET_SAVED_URLS'
+  | 'ADD_SAVED_URL'
+  | 'REMOVE_SAVED_URL'
+  | 'UPDATE_SAVED_URL_USAGE'
+  | 'SAVED_URLS_UPDATED'
+  // Scraping template messages
+  | 'GET_TEMPLATES'
+  | 'SAVE_TEMPLATE'
+  | 'UPDATE_TEMPLATE'
+  | 'DELETE_TEMPLATE'
+  | 'FIND_MATCHING_TEMPLATE'
+  | 'APPLY_TEMPLATE'
+  | 'TEMPLATE_APPLIED'
+  // Arbitrage messages
+  | 'DETECT_PLATFORM'
+  | 'EXTRACT_PRODUCTS'
+  | 'RECORD_PRICE'
+  | 'RECORD_PRICES'
+  | 'GET_PRICE_HISTORY'
+  | 'FIND_MATCHES'
+  | 'FIND_ALL_MATCHES'
+  | 'GET_TREND'
+  | 'GET_BEST_BUY_TIME'
+  | 'ANALYZE_ARBITRAGE'
+  | 'GET_OPPORTUNITIES'
+  | 'DISMISS_OPPORTUNITY'
+  | 'GET_ARBITRAGE_STATS'
+  | 'GET_ARBITRAGE_SETTINGS'
+  | 'UPDATE_ARBITRAGE_SETTINGS'
+  | 'CLEANUP_ARBITRAGE';
 
 export interface ScraperMessage {
   type: MessageType;

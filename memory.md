@@ -47,8 +47,29 @@ bun run typecheck && bun run test
 | `docs/BLUEPRINT-ai-phase1.md` | AI features roadmap |
 | `CLAUDE.md` | Build commands & architecture reference |
 
+## E-Commerce Arbitrage Module
+
+**Supported Platforms:** Temu, Shein, AliExpress, Shopee, Lazada, TikTok Shop
+
+| Component | Purpose |
+|-----------|---------|
+| `extractors/platformConfigs` | Platform-specific field extractors |
+| `extractors/index` | Auto-detection & product extraction |
+| `services/priceComparison` | Cross-platform matching (Jaccard similarity) |
+| `services/trendDetection` | Price trends (linear regression, Z-score) |
+| `services/arbitrageAnalyzer` | Opportunity detection & AI analysis |
+
+**Features:**
+- Platform auto-detection from URL
+- Product extraction (title, price, image, rating, sales)
+- Cross-platform price comparison & matching
+- Profit margin calculations
+- Price trend analysis & anomaly detection
+- AI-powered opportunity recommendations (buy/hold/avoid)
+
 ## Recent Updates
 
+- **E-commerce arbitrage** for 6 platforms with price comparison & trend analysis
 - Master ON/OFF toggle in sidepanel sidebar
 - AI pattern detector with LLM integration
 - Core infrastructure (eventBus, jobQueue, storageManager)

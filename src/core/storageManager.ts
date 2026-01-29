@@ -59,6 +59,12 @@ export const STORAGE_TYPES = {
   SETTINGS: 'settings_',
   CACHE: 'cache_',
   JOB_QUEUE: 'job_queue',
+  // Arbitrage storage types
+  ARB_PRICE: 'arb_price_',
+  ARB_OPPORTUNITY: 'arb_opp_',
+  ARB_MATCH: 'arb_match_',
+  ARB_SETTINGS: 'arb_settings',
+  ARB_TREND: 'arb_trend_',
 } as const;
 
 /**

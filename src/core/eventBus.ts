@@ -37,6 +37,15 @@ export type EventType =
   | 'storage:quota:warning'
   | 'storage:quota:exceeded'
   | 'storage:cleaned'
+  // Arbitrage events
+  | 'arbitrage:price:recorded'
+  | 'arbitrage:match:found'
+  | 'arbitrage:opportunity:detected'
+  | 'arbitrage:opportunity:dismissed'
+  | 'arbitrage:trend:updated'
+  | 'arbitrage:anomaly:detected'
+  | 'arbitrage:platform:detected'
+  | 'arbitrage:settings:updated'
   // System events
   | 'system:error'
   | 'system:warning'

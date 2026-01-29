@@ -153,8 +153,8 @@ export function lockPattern(): void {
   }
   // Update highlight style to show locked
   for (const el of lastHighlighted) {
-    el.style.outline = '3px solid #3b82f6';
-    el.style.backgroundColor = 'rgba(59, 130, 246, 0.15)';
+    el.style.setProperty('outline', '3px solid #3b82f6', 'important');
+    el.style.setProperty('background-color', 'rgba(59, 130, 246, 0.15)', 'important');
   }
 }
 
@@ -171,9 +171,10 @@ export function highlightPattern(match: PatternMatch): void {
 
   for (const el of match.siblings) {
     if (el instanceof HTMLElement) {
-      el.style.outline = outline;
-      el.style.backgroundColor = bg;
-      el.style.cursor = 'pointer';
+      // Use setProperty with !important to ensure styles are applied
+      el.style.setProperty('outline', outline, 'important');
+      el.style.setProperty('background-color', bg, 'important');
+      el.style.setProperty('cursor', 'pointer', 'important');
       // Add data-attribute to mark as scraped candidate
       el.setAttribute('data-scraper-highlight', 'true');
       lastHighlighted.push(el);
@@ -192,9 +193,9 @@ export function hideHighlight(force: boolean = false): void {
   if (isPatternLocked && !force) return;
 
   for (const el of lastHighlighted) {
-    el.style.outline = "";
-    el.style.backgroundColor = "";
-    el.style.cursor = "";
+    el.style.removeProperty('outline');
+    el.style.removeProperty('background-color');
+    el.style.removeProperty('cursor');
     el.removeAttribute('data-scraper-highlight');
   }
   lastHighlighted = [];

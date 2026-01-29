@@ -6,7 +6,10 @@ import type {
   ScrollerConfig,
   ExtractionConfig,
   ExtractionField,
-  ExtractedItem
+  ExtractedItem,
+  ArbitrageOpportunity,
+  PlatformId,
+  ScrapingTemplate,
 } from '../types';
 
 // State Interfaces
@@ -28,6 +31,7 @@ interface HistoryEntry {
 interface WizardData {
   taskName: string;
   targetUrl: string;
+  urls: string[];          // NEW: Batch URLs
   description: string;
   frequency: string;
   maxItems: number;
@@ -35,6 +39,17 @@ interface WizardData {
   exportFormat: string;
   webhookUrl: string;
   autoExport: boolean;
+  // NEW: Cron scheduling
+  scheduleType: 'simple' | 'cron';
+  cronTime: string;
+  daysOfWeek: number[];
+  daysOfMonth: number[];
+  // NEW: Batch config
+  batchContinueOnError: boolean;
+  batchDelayMs: number;
+  // NEW: Change detection
+  changeDetectionEnabled: boolean;
+  webhookOnChangeOnly: boolean;
 }
 
 interface WebhookConfig {
@@ -51,6 +66,17 @@ interface ScheduledTask {
   frequency: string;
   lastRun: Date | null;
   nextRun: Date | null;
+}
+
+interface SavedUrl {
+  id: string;
+  name: string;
+  url: string;
+  favicon?: string;
+  addedAt: string;
+  lastUsed?: string;
+  useCount: number;
+  tags?: string[];
 }
 
 // Default Configuration
@@ -147,7 +173,7 @@ const ui = {
 
   // Wizard Fields
   wizardTaskName: document.getElementById('wizard-task-name') as HTMLInputElement,
-  wizardTargetUrl: document.getElementById('wizard-target-url') as HTMLInputElement,
+  wizardTargetUrls: document.getElementById('wizard-target-urls') as HTMLTextAreaElement,
   wizardDescription: document.getElementById('wizard-description') as HTMLTextAreaElement,
   wizardFrequency: document.getElementById('wizard-frequency') as HTMLSelectElement,
   wizardMaxItems: document.getElementById('wizard-max-items') as HTMLInputElement,
@@ -155,6 +181,34 @@ const ui = {
   wizardExportFormat: document.getElementById('wizard-export-format') as HTMLSelectElement,
   wizardWebhook: document.getElementById('wizard-webhook') as HTMLInputElement,
   wizardAutoExport: document.getElementById('wizard-auto-export') as HTMLInputElement,
+  // NEW: Batch options
+  batchOptions: document.getElementById('batch-options') as HTMLDivElement,
+  wizardContinueOnError: document.getElementById('wizard-continue-on-error') as HTMLInputElement,
+  wizardBatchDelay: document.getElementById('wizard-batch-delay') as HTMLInputElement,
+  // NEW: Cron scheduling
+  cronTimeField: document.getElementById('cron-time-field') as HTMLDivElement,
+  cronDaysField: document.getElementById('cron-days-field') as HTMLDivElement,
+  cronMonthDaysField: document.getElementById('cron-month-days-field') as HTMLDivElement,
+  wizardCronTime: document.getElementById('wizard-cron-time') as HTMLInputElement,
+  wizardDaysGroup: document.getElementById('wizard-days-group') as HTMLDivElement,
+  wizardMonthDays: document.getElementById('wizard-month-days') as HTMLInputElement,
+  // NEW: Change detection
+  wizardChangeDetection: document.getElementById('wizard-change-detection') as HTMLInputElement,
+  wizardWebhookOnChange: document.getElementById('wizard-webhook-on-change') as HTMLInputElement,
+  webhookOnChangeRow: document.getElementById('webhook-on-change-row') as HTMLDivElement,
+
+  // Saved URLs
+  savedUrlsList: document.getElementById('saved-urls-list') as HTMLDivElement,
+  addCurrentUrlBtn: document.getElementById('add-current-url-btn') as HTMLButtonElement,
+  wizardUrlSelect: document.getElementById('wizard-url-select') as HTMLSelectElement,
+
+  // Templates
+  templatesList: document.getElementById('templates-list') as HTMLDivElement,
+  saveCurrentAsTemplateBtn: document.getElementById('save-current-as-template-btn') as HTMLButtonElement,
+  templateSuggestionBanner: document.getElementById('template-suggestion-banner') as HTMLDivElement,
+  templateSuggestionText: document.getElementById('template-suggestion-text') as HTMLParagraphElement,
+  applySuggestedTemplateBtn: document.getElementById('apply-suggested-template-btn') as HTMLButtonElement,
+  dismissTemplateSuggestionBtn: document.getElementById('dismiss-template-suggestion-btn') as HTMLButtonElement,
 
   // Preview
   previewCards: document.getElementById('preview-cards') as HTMLDivElement,
@@ -179,6 +233,10 @@ let webhookConfig: WebhookConfig = {
 let previewMode: 'cards' | 'json' = 'cards';
 let previewItems: ExtractedItem[] = [];
 let extensionEnabled = true;
+let savedUrls: SavedUrl[] = [];
+let templates: ScrapingTemplate[] = [];
+let suggestedTemplate: ScrapingTemplate | null = null;
+let currentContainerSelector: string = '';
 
 // --- Utility Functions ---
 
@@ -659,6 +717,417 @@ function renderScheduledTasks() {
   });
 }
 
+// --- Saved URLs ---
+
+async function loadSavedUrls(): Promise<SavedUrl[]> {
+  const response = await chrome.runtime.sendMessage({
+    type: 'GET_SAVED_URLS',
+  }) as ScraperResponse;
+
+  if (response.success && response.data) {
+    return response.data as SavedUrl[];
+  }
+  return [];
+}
+
+async function removeSavedUrl(id: string): Promise<void> {
+  await chrome.runtime.sendMessage({
+    type: 'REMOVE_SAVED_URL',
+    payload: { id },
+  });
+
+  // Refresh the list
+  savedUrls = await loadSavedUrls();
+  renderSavedUrls();
+  populateWizardUrlSelect();
+}
+
+function renderSavedUrls(): void {
+  if (!ui.savedUrlsList) return;
+
+  if (savedUrls.length === 0) {
+    ui.savedUrlsList.innerHTML = `
+      <div class="saved-url-empty" style="text-align: center; padding: 16px; color: var(--color-text-muted); font-size: 12px;">
+        <span class="material-symbols-outlined" style="font-size: 24px; display: block; margin-bottom: 4px;">bookmark_border</span>
+        No saved URLs yet. Right-click any page and select "Save to Scraping List".
+      </div>
+    `;
+    return;
+  }
+
+  ui.savedUrlsList.innerHTML = savedUrls
+    .slice(0, 10)
+    .map(url => {
+      const faviconHtml = url.favicon
+        ? `<img src="${escapeHtml(url.favicon)}" width="16" height="16" style="border-radius: 2px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex'"/><span class="material-symbols-outlined" style="font-size: 16px; display: none;">language</span>`
+        : `<span class="material-symbols-outlined" style="font-size: 16px;">language</span>`;
+
+      const usedText = url.lastUsed
+        ? `Used ${url.useCount}x`
+        : 'Not used yet';
+
+      return `
+        <div class="saved-url-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--color-border); cursor: pointer;" data-url="${escapeHtml(url.url)}" data-id="${url.id}">
+          <div class="saved-url-favicon" style="flex-shrink: 0;">
+            ${faviconHtml}
+          </div>
+          <div class="saved-url-info" style="flex: 1; min-width: 0;">
+            <div class="saved-url-name" style="font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(url.name)}</div>
+            <div class="saved-url-meta" style="font-size: 10px; color: var(--color-text-muted);">${usedText}</div>
+          </div>
+          <div class="saved-url-actions" style="display: flex; gap: 4px; flex-shrink: 0;">
+            <button class="btn-icon-sm saved-url-use" title="Create task from URL" data-id="${url.id}" data-url="${escapeHtml(url.url)}" data-name="${escapeHtml(url.name)}">
+              <span class="material-symbols-outlined" style="font-size: 14px;">add_task</span>
+            </button>
+            <button class="btn-icon-sm saved-url-remove" title="Remove" data-id="${url.id}">
+              <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+            </button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  // Add event listeners
+  ui.savedUrlsList.querySelectorAll('.saved-url-use').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const urlData = (btn as HTMLElement).dataset;
+      if (urlData.url) {
+        // Open wizard with this URL
+        openWizard();
+        if (ui.wizardTargetUrls) {
+          ui.wizardTargetUrls.value = urlData.url;
+        }
+        if (ui.wizardTaskName && urlData.name) {
+          ui.wizardTaskName.value = `Scrape: ${urlData.name}`;
+        }
+        // Update usage
+        if (urlData.id) {
+          chrome.runtime.sendMessage({
+            type: 'UPDATE_SAVED_URL_USAGE',
+            payload: { id: urlData.id },
+          });
+        }
+      }
+    });
+  });
+
+  ui.savedUrlsList.querySelectorAll('.saved-url-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = (btn as HTMLElement).dataset.id;
+      if (id) {
+        removeSavedUrl(id);
+        addLogEntry('Removed URL from saved list');
+      }
+    });
+  });
+
+  // Click on item to copy URL
+  ui.savedUrlsList.querySelectorAll('.saved-url-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const url = (item as HTMLElement).dataset.url;
+      if (url) {
+        navigator.clipboard.writeText(url).then(() => {
+          addLogEntry('URL copied to clipboard');
+        }).catch(() => {
+          addLogEntry('Failed to copy URL');
+        });
+      }
+    });
+  });
+}
+
+function populateWizardUrlSelect(): void {
+  if (!ui.wizardUrlSelect) return;
+
+  // Keep the default option and rebuild the rest
+  ui.wizardUrlSelect.innerHTML = `
+    <option value="">-- Select a saved URL (or enter manually below) --</option>
+    ${savedUrls.map(url => `
+      <option value="${escapeHtml(url.url)}" data-name="${escapeHtml(url.name)}">${escapeHtml(url.name)}</option>
+    `).join('')}
+  `;
+}
+
+function bindSavedUrlsListeners(): void {
+  // URL select dropdown in wizard
+  if (ui.wizardUrlSelect) {
+    ui.wizardUrlSelect.addEventListener('change', () => {
+      const selectedUrl = ui.wizardUrlSelect.value;
+      if (selectedUrl && ui.wizardTargetUrls) {
+        ui.wizardTargetUrls.value = selectedUrl;
+
+        // Auto-fill task name from selected option's data attribute
+        const selectedOption = ui.wizardUrlSelect.selectedOptions[0];
+        const urlName = selectedOption?.dataset.name;
+        if (urlName && ui.wizardTaskName) {
+          ui.wizardTaskName.value = `Scrape: ${urlName}`;
+        }
+
+        // Find and update usage
+        const savedUrl = savedUrls.find(u => u.url === selectedUrl);
+        if (savedUrl) {
+          chrome.runtime.sendMessage({
+            type: 'UPDATE_SAVED_URL_USAGE',
+            payload: { id: savedUrl.id },
+          });
+        }
+      }
+    });
+  }
+
+  // Add current page URL button
+  if (ui.addCurrentUrlBtn) {
+    ui.addCurrentUrlBtn.addEventListener('click', async () => {
+      // Get current tab info
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.url) {
+        const response = await chrome.runtime.sendMessage({
+          type: 'ADD_SAVED_URL',
+          payload: {
+            url: tab.url,
+            name: tab.title || new URL(tab.url).hostname,
+            favicon: tab.favIconUrl,
+          },
+        }) as ScraperResponse;
+
+        if (response.success) {
+          addLogEntry(`Saved: ${tab.title || 'Current page'}`);
+          // Refresh the list
+          savedUrls = await loadSavedUrls();
+          renderSavedUrls();
+          populateWizardUrlSelect();
+        }
+      }
+    });
+  }
+}
+
+// --- Scraping Templates ---
+
+async function loadTemplates(): Promise<ScrapingTemplate[]> {
+  const response = await chrome.runtime.sendMessage({
+    type: 'GET_TEMPLATES',
+  }) as ScraperResponse;
+
+  if (response.success && response.data) {
+    return response.data as ScrapingTemplate[];
+  }
+  return [];
+}
+
+async function saveCurrentAsTemplate(): Promise<void> {
+  // Get current tab info for URL pattern
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) {
+    addLogEntry('Error: No active tab');
+    return;
+  }
+
+  let hostname: string;
+  let pathname: string;
+  try {
+    const url = new URL(tab.url);
+    hostname = url.hostname;
+    pathname = url.pathname;
+  } catch {
+    addLogEntry('Error: Invalid URL');
+    return;
+  }
+
+  // Create URL pattern (escape special regex chars in pathname)
+  const escapedPathname = pathname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const urlPattern = `https?://${hostname.replace(/\./g, '\\.')}${escapedPathname}.*`;
+
+  // Prompt for template name
+  const templateName = prompt('Enter a name for this template:', tab.title || hostname);
+  if (!templateName) return;
+
+  const templateData = {
+    name: templateName,
+    description: `Template for ${hostname}`,
+    urlPattern,
+    siteHostname: hostname,
+    containerSelector: currentContainerSelector || '',
+    extractionConfig: currentConfig.extractionConfig,
+    patternConfig: currentConfig.patternConfig,
+    scrollerConfig: currentConfig.scrollerConfig,
+  };
+
+  const response = await chrome.runtime.sendMessage({
+    type: 'SAVE_TEMPLATE',
+    payload: templateData,
+  }) as ScraperResponse;
+
+  if (response.success) {
+    addLogEntry(`Template saved: ${templateName}`);
+    templates = await loadTemplates();
+    renderTemplates();
+  } else {
+    addLogEntry(`Error saving template: ${response.error}`);
+  }
+}
+
+async function deleteTemplate(id: string): Promise<void> {
+  await chrome.runtime.sendMessage({
+    type: 'DELETE_TEMPLATE',
+    payload: { id },
+  });
+
+  templates = await loadTemplates();
+  renderTemplates();
+  addLogEntry('Template deleted');
+}
+
+async function applyTemplate(template: ScrapingTemplate): Promise<void> {
+  // Update current config with template values
+  currentConfig.extractionConfig = { ...template.extractionConfig };
+  currentConfig.patternConfig = { ...template.patternConfig };
+  if (template.scrollerConfig) {
+    currentConfig.scrollerConfig = { ...template.scrollerConfig };
+  }
+  currentContainerSelector = template.containerSelector;
+
+  // Update UI to reflect template config
+  syncUIWithConfig();
+
+  // Mark template as used
+  await chrome.runtime.sendMessage({
+    type: 'APPLY_TEMPLATE',
+    payload: { id: template.id },
+  });
+
+  // Hide suggestion banner
+  if (ui.templateSuggestionBanner) {
+    ui.templateSuggestionBanner.style.display = 'none';
+  }
+  suggestedTemplate = null;
+
+  addLogEntry(`Applied template: ${template.name}`);
+}
+
+function renderTemplates(): void {
+  if (!ui.templatesList) return;
+
+  if (templates.length === 0) {
+    ui.templatesList.innerHTML = `
+      <div class="templates-empty" style="text-align: center; padding: 32px; color: var(--color-text-muted);">
+        <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">content_copy</span>
+        <p style="margin-bottom: 8px;">No templates saved yet.</p>
+        <p style="font-size: 12px;">Configure a scraping task and click "Save Current" to create a reusable template.</p>
+      </div>
+    `;
+    return;
+  }
+
+  ui.templatesList.innerHTML = templates.map(template => {
+    const lastUsed = template.lastUsedAt
+      ? new Date(template.lastUsedAt).toLocaleDateString()
+      : 'Never';
+
+    return `
+      <div class="template-item" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-bottom: 1px solid var(--color-border);" data-id="${template.id}">
+        <div class="template-icon" style="flex-shrink: 0; width: 40px; height: 40px; background: var(--color-bg-alt); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--color-accent);">language</span>
+        </div>
+        <div class="template-info" style="flex: 1; min-width: 0;">
+          <div class="template-name" style="font-weight: 600; font-size: 14px; margin-bottom: 2px;">${escapeHtml(template.name)}</div>
+          <div class="template-hostname" style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 4px;">${escapeHtml(template.siteHostname)}</div>
+          <div class="template-meta" style="font-size: 11px; color: var(--color-text-muted);">
+            Used ${template.useCount}x · Last: ${lastUsed}
+          </div>
+        </div>
+        <div class="template-actions" style="display: flex; gap: 4px; flex-shrink: 0;">
+          <button class="btn-icon-sm template-apply" title="Apply template" data-id="${template.id}">
+            <span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span>
+          </button>
+          <button class="btn-icon-sm template-delete" title="Delete template" data-id="${template.id}">
+            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Add event listeners
+  ui.templatesList.querySelectorAll('.template-apply').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = (btn as HTMLElement).dataset.id;
+      const template = templates.find(t => t.id === id);
+      if (template) {
+        applyTemplate(template);
+      }
+    });
+  });
+
+  ui.templatesList.querySelectorAll('.template-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = (btn as HTMLElement).dataset.id;
+      if (id && confirm('Delete this template?')) {
+        deleteTemplate(id);
+      }
+    });
+  });
+}
+
+function showTemplateSuggestion(template: ScrapingTemplate): void {
+  suggestedTemplate = template;
+
+  if (ui.templateSuggestionBanner && ui.templateSuggestionText) {
+    ui.templateSuggestionText.textContent = `"${template.name}" matches this page. Apply it to load your saved configuration.`;
+    ui.templateSuggestionBanner.style.display = 'block';
+  }
+}
+
+function bindTemplateListeners(): void {
+  // Save current as template button
+  if (ui.saveCurrentAsTemplateBtn) {
+    ui.saveCurrentAsTemplateBtn.addEventListener('click', saveCurrentAsTemplate);
+  }
+
+  // Apply suggested template button
+  if (ui.applySuggestedTemplateBtn) {
+    ui.applySuggestedTemplateBtn.addEventListener('click', () => {
+      if (suggestedTemplate) {
+        applyTemplate(suggestedTemplate);
+      }
+    });
+  }
+
+  // Dismiss template suggestion button
+  if (ui.dismissTemplateSuggestionBtn) {
+    ui.dismissTemplateSuggestionBtn.addEventListener('click', () => {
+      if (ui.templateSuggestionBanner) {
+        ui.templateSuggestionBanner.style.display = 'none';
+      }
+      suggestedTemplate = null;
+    });
+  }
+}
+
+async function checkForMatchingTemplate(): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) return;
+
+  const response = await chrome.runtime.sendMessage({
+    type: 'FIND_MATCHING_TEMPLATE',
+    payload: { url: tab.url },
+  }) as ScraperResponse;
+
+  if (response.success && response.data) {
+    const template = response.data as ScrapingTemplate;
+    // Only show suggestion if auto-apply is not enabled
+    if (!template.autoApply) {
+      showTemplateSuggestion(template);
+    } else {
+      // Auto-apply the template
+      applyTemplate(template);
+    }
+  }
+}
+
 function updateDashboardStats() {
   // Update total tasks
   if (ui.totalTasks) {
@@ -752,7 +1221,7 @@ function openWizard() {
 
   // Reset form
   if (ui.wizardTaskName) ui.wizardTaskName.value = '';
-  if (ui.wizardTargetUrl) ui.wizardTargetUrl.value = '';
+  if (ui.wizardTargetUrls) ui.wizardTargetUrls.value = '';
   if (ui.wizardDescription) ui.wizardDescription.value = '';
   if (ui.wizardFrequency) ui.wizardFrequency.value = 'once';
   if (ui.wizardMaxItems) ui.wizardMaxItems.value = '100';
@@ -760,6 +1229,26 @@ function openWizard() {
   if (ui.wizardExportFormat) ui.wizardExportFormat.value = 'json';
   if (ui.wizardWebhook) ui.wizardWebhook.value = '';
   if (ui.wizardAutoExport) ui.wizardAutoExport.checked = false;
+
+  // Reset new fields
+  if (ui.batchOptions) ui.batchOptions.style.display = 'none';
+  if (ui.wizardContinueOnError) ui.wizardContinueOnError.checked = true;
+  if (ui.wizardBatchDelay) ui.wizardBatchDelay.value = '2000';
+  if (ui.cronTimeField) ui.cronTimeField.style.display = 'none';
+  if (ui.cronDaysField) ui.cronDaysField.style.display = 'none';
+  if (ui.cronMonthDaysField) ui.cronMonthDaysField.style.display = 'none';
+  if (ui.wizardCronTime) ui.wizardCronTime.value = '09:00';
+  if (ui.wizardMonthDays) ui.wizardMonthDays.value = '';
+  if (ui.wizardChangeDetection) ui.wizardChangeDetection.checked = false;
+  if (ui.wizardWebhookOnChange) ui.wizardWebhookOnChange.checked = false;
+  if (ui.webhookOnChangeRow) ui.webhookOnChangeRow.style.display = 'none';
+
+  // Reset day checkboxes
+  if (ui.wizardDaysGroup) {
+    ui.wizardDaysGroup.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      (cb as HTMLInputElement).checked = false;
+    });
+  }
 }
 
 function closeWizard() {
@@ -796,36 +1285,121 @@ function updateWizardUI() {
 }
 
 function getWizardData(): WizardData {
+  // Parse URLs from textarea
+  const urlsText = ui.wizardTargetUrls?.value || '';
+  const urls = urlsText
+    .split('\n')
+    .map(url => url.trim())
+    .filter(url => url.length > 0 && url.startsWith('http'));
+
+  // Parse days of week from checkboxes
+  const daysOfWeek: number[] = [];
+  if (ui.wizardDaysGroup) {
+    ui.wizardDaysGroup.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+      daysOfWeek.push(parseInt((cb as HTMLInputElement).value));
+    });
+  }
+
+  // Parse days of month from input
+  const monthDaysText = ui.wizardMonthDays?.value || '';
+  const daysOfMonth = monthDaysText
+    .split(',')
+    .map(d => parseInt(d.trim()))
+    .filter(d => !isNaN(d) && d >= 1 && d <= 31);
+
+  const frequency = ui.wizardFrequency?.value || 'once';
+  const hasCronConfig = frequency !== 'once' && frequency !== 'hourly';
+
   return {
     taskName: ui.wizardTaskName?.value || 'Untitled Task',
-    targetUrl: ui.wizardTargetUrl?.value || '',
+    targetUrl: urls[0] || '',
+    urls,
     description: ui.wizardDescription?.value || '',
-    frequency: ui.wizardFrequency?.value || 'once',
+    frequency,
     maxItems: parseInt(ui.wizardMaxItems?.value) || 100,
     timeout: parseInt(ui.wizardTimeout?.value) || 300,
     exportFormat: ui.wizardExportFormat?.value || 'json',
     webhookUrl: ui.wizardWebhook?.value || '',
     autoExport: ui.wizardAutoExport?.checked || false,
+    // Cron scheduling
+    scheduleType: hasCronConfig ? 'cron' : 'simple',
+    cronTime: ui.wizardCronTime?.value || '09:00',
+    daysOfWeek,
+    daysOfMonth,
+    // Batch config
+    batchContinueOnError: ui.wizardContinueOnError?.checked ?? true,
+    batchDelayMs: parseInt(ui.wizardBatchDelay?.value) || 2000,
+    // Change detection
+    changeDetectionEnabled: ui.wizardChangeDetection?.checked || false,
+    webhookOnChangeOnly: ui.wizardWebhookOnChange?.checked || false,
   };
 }
 
 async function createTask() {
   const data = getWizardData();
 
-  // Create scheduled task
-  const task: ScheduledTask = {
+  // Build the full task object for service worker
+  const fullTask = {
     id: crypto.randomUUID(),
+    name: data.taskName,
+    url: data.targetUrl,
+    urls: data.urls.length > 1 ? data.urls : undefined,
+    description: data.description || undefined,
+    frequency: data.frequency === 'once' ? 'daily' : data.frequency, // Map once to daily for storage
+    maxItems: data.maxItems,
+    timeout: data.timeout,
+    format: data.exportFormat as 'json' | 'csv',
+    webhookUrl: data.webhookUrl || undefined,
+    autoExport: data.autoExport,
+    enabled: data.frequency !== 'once', // Only enable scheduling for recurring tasks
+    status: 'idle' as const,
+    // Cron scheduling
+    scheduleType: data.scheduleType,
+    cronConfig: data.scheduleType === 'cron' ? {
+      time: data.cronTime,
+      dayOfWeek: data.daysOfWeek.length > 0 ? data.daysOfWeek : undefined,
+      dayOfMonth: data.daysOfMonth.length > 0 ? data.daysOfMonth : undefined,
+    } : undefined,
+    // Batch config
+    batchConfig: data.urls.length > 1 ? {
+      delayBetweenMs: data.batchDelayMs,
+      continueOnError: data.batchContinueOnError,
+      aggregateResults: true,
+    } : undefined,
+    // Change detection
+    changeDetection: data.changeDetectionEnabled ? {
+      enabled: true,
+      webhookOnChangeOnly: data.webhookOnChangeOnly,
+      trackFieldChanges: false,
+    } : undefined,
+  };
+
+  // Create scheduled task for UI display
+  const task: ScheduledTask = {
+    id: fullTask.id,
     name: data.taskName,
     status: 'active',
     frequency: data.frequency === 'once' ? 'Once' :
       data.frequency === 'hourly' ? 'Hourly' :
-        data.frequency === 'daily' ? 'Daily' : 'Weekly',
+        data.frequency === 'daily' ? 'Daily' :
+          data.frequency === 'weekly' ? 'Weekly' : 'Monthly',
     lastRun: null,
     nextRun: data.frequency === 'once' ? null : new Date(),
   };
 
   scheduledTasks.unshift(task);
   await saveScheduledTasks(scheduledTasks);
+
+  // Save full task to service worker storage
+  const existingTasks = await chrome.storage.local.get('scheduled-tasks');
+  const tasks = existingTasks['scheduled-tasks'] || [];
+  tasks.unshift(fullTask);
+  await chrome.storage.local.set({ 'scheduled-tasks': tasks });
+
+  // Schedule the task if it's recurring
+  if (data.frequency !== 'once') {
+    await sendMessage({ type: 'SCHEDULE_TASK', payload: fullTask });
+  }
 
   // Create history entry
   const entry: HistoryEntry = {
@@ -845,7 +1419,9 @@ async function createTask() {
   await saveConfig(currentConfig);
 
   // Add log entry
-  addLogEntry(`Created task: ${data.taskName}`);
+  const batchInfo = data.urls.length > 1 ? ` (${data.urls.length} URLs)` : '';
+  const cronInfo = data.scheduleType === 'cron' ? ` at ${data.cronTime}` : '';
+  addLogEntry(`Created task: ${data.taskName}${batchInfo}${cronInfo}`);
 
   closeWizard();
   renderHistory();
@@ -877,6 +1453,41 @@ ui.wizardOverlay?.addEventListener('click', (e) => {
   if (e.target === ui.wizardOverlay) {
     closeWizard();
   }
+});
+
+// --- NEW: Wizard Field Event Listeners ---
+
+// Frequency change - show/hide cron fields
+ui.wizardFrequency?.addEventListener('change', () => {
+  const frequency = ui.wizardFrequency.value;
+
+  // Show time picker for daily, weekly, monthly
+  const showTime = ['daily', 'weekly', 'monthly'].includes(frequency);
+  if (ui.cronTimeField) ui.cronTimeField.style.display = showTime ? 'block' : 'none';
+
+  // Show day of week for weekly
+  if (ui.cronDaysField) ui.cronDaysField.style.display = frequency === 'weekly' ? 'block' : 'none';
+
+  // Show day of month for monthly
+  if (ui.cronMonthDaysField) ui.cronMonthDaysField.style.display = frequency === 'monthly' ? 'block' : 'none';
+});
+
+// URL textarea change - show/hide batch options
+ui.wizardTargetUrls?.addEventListener('input', () => {
+  const urlsText = ui.wizardTargetUrls.value;
+  const urls = urlsText
+    .split('\n')
+    .map(url => url.trim())
+    .filter(url => url.length > 0 && url.startsWith('http'));
+
+  const hasMultipleUrls = urls.length > 1;
+  if (ui.batchOptions) ui.batchOptions.style.display = hasMultipleUrls ? 'block' : 'none';
+});
+
+// Change detection toggle - show/hide webhook-on-change row
+ui.wizardChangeDetection?.addEventListener('change', () => {
+  const enabled = ui.wizardChangeDetection.checked;
+  if (ui.webhookOnChangeRow) ui.webhookOnChangeRow.style.display = enabled ? 'flex' : 'none';
 });
 
 // --- Dashboard Actions ---
@@ -1047,6 +1658,20 @@ async function init() {
   renderScheduledTasks();
   updateDashboardStats();
 
+  // Load and render saved URLs
+  savedUrls = await loadSavedUrls();
+  renderSavedUrls();
+  populateWizardUrlSelect();
+  bindSavedUrlsListeners();
+
+  // Load and render templates
+  templates = await loadTemplates();
+  renderTemplates();
+  bindTemplateListeners();
+
+  // Check for matching template on current page
+  checkForMatchingTemplate();
+
   // Load and sync webhook config
   webhookConfig = await loadWebhookConfig();
   syncWebhookUI();
@@ -1103,5 +1728,358 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
         ui.livePreviewContent.textContent = JSON.stringify(items.slice(-5), null, 2);
       }
     }
+  } else if (message.type === 'SAVED_URLS_UPDATED') {
+    // Refresh saved URLs when updated from context menu
+    loadSavedUrls().then(urls => {
+      savedUrls = urls;
+      renderSavedUrls();
+      populateWizardUrlSelect();
+    });
+  } else if (message.type === 'TEMPLATE_APPLIED') {
+    // Template was applied from somewhere else
+    const template = message.payload?.template as ScrapingTemplate;
+    if (template) {
+      addLogEntry(`Template applied: ${template.name}`);
+      // Update config
+      currentConfig.extractionConfig = { ...template.extractionConfig };
+      currentConfig.patternConfig = { ...template.patternConfig };
+      if (template.scrollerConfig) {
+        currentConfig.scrollerConfig = { ...template.scrollerConfig };
+      }
+      currentContainerSelector = template.containerSelector;
+      syncUIWithConfig();
+    }
+  } else if (message.type === 'arbitrage:opportunity:detected') {
+    // Refresh opportunities when new one is detected
+    loadArbitrageOpportunities();
   }
 });
+
+// --- Tab Change Detection for Templates ---
+
+// Check for matching template when user switches browser tabs
+chrome.tabs.onActivated.addListener(() => {
+  // Small delay to ensure tab info is updated
+  setTimeout(() => {
+    checkForMatchingTemplate();
+  }, 100);
+});
+
+// Check for matching template when URL changes in the current tab
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    // Check if this is the active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id === tabId) {
+        checkForMatchingTemplate();
+      }
+    });
+  }
+});
+
+// --- Arbitrage Tab ---
+
+// Arbitrage UI Elements
+const arbUI = {
+  scanBtn: document.getElementById('scan-arbitrage-btn') as HTMLButtonElement,
+  platformBanner: document.getElementById('platform-banner') as HTMLDivElement,
+  platformName: document.getElementById('platform-name') as HTMLParagraphElement,
+  platformInfo: document.getElementById('platform-info') as HTMLParagraphElement,
+  opportunitiesCount: document.getElementById('arb-opportunities') as HTMLSpanElement,
+  avgMargin: document.getElementById('arb-avg-margin') as HTMLSpanElement,
+  productsCount: document.getElementById('arb-products') as HTMLSpanElement,
+  opportunitiesList: document.getElementById('opportunities-list') as HTMLDivElement,
+  sortSelect: document.getElementById('arb-sort') as HTMLSelectElement,
+  refreshBtn: document.getElementById('refresh-opportunities-btn') as HTMLButtonElement,
+  minMarginInput: document.getElementById('arb-min-margin') as HTMLInputElement,
+  autoMatchToggle: document.getElementById('arb-auto-match') as HTMLInputElement,
+  alertsToggle: document.getElementById('arb-alerts') as HTMLInputElement,
+  platformFilters: document.querySelectorAll('.platform-chip') as NodeListOf<HTMLLabelElement>,
+};
+
+// Arbitrage State
+let arbitrageOpportunities: ArbitrageOpportunity[] = [];
+let enabledPlatforms: PlatformId[] = ['temu', 'shein', 'aliexpress', 'shopee', 'lazada', 'tiktokshop'];
+let _currentPlatform: { id: PlatformId; name: string } | null = null;
+void _currentPlatform; // Reserved for future use (e.g., platform-specific actions)
+
+// Arbitrage Helper Functions
+function formatMargin(margin: number): string {
+  return margin >= 0 ? `+${margin.toFixed(1)}%` : `${margin.toFixed(1)}%`;
+}
+
+function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
+function getRecommendationClass(rec: string): string {
+  switch (rec) {
+    case 'buy': return 'badge-success';
+    case 'hold': return 'badge-warning';
+    case 'avoid': return 'badge-error';
+    default: return 'badge-info';
+  }
+}
+
+function renderOpportunityCard(opp: ArbitrageOpportunity): string {
+  const margin = opp.financials.profitMarginPercent;
+  const marginClass = margin >= 30 ? 'text-success' : margin >= 20 ? 'text-warning' : 'text-muted';
+  const recClass = getRecommendationClass(opp.recommendation);
+
+  return `
+    <div class="opportunity-card" data-id="${opp.id}" style="padding: 12px 16px; border-bottom: 1px solid var(--color-border);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(opp.sourceProduct.title)}">
+            ${escapeHtml(opp.sourceProduct.title.substring(0, 50))}${opp.sourceProduct.title.length > 50 ? '...' : ''}
+          </div>
+          <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 2px;">
+            ${opp.sourceProduct.platform} → ${opp.targetProduct.platform}
+          </div>
+        </div>
+        <span class="badge ${recClass}" style="font-size: 10px; padding: 2px 6px;">
+          ${opp.recommendation.toUpperCase()}
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 12px; color: var(--color-text-muted);">Margin:</span>
+          <span class="${marginClass}" style="font-weight: 600; font-size: 14px; margin-left: 4px;">
+            ${formatMargin(margin)}
+          </span>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 11px; color: var(--color-text-muted);">Profit:</span>
+          <span style="font-weight: 500; font-size: 13px; color: var(--color-primary); margin-left: 4px;">
+            ${formatCurrency(opp.financials.profitPerUnit)}
+          </span>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--color-text-muted);">
+        <span>Confidence: ${(opp.riskMetrics.confidence * 100).toFixed(0)}%</span>
+        <button class="btn-text dismiss-opp-btn" data-id="${opp.id}" style="font-size: 11px; padding: 2px 4px;">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderArbitrageOpportunities() {
+  if (!arbUI.opportunitiesList) return;
+
+  // Filter by enabled platforms
+  const filtered = arbitrageOpportunities.filter(opp =>
+    enabledPlatforms.includes(opp.sourceProduct.platform) ||
+    enabledPlatforms.includes(opp.targetProduct.platform)
+  );
+
+  if (filtered.length === 0) {
+    arbUI.opportunitiesList.innerHTML = `
+      <div class="empty-placeholder" style="padding: 32px; text-align: center;">
+        <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.3; display: block; margin-bottom: 8px;">search_off</span>
+        <p style="margin: 0; color: var(--color-text-muted);">No opportunities found yet</p>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--color-text-muted);">
+          Navigate to a supported e-commerce site and click "Scan Products"
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  arbUI.opportunitiesList.innerHTML = filtered.map(opp => renderOpportunityCard(opp)).join('');
+
+  // Add event listeners for dismiss buttons
+  arbUI.opportunitiesList.querySelectorAll('.dismiss-opp-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = (btn as HTMLElement).dataset.id;
+      if (id) {
+        await dismissOpportunity(id);
+      }
+    });
+  });
+}
+
+function updateArbitrageStats() {
+  const _buyOpps = arbitrageOpportunities.filter(o => o.recommendation === 'buy').length;
+  void _buyOpps; // Reserved for future use
+  const totalMargin = arbitrageOpportunities.reduce((sum, o) => sum + o.financials.profitMarginPercent, 0);
+  const avgMargin = arbitrageOpportunities.length > 0 ? totalMargin / arbitrageOpportunities.length : 0;
+
+  if (arbUI.opportunitiesCount) {
+    arbUI.opportunitiesCount.textContent = String(arbitrageOpportunities.length);
+  }
+  if (arbUI.avgMargin) {
+    arbUI.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
+  }
+  // Products count would come from a separate API call - placeholder for now
+}
+
+async function loadArbitrageOpportunities() {
+  try {
+    const sortBy = arbUI.sortSelect?.value || 'margin';
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_OPPORTUNITIES',
+      payload: {
+        sortBy,
+        platforms: enabledPlatforms,
+        showDismissed: false,
+      },
+    }) as ScraperResponse;
+
+    if (response.success && response.data) {
+      arbitrageOpportunities = response.data as ArbitrageOpportunity[];
+      renderArbitrageOpportunities();
+      updateArbitrageStats();
+    }
+  } catch (error) {
+    console.error('[Arbitrage] Failed to load opportunities:', error);
+  }
+}
+
+async function dismissOpportunity(id: string) {
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'DISMISS_OPPORTUNITY',
+      payload: { opportunityId: id },
+    });
+
+    // Remove from local list and re-render
+    arbitrageOpportunities = arbitrageOpportunities.filter(o => o.id !== id);
+    renderArbitrageOpportunities();
+    updateArbitrageStats();
+    addLogEntry('Dismissed opportunity');
+  } catch (error) {
+    console.error('[Arbitrage] Failed to dismiss:', error);
+  }
+}
+
+async function scanForProducts() {
+  addLogEntry('Scanning for products...');
+
+  // Send message to content script to extract products
+  const response = await sendToContentScript({
+    type: 'EXTRACT_PRODUCTS',
+  } as ScraperMessage);
+
+  if (response.success && response.data) {
+    const { platform, products } = response.data as { platform: any; products: any[] };
+
+    if (platform) {
+      _currentPlatform = { id: platform.id, name: platform.name };
+      if (arbUI.platformBanner) arbUI.platformBanner.style.display = 'block';
+      if (arbUI.platformName) arbUI.platformName.textContent = platform.name;
+      if (arbUI.platformInfo) arbUI.platformInfo.textContent = `Found ${products.length} products`;
+    }
+
+    if (products.length > 0) {
+      // Record prices
+      await chrome.runtime.sendMessage({
+        type: 'RECORD_PRICES',
+        payload: { snapshots: products },
+      });
+
+      // Analyze for arbitrage opportunities
+      const analyzeResponse = await chrome.runtime.sendMessage({
+        type: 'ANALYZE_ARBITRAGE',
+        payload: {
+          products,
+          sourcePlatform: platform?.id || 'temu',
+          targetPlatforms: enabledPlatforms.filter(p => p !== platform?.id),
+          minMargin: parseInt(arbUI.minMarginInput?.value) || 20,
+        },
+      });
+
+      if (analyzeResponse.success) {
+        addLogEntry(`Found ${(analyzeResponse.data as any[]).length} opportunities`);
+        await loadArbitrageOpportunities();
+      }
+    } else {
+      addLogEntry('No products found on this page');
+    }
+  } else {
+    addLogEntry('Platform not supported or no products found');
+  }
+}
+
+// Bind Arbitrage Event Listeners
+function bindArbitrageListeners() {
+  // Scan button
+  arbUI.scanBtn?.addEventListener('click', scanForProducts);
+
+  // Refresh button
+  arbUI.refreshBtn?.addEventListener('click', loadArbitrageOpportunities);
+
+  // Sort selector
+  arbUI.sortSelect?.addEventListener('change', loadArbitrageOpportunities);
+
+  // Platform filters
+  arbUI.platformFilters.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const checkbox = chip.querySelector('input') as HTMLInputElement;
+      const platform = chip.dataset.platform as PlatformId;
+
+      if (checkbox.checked) {
+        checkbox.checked = false;
+        chip.classList.remove('active');
+        enabledPlatforms = enabledPlatforms.filter(p => p !== platform);
+      } else {
+        checkbox.checked = true;
+        chip.classList.add('active');
+        if (!enabledPlatforms.includes(platform)) {
+          enabledPlatforms.push(platform);
+        }
+      }
+
+      renderArbitrageOpportunities();
+    });
+  });
+
+  // Settings changes
+  arbUI.minMarginInput?.addEventListener('change', async () => {
+    await chrome.runtime.sendMessage({
+      type: 'UPDATE_ARBITRAGE_SETTINGS',
+      payload: { minProfitMargin: parseInt(arbUI.minMarginInput.value) || 20 },
+    });
+  });
+
+  arbUI.autoMatchToggle?.addEventListener('change', async () => {
+    await chrome.runtime.sendMessage({
+      type: 'UPDATE_ARBITRAGE_SETTINGS',
+      payload: { autoMatch: arbUI.autoMatchToggle.checked },
+    });
+  });
+
+  arbUI.alertsToggle?.addEventListener('change', async () => {
+    await chrome.runtime.sendMessage({
+      type: 'UPDATE_ARBITRAGE_SETTINGS',
+      payload: { alertOnOpportunity: arbUI.alertsToggle.checked },
+    });
+  });
+}
+
+// Initialize Arbitrage Tab
+async function initArbitrage() {
+  bindArbitrageListeners();
+  await loadArbitrageOpportunities();
+
+  // Load settings
+  const settingsResponse = await chrome.runtime.sendMessage({
+    type: 'GET_ARBITRAGE_SETTINGS',
+  }) as ScraperResponse;
+
+  if (settingsResponse.success && settingsResponse.data) {
+    const settings = settingsResponse.data as any;
+    if (arbUI.minMarginInput) arbUI.minMarginInput.value = String(settings.minProfitMargin || 20);
+    if (arbUI.autoMatchToggle) arbUI.autoMatchToggle.checked = settings.autoMatch !== false;
+    if (arbUI.alertsToggle) arbUI.alertsToggle.checked = settings.alertOnOpportunity !== false;
+  }
+}
+
+// Call initArbitrage after main init
+initArbitrage();

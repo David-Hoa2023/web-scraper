@@ -10,6 +10,7 @@ import type {
   ScrollerConfig,
   ExtractionConfig,
 } from '../types';
+import { detectPlatform, extractAllProducts } from '../extractors';
 import {
   detectPattern,
   highlightPattern,
@@ -68,8 +69,11 @@ function debounce<T extends (...args: Parameters<T>) => void>(
 
 // --- Pattern Detection Logic ---
 
-const handleMouseOver = debounce((event: MouseEvent) => {
-  if (!isPatternDetectionEnabled) return;
+// Direct handler without debounce for debugging
+function handleMouseOverDirect(event: MouseEvent) {
+  if (!isPatternDetectionEnabled) {
+    return;
+  }
 
   // Don't change highlight if pattern is locked
   if (isLocked()) return;
@@ -78,7 +82,7 @@ const handleMouseOver = debounce((event: MouseEvent) => {
   if (!target || target.nodeType !== Node.ELEMENT_NODE) return;
 
   // Ignore overlay and badge
-  if (target.closest('#web-scraper-pattern-overlay') || target.closest('#web-scraper-shadow-host')) {
+  if (target.closest('#web-scraper-pattern-overlay') || target.closest('#web-scraper-shadow-host') || target.closest('#web-scraper-pattern-badge')) {
     return;
   }
 
@@ -91,7 +95,9 @@ const handleMouseOver = debounce((event: MouseEvent) => {
     currentPattern = null;
     hideHighlight();
   }
-}, 50);
+}
+
+const handleMouseOver = debounce(handleMouseOverDirect, 50);
 
 function handleMouseOut(event: MouseEvent) {
   // Don't hide if pattern is locked
@@ -103,7 +109,17 @@ function handleMouseOut(event: MouseEvent) {
   }
 }
 
+let patternDetectionInitialized = false;
+
 function initPatternDetection() {
+  // Clean up any existing listeners first to prevent duplicates
+  if (patternDetectionInitialized) {
+    console.log('[Web Scraper] Cleaning up existing pattern detection before re-init');
+    document.removeEventListener('mouseover', handleMouseOver, { capture: true });
+    document.removeEventListener('mouseout', handleMouseOut, { capture: true });
+  }
+
+  // Add fresh listeners
   document.addEventListener('mouseover', handleMouseOver, { passive: true, capture: true });
   document.addEventListener('mouseout', handleMouseOut, { passive: true, capture: true });
 
@@ -124,14 +140,16 @@ function initPatternDetection() {
     }
   });
 
+  patternDetectionInitialized = true;
   console.log('[Web Scraper] Pattern detection active');
 }
 
 function cleanupPatternDetection() {
-  document.removeEventListener('mouseover', handleMouseOver);
-  document.removeEventListener('mouseout', handleMouseOut);
+  document.removeEventListener('mouseover', handleMouseOver, { capture: true });
+  document.removeEventListener('mouseout', handleMouseOut, { capture: true });
   setOnPatternClick(null);
   hideHighlight();
+  patternDetectionInitialized = false;
   console.log('[Web Scraper] Pattern detection paused');
 }
 
@@ -369,6 +387,32 @@ chrome.runtime.onMessage.addListener(
           break;
         }
 
+        // Arbitrage: Platform detection and product extraction
+        case 'DETECT_PLATFORM': {
+          const result = detectPlatform();
+          if (result.detected && result.platform) {
+            sendResponse({
+              success: true,
+              data: { platform: result.platform.id, name: result.platform.name }
+            });
+          } else {
+            sendResponse({ success: true, data: null });
+          }
+          break;
+        }
+
+        case 'EXTRACT_PRODUCTS': {
+          const result = detectPlatform();
+          if (!result.detected || !result.platform) {
+            sendResponse({ success: false, error: 'No supported platform detected' });
+            break;
+          }
+          const products = extractAllProducts(result.platform);
+          console.log(`[Content] Extracted ${products.length} products from ${result.platform.name}`);
+          sendResponse({ success: true, data: { platform: result.platform.id, products } });
+          break;
+        }
+
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
       }
@@ -437,9 +481,23 @@ function handleStopScrape() {
 // --- Initialization ---
 
 async function init() {
+  console.log('[Web Scraper] Initializing content script...');
+
+  // Reset pattern detection state to ensure clean start
+  patternDetectionInitialized = false;
+  currentPattern = null;
+
   // Load extension enabled state
   const enabledResult = await chrome.storage.local.get('extensionEnabled');
+  // Default to enabled if not explicitly set to false
   isPatternDetectionEnabled = enabledResult.extensionEnabled !== false;
+
+  // Ensure storage has the correct value
+  if (enabledResult.extensionEnabled === undefined) {
+    await chrome.storage.local.set({ extensionEnabled: true });
+  }
+
+  console.log('[Web Scraper] Extension enabled state:', isPatternDetectionEnabled);
 
   // Load saved config
   const saved = await chrome.storage.local.get('scraperConfig');
@@ -456,9 +514,12 @@ async function init() {
     };
   }
 
-  // Only init pattern detection if extension is enabled
+  // Always initialize pattern detection (will be a no-op if already initialized)
   if (isPatternDetectionEnabled) {
     initPatternDetection();
+    console.log('[Web Scraper] Pattern detection initialized successfully');
+  } else {
+    console.log('[Web Scraper] Extension disabled, pattern detection not initialized');
   }
 }
 
