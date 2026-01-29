@@ -20,13 +20,19 @@ export default defineConfig({
     rollupOptions: {
       input: {
         sidepanel: resolve(__dirname, 'src/ui/sidepanel.html'),
-        content: resolve(__dirname, 'src/content/index.ts'),
+        // content script is built separately by esbuild (scripts/build-content.mjs)
+        // to ensure it's a single IIFE bundle without ES module imports
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
       },
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
+        // Prevent code splitting for content scripts - they must be self-contained
+        manualChunks(id) {
+          // Don't create shared chunks - inline everything
+          return undefined;
+        },
       },
     },
   },

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/post-build.js",
+    "build": "tsc && vite build && node scripts/build-content.mjs && node scripts/post-build.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "bunx vitest run",
@@ -17,6 +17,7 @@
     "simple-statistics": "^7.8.8"
   },
   "devDependencies": {
+    "esbuild": "^0.20.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/chrome": "^0.0.268",
     "@types/jspdf": "^2.0.0",

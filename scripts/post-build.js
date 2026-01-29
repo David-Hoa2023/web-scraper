@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Post-build script to fix content script for Chrome extension compatibility
- * - Removes import.meta.url references (not allowed in non-module scripts)
- * - Removes ES module export statements
+ * Post-build script for Chrome extension
  * - Copies manifest.json and icons to dist
+ *
+ * Note: Content script is built separately by esbuild (build-content.mjs)
+ * as a single IIFE bundle to avoid ES module import issues.
  */
 
-import { readFileSync, writeFileSync, copyFileSync, cpSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, cpSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,24 +15,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 const distDir = join(rootDir, 'dist');
 
-console.log('[post-build] Fixing content script for Chrome extension...');
-
-// Fix content.js
-const contentPath = join(distDir, 'content.js');
-if (existsSync(contentPath)) {
-  let content = readFileSync(contentPath, 'utf-8');
-
-  // Remove import.meta.url references
-  const importMetaCount = (content.match(/import\.meta\.url/g) || []).length;
-  content = content.replace(/import\.meta\.url/g, '""');
-
-  // Remove ES module exports
-  const exportCount = (content.match(/export\{[^}]*\};/g) || []).length;
-  content = content.replace(/export\{[^}]*\};/g, '');
-
-  writeFileSync(contentPath, content);
-  console.log(`[post-build] Fixed content.js: removed ${importMetaCount} import.meta refs, ${exportCount} exports`);
-}
+console.log('[post-build] Copying extension assets...');
 
 // Copy manifest.json
 const manifestSrc = join(rootDir, 'src', 'manifest.json');

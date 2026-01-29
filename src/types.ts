@@ -154,6 +154,9 @@ export type MessageType =
   | 'FIND_MATCHING_TEMPLATE'
   | 'APPLY_TEMPLATE'
   | 'TEMPLATE_APPLIED'
+  // Pattern selector messages
+  | 'GET_PATTERN_SELECTORS'
+  | 'PATTERN_SELECTORS_UPDATED'
   // Arbitrage messages
   | 'DETECT_PLATFORM'
   | 'EXTRACT_PRODUCTS'

@@ -21,6 +21,7 @@ import {
   unlockPattern,
   isLocked,
 } from './patternDetector';
+import { buildSelectorsFromPattern, type PatternSelectors } from './selectorGenerator';
 import * as AutoScroller from './autoScroller';
 // Overlay imports removed
 import { extractData } from './dataExtractor';
@@ -29,6 +30,7 @@ console.log('[Web Scraper] Content script loaded');
 
 // --- State Management ---
 let currentPattern: PatternMatch | null = null;
+let currentSelectors: PatternSelectors | null = null;
 let isPatternDetectionEnabled = true;
 
 // Default layouts
@@ -132,10 +134,29 @@ function initPatternDetection() {
         unlockPattern();
         hideHighlight(true);
         currentPattern = null;
+        currentSelectors = null;
+        // Notify sidepanel that pattern was cleared
+        chrome.runtime.sendMessage({
+          type: 'PATTERN_SELECTORS_UPDATED',
+          payload: { selectors: null, itemCount: 0 },
+        }).catch(() => {});
       } else {
-        // Lock the current pattern
+        // Lock the current pattern and generate selectors
         console.log('[Web Scraper] Pattern locked! Click "Start Scanning" in sidepanel or right-click for context menu.');
         lockPattern();
+
+        // Generate CSS selectors from the pattern
+        currentSelectors = buildSelectorsFromPattern(currentPattern);
+        console.log('[Web Scraper] Generated selectors:', currentSelectors);
+
+        // Send selectors to sidepanel for template saving
+        chrome.runtime.sendMessage({
+          type: 'PATTERN_SELECTORS_UPDATED',
+          payload: {
+            selectors: currentSelectors,
+            itemCount: currentPattern.siblings.length,
+          },
+        }).catch(() => {});
       }
     }
   });
@@ -366,6 +387,35 @@ chrome.runtime.onMessage.addListener(
           sendResponse({ success: true });
           break;
 
+        case 'GET_PATTERN_SELECTORS':
+          // Return current pattern selectors for template saving
+          if (currentPattern && currentSelectors) {
+            sendResponse({
+              success: true,
+              data: {
+                selectors: currentSelectors,
+                itemCount: currentPattern.siblings.length,
+              }
+            });
+          } else if (currentPattern) {
+            // Pattern exists but selectors weren't generated yet
+            const selectors = buildSelectorsFromPattern(currentPattern);
+            currentSelectors = selectors;
+            sendResponse({
+              success: true,
+              data: {
+                selectors,
+                itemCount: currentPattern.siblings.length,
+              }
+            });
+          } else {
+            sendResponse({
+              success: false,
+              error: 'No pattern selected. Hover over a list and click to lock a pattern first.'
+            });
+          }
+          break;
+
         case 'SET_EXTENSION_ENABLED': {
           const payload = message.payload as { enabled?: boolean } | undefined;
           const enabled = payload?.enabled ?? true;
@@ -384,6 +434,67 @@ chrome.runtime.onMessage.addListener(
             initPatternDetection();
           }
           sendResponse({ success: true, data: { enabled } });
+          break;
+        }
+
+        // Template application: Find elements by selector and set up pattern
+        case 'APPLY_TEMPLATE': {
+          const templatePayload = message.payload as {
+            containerSelector: string;
+            extractionConfig?: any;
+            patternConfig?: any;
+          } | undefined;
+
+          if (!templatePayload?.containerSelector) {
+            sendResponse({ success: false, error: 'No container selector provided' });
+            break;
+          }
+
+          const selector = templatePayload.containerSelector;
+          console.log('[Content] Applying template with selector:', selector);
+
+          try {
+            // Find elements matching the selector
+            const elements = document.querySelectorAll(selector);
+            console.log('[Content] Found', elements.length, 'elements matching selector');
+
+            if (elements.length === 0) {
+              sendResponse({ success: false, error: `No elements found for selector: ${selector}` });
+              break;
+            }
+
+            // Get the container (parent of matched elements)
+            const firstElement = elements[0];
+            const container = firstElement.parentElement || document.body;
+
+            // Create fingerprint from the first element
+            const fingerprint = getFingerprint(firstElement);
+
+            // Create pattern match
+            currentPattern = {
+              container,
+              fingerprint,
+              siblings: Array.from(elements) as Element[],
+              isSingle: elements.length === 1,
+              confidence: 1.0, // High confidence since we're using saved selector
+            };
+
+            // Highlight the pattern
+            highlightPattern(currentPattern);
+            lockPattern();
+
+            console.log('[Content] Template applied - pattern set with', elements.length, 'items');
+            sendResponse({
+              success: true,
+              data: {
+                itemCount: elements.length,
+                selector,
+              }
+            });
+          } catch (err: any) {
+            console.error('[Content] Error applying template:', err);
+            sendResponse({ success: false, error: err.message });
+          }
           break;
         }
 

@@ -43,4 +43,288 @@ Why does it still fail on Shopee?
 ## Lessons & Next Steps
 1.  **Structural Matching**: We rely too much on `class`. We should implement a "Tag Structure" fallback.
     *   If Class Jaccard is 0, check check if `TAG > CHILD_TAG` structure matches.
-2.  **Grandparent Checks**: If Parent has 0 siblings, we must check Grandparent patterns (e.g. "Cousins"). Currently we traverse up, but we look for *Siblings* of the ancestor.  
+2.  **Grandparent Checks**: If Parent has 0 siblings, we must check Grandparent patterns (e.g. "Cousins"). Currently we traverse up, but we look for *Siblings* of the ancestor.
+
+---
+
+# Lessons Learned: Content Script Not Loading (Green Rectangles Missing)
+
+## Issue
+**Content script fails to load**: After adding the Scraping Templates feature, the pattern detection stopped working entirely. No green rectangles appear on hover, and the console shows no `[Web Scraper]` log messages - indicating the content script isn't executing at all.
+
+## Root Cause Identified
+**ES Module imports in content scripts**: Vite's build was splitting shared code into chunks (e.g., `errors.js`). The built `content.js` started with:
+```javascript
+import{S as N,E as _,c as K,f as Se}from"./errors.js";
+```
+
+Chrome extension content scripts **cannot use ES module imports** - they must be completely self-contained. The browser silently fails to load the script when it encounters the import statement.
+
+## Fixes Attempted
+
+### 1. Event Listener Cleanup (Failure)
+*   **Issue**: Suspected duplicate event listeners or improper cleanup.
+*   **Fix**:
+    - Added `{ capture: true }` to `removeEventListener` calls (must match `addEventListener`)
+    - Added `patternDetectionInitialized` flag to prevent duplicate listeners
+    - Reset state in `init()` function
+*   **Result**: Build succeeded, but content script still not loading. Issue was elsewhere.
+
+### 2. CSS Style Priority (Failure)
+*   **Issue**: Suspected page CSS overriding highlight styles.
+*   **Fix**: Changed from `el.style.outline = ...` to `el.style.setProperty('outline', ..., 'important')`
+*   **Result**: Build succeeded, but content script still not loading. Issue was elsewhere.
+
+### 3. Vite manualChunks Configuration (Failure)
+*   **Issue**: Vite creating shared chunks that content scripts can't import.
+*   **Fix**: Added `manualChunks(id) { return undefined; }` to rollupOptions.output
+*   **Result**: Vite still created `errors.js` chunk. `manualChunks` returning undefined doesn't prevent default chunking.
+
+### 4. Post-Build Script Inlining (Partial Success)
+*   **Issue**: Need to inline imported chunks into content.js
+*   **Fix**: Enhanced `scripts/post-build.js` to:
+    - Detect `import{...}from"./filename.js"` statements
+    - Read the chunk file content
+    - Rename exported variables to match import aliases
+    - Prepend chunk content to content.js
+    - Remove import statements
+    - Delete the inlined chunk file
+*   **Result**:
+    - Build log shows: `inlined 1 chunks (errors.js)`
+    - content.js now starts with `class R extends Error{...}` instead of import
+    - **Still not working** - cause unknown
+
+## Successes
+*   Identified the ES module import issue via build output inspection
+*   Post-build script successfully inlines chunk imports
+*   content.js is now self-contained (verified: no import statements at start)
+
+## Failure Analysis
+Why does it still not work after inlining?
+1.  **Variable name collision**: The post-build renaming (`S` -> `N`, etc.) may not be complete. Minified variable names could collide or be incorrectly replaced.
+2.  **Order of inlined code**: Prepending chunk code may cause issues if it references variables defined later.
+3.  **Other syntax issues**: There may be other ES module artifacts (dynamic imports, top-level await) that aren't being handled.
+4.  **Chrome caching**: The extension may be loading a cached version despite reload.
+5.  **Manifest issue**: The content_scripts configuration may have issues not visible in the manifest file.
+
+## Lessons
+1.  **Chrome extension content scripts are NOT ES modules**: They cannot use `import`/`export` syntax. This is a fundamental constraint.
+2.  **Vite code splitting is incompatible with content scripts**: Need to either:
+    - Use a separate build for content scripts with `inlineDynamicImports: true`
+    - Use a bundler plugin that forces all code into a single file
+    - Build content scripts separately from the rest of the extension
+3.  **Silent failures are hard to debug**: Content scripts that fail to parse don't show errors - they simply don't run.
+4.  **Post-build transforms are fragile**: Trying to fix module issues after build is error-prone. Better to configure the build correctly upfront.
+
+## Final Fix (Success)
+
+### Solution: Build content script separately with esbuild as IIFE
+
+The fix was to use esbuild to build the content script as a **single self-contained IIFE bundle**, completely separate from Vite's build.
+
+**Files created/modified:**
+
+1. **`scripts/build-content.mjs`** (new):
+```javascript
+import { build } from "esbuild";
+
+await build({
+  entryPoints: ["src/content/index.ts"],
+  outfile: "dist/content.js",
+  bundle: true,
+  format: "iife",  // Classic script; no imports/exports
+  platform: "browser",
+  target: ["chrome114"],
+  sourcemap: true,
+  minify: true,
+});
+```
+
+2. **`package.json`** - Updated build script:
+```json
+"build": "tsc && vite build && node scripts/build-content.mjs && node scripts/post-build.js"
+```
+Added `esbuild` as dev dependency.
+
+3. **`vite.config.ts`** - Removed content script from Vite inputs:
+```typescript
+input: {
+  sidepanel: resolve(__dirname, 'src/ui/sidepanel.html'),
+  // content script is built separately by esbuild
+  'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
+},
+```
+
+4. **`scripts/post-build.js`** - Simplified to just copy manifest and icons (removed fragile chunk inliner).
+
+**Result:**
+- content.js now starts with `"use strict";(()=>{...` (IIFE wrapper)
+- Zero import statements
+- Content script loads and executes correctly
+- Green rectangles appear on hover
+
+## Key Lessons
+
+1. **Chrome content scripts are classic scripts, not ES modules**: They cannot use `import`/`export` syntax. The browser silently fails to load scripts with module syntax.
+
+2. **Vite code splitting is incompatible with content scripts**: Vite/Rollup will create shared chunks by default, which breaks content scripts.
+
+3. **Use esbuild with `format: "iife"` for content scripts**: This guarantees a single bundled file with no module syntax.
+
+4. **Build content scripts separately**: Don't try to make Vite produce content scripts alongside the rest of the extension. Use a dedicated build step.
+
+5. **Post-build transforms are fragile**: Trying to fix module issues after the build (inlining chunks, renaming variables) is error-prone. Configure the build correctly from the start.
+
+6. **Silent failures are the worst**: Content scripts that fail to parse don't show errors in the console - they simply don't run. Always verify the script is loading with a boot log.
+
+---
+
+# Lessons Learned: Template Apply Not Working (containerSelector Empty)
+
+## Issue
+**Apply Template does nothing**: After saving a template and clicking "Apply", the content script receives the message but `containerSelector` is empty (`""`), so no elements are found or highlighted.
+
+## Console Evidence
+```
+[Content] Received: APPLY_TEMPLATE {containerSelector: '', extractionConfig: {...}, patternConfig: {...}}
+```
+
+The `containerSelector: ""` shows the template was saved without capturing the actual CSS selector.
+
+## Root Cause Analysis
+
+### Template Save Flow
+When saving a template, the code uses `currentContainerSelector` variable:
+```typescript
+const template: ScrapingTemplate = {
+  containerSelector: currentContainerSelector,
+  // ...
+};
+```
+
+### The Bug
+`currentContainerSelector` is **never set** when a pattern is detected via mouse hover. The pattern detection flow:
+1. User hovers over element → `detectPattern()` finds siblings
+2. Pattern is stored in `currentPattern` (PatternMatch object with `container`, `fingerprint`, `siblings`)
+3. User clicks "Save Template"
+4. Template is saved with `containerSelector: currentContainerSelector` (which is still `""`)
+
+**Missing step**: There's no code that converts the detected `currentPattern` into a CSS selector string and stores it in `currentContainerSelector`.
+
+## Why Apply Template Was "Fixed" But Still Broken
+The apply template logic was correct:
+1. Sidepanel sends `APPLY_TEMPLATE` with `containerSelector` to content script ✓
+2. Content script uses `document.querySelectorAll(selector)` to find elements ✓
+3. Content script creates pattern and highlights ✓
+
+But since `containerSelector` was never populated during save, it's always empty.
+
+## Required Fix (Not Implemented)
+
+### Option A: Generate CSS Selector on Save
+When saving a template, generate a CSS selector from the current pattern:
+```typescript
+function generateSelector(element: Element): string {
+  // Generate unique selector: tag + id + classes + nth-child
+  // e.g., "div.product-card" or "[data-testid='product-item']"
+}
+
+// In saveCurrentTemplate():
+if (currentPattern?.siblings[0]) {
+  currentContainerSelector = generateSelector(currentPattern.siblings[0]);
+}
+```
+
+### Option B: Store Pattern Fingerprint Instead
+Instead of CSS selector, store the fingerprint and use similarity matching on apply:
+```typescript
+interface ScrapingTemplate {
+  // Instead of containerSelector: string
+  patternFingerprint: Fingerprint;
+}
+```
+
+### Option C: Prompt User for Selector
+Ask user to provide/confirm the CSS selector when saving template.
+
+## Lessons
+
+1. **Trace the full data flow**: The save→apply cycle involves multiple variables (`currentPattern`, `currentContainerSelector`, template storage). A bug in any step breaks the whole flow.
+
+2. **Empty strings are silent failures**: `containerSelector: ""` doesn't throw an error - it just finds zero elements. Always validate critical data before saving.
+
+3. **Test the round-trip**: Save a template, close the page, reopen, apply template. This reveals whether data persists correctly.
+
+4. **Console logging is essential**: The `[Content] Received: APPLY_TEMPLATE {containerSelector: ''}` log immediately showed the problem.
+
+## Final Fix (Success)
+
+### Solution: Generate CSS selectors when pattern is locked
+
+**New file created:** `src/content/selectorGenerator.ts`
+
+This utility generates stable CSS selectors from a detected pattern:
+- `uniqueSelector(el)` - Creates a unique selector for the container element
+- `deriveItemSelector(items)` - Creates a selector matching all repeated items
+- `buildSelectorsFromPattern(p)` - Returns `{ listContainerSelector, itemSelector, fullItemSelector }`
+
+**Key algorithms:**
+```typescript
+// Derive item selector from common classes across siblings
+function deriveItemSelector(items: Element[]): string {
+  // Find intersection of classes across all items
+  let common = new Set(Array.from(first.classList));
+  for (const el of items.slice(1)) {
+    common = new Set([...common].filter(c => el.classList.contains(c)));
+  }
+  // Filter to stable classes (not state classes like 'active', 'hover')
+  const stable = Array.from(common).filter(isStableClass).slice(0, 3);
+  if (stable.length) return `${tag}.${stable.join('.')}`;
+  // Fallback to data attributes or tag only
+}
+
+// Generate unique container selector
+function uniqueSelector(el: Element): string {
+  // 1. Try unique ID
+  // 2. Try stable data attributes (data-testid, data-qa, etc.)
+  // 3. Build path with nth-of-type until unique
+}
+```
+
+**Integration changes:**
+
+1. **Content script** (`content/index.ts`):
+   - When pattern is **locked**: generates selectors, sends `PATTERN_SELECTORS_UPDATED` to sidepanel
+   - When pattern is **unlocked**: clears selectors
+   - Added `GET_PATTERN_SELECTORS` message handler
+
+2. **Sidepanel** (`sidepanel.ts`):
+   - Listens for `PATTERN_SELECTORS_UPDATED` to receive selectors
+   - `saveCurrentAsTemplate()` now requests selectors if not set
+   - **Blocks saving if no pattern selected** (shows alert)
+
+**Console output when working:**
+```
+[Web Scraper] Pattern locked!
+[Web Scraper] Generated selectors: {
+  listContainerSelector: "div.product-grid",
+  itemSelector: "div.product-card",
+  fullItemSelector: "div.product-grid > div.product-card"
+}
+[Sidepanel] Pattern selectors updated: div.product-grid > div.product-card
+```
+
+## Status
+**Fixed**. Templates now save with valid CSS selectors and Apply Template works correctly.
+
+## Key Lessons
+
+1. **Generate selectors at lock time, not save time**: The pattern detection already has access to the DOM elements. Generate and cache selectors immediately when the user locks a pattern.
+
+2. **Use stable class intersection**: Dynamic/state classes (`hover`, `active`, `css-xxx`) vary per element. Only use classes that appear on ALL siblings.
+
+3. **Fallback strategy matters**: `id` → `data-testid` → `stable classes` → `nth-of-type path` → `tag only`
+
+4. **Block invalid saves**: Don't save templates with empty selectors. Show clear error message.
+
+5. **Message-based state sync**: Content script generates selectors, sidepanel stores them. Use Chrome messaging to keep them in sync.

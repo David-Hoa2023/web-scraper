@@ -937,6 +937,31 @@ async function saveCurrentAsTemplate(): Promise<void> {
     return;
   }
 
+  // If no container selector, request it from content script
+  let containerSelector = currentContainerSelector;
+  if (!containerSelector) {
+    const selectorResponse = await sendToContentScript({
+      type: 'GET_PATTERN_SELECTORS',
+      payload: {},
+    });
+
+    if (selectorResponse.success && selectorResponse.data) {
+      const selectors = selectorResponse.data as { selectors?: { fullItemSelector?: string }; itemCount?: number };
+      containerSelector = selectors.selectors?.fullItemSelector || '';
+      if (containerSelector) {
+        currentContainerSelector = containerSelector;
+        addLogEntry(`Pattern detected (${selectors.itemCount || 0} items)`);
+      }
+    }
+  }
+
+  // Validate we have a selector
+  if (!containerSelector) {
+    addLogEntry('Error: No pattern selected. Hover over a list and click to lock a pattern first.');
+    alert('No pattern selected.\n\nHover over a list of items on the page and click to lock a pattern before saving a template.');
+    return;
+  }
+
   // Create URL pattern (escape special regex chars in pathname)
   const escapedPathname = pathname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const urlPattern = `https?://${hostname.replace(/\./g, '\\.')}${escapedPathname}.*`;
@@ -950,7 +975,7 @@ async function saveCurrentAsTemplate(): Promise<void> {
     description: `Template for ${hostname}`,
     urlPattern,
     siteHostname: hostname,
-    containerSelector: currentContainerSelector || '',
+    containerSelector,
     extractionConfig: currentConfig.extractionConfig,
     patternConfig: currentConfig.patternConfig,
     scrollerConfig: currentConfig.scrollerConfig,
@@ -990,10 +1015,36 @@ async function applyTemplate(template: ScrapingTemplate): Promise<void> {
   }
   currentContainerSelector = template.containerSelector;
 
-  // Update UI to reflect template config
-  syncUIWithConfig();
+  // Save config to storage
+  await saveConfig(currentConfig);
 
-  // Mark template as used
+  // Update UI to reflect template config (reload from storage to sync)
+  await syncUIWithConfig();
+
+  // Send config to content script
+  sendToContentScript({
+    type: 'UPDATE_CONFIG',
+    payload: currentConfig,
+  });
+
+  // Apply template to content script - this will find elements and highlight them
+  const applyResult = await sendToContentScript({
+    type: 'APPLY_TEMPLATE',
+    payload: {
+      containerSelector: template.containerSelector,
+      extractionConfig: template.extractionConfig,
+      patternConfig: template.patternConfig,
+    },
+  });
+
+  if (applyResult?.success) {
+    const data = applyResult.data as { itemCount?: number } | undefined;
+    addLogEntry(`Applied template: ${template.name} (${data?.itemCount || 0} items found)`);
+  } else {
+    addLogEntry(`Applied template: ${template.name} (${applyResult?.error || 'no items found on page'})`);
+  }
+
+  // Mark template as used in storage
   await chrome.runtime.sendMessage({
     type: 'APPLY_TEMPLATE',
     payload: { id: template.id },
@@ -1004,8 +1055,6 @@ async function applyTemplate(template: ScrapingTemplate): Promise<void> {
     ui.templateSuggestionBanner.style.display = 'none';
   }
   suggestedTemplate = null;
-
-  addLogEntry(`Applied template: ${template.name}`);
 }
 
 function renderTemplates(): void {
@@ -1752,6 +1801,17 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   } else if (message.type === 'arbitrage:opportunity:detected') {
     // Refresh opportunities when new one is detected
     loadArbitrageOpportunities();
+  } else if (message.type === 'PATTERN_SELECTORS_UPDATED') {
+    // Pattern was locked/unlocked in content script - update selectors
+    const selectors = message.payload?.selectors as { fullItemSelector?: string } | null;
+    if (selectors?.fullItemSelector) {
+      currentContainerSelector = selectors.fullItemSelector;
+      console.log('[Sidepanel] Pattern selectors updated:', currentContainerSelector);
+      addLogEntry(`Pattern locked (${message.payload?.itemCount || 0} items)`);
+    } else {
+      currentContainerSelector = '';
+      console.log('[Sidepanel] Pattern cleared');
+    }
   }
 });
 
