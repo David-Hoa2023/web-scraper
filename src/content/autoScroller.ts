@@ -27,6 +27,7 @@ let mutationObserver: MutationObserver | null = null;
 let retryAttempt = 0;
 let lastScrollHeight = 0;
 let noChangeCount = 0;
+let currentPage = 1; // Track current page number for pagination limits
 
 // Progress estimation state
 let scrollStartTime = 0;
@@ -279,7 +280,9 @@ async function scrollIteration(): Promise<void> {
       // 1. Try clicking "Load More"
       if (tryClickLoadMore()) {
         noChangeCount = 0;
+        // Apply base delay + random anti-ban delay
         await delay(currentConfig.throttleMs);
+        await applyRandomDelay();
         return;
       }
 
@@ -287,10 +290,21 @@ async function scrollIteration(): Promise<void> {
       // Only try next page if we've tried scrolling a few times with no result
       // This prevents premature page jumping if network is just slow
       if (noChangeCount >= 2) {
+        // Check if we've reached the max pages limit
+        const maxPages = currentConfig.maxPages ?? 0;
+        if (maxPages > 0 && currentPage >= maxPages) {
+          console.log(`[AutoScroller] Max pages limit reached (${currentPage}/${maxPages}), stopping`);
+          stopScroll();
+          return;
+        }
+
         if (tryClickNextPage()) {
+          currentPage++;
+          console.log(`[AutoScroller] Navigated to page ${currentPage}${maxPages > 0 ? ` of max ${maxPages}` : ''}`);
           noChangeCount = 0;
-          // Wait longer for full page navigation/load
+          // Wait longer for full page navigation/load + random anti-ban delay
           await delay(3000);
+          await applyRandomDelay();
           // Reset scroll mechanics for new page
           lastScrollHeight = 0;
           return;
@@ -377,16 +391,25 @@ async function scrollIteration(): Promise<void> {
 }
 
 /**
- * Schedules the next scroll iteration
+ * Schedules the next scroll iteration with optional random delay for anti-ban protection
  */
 function scheduleNextIteration(): void {
   if (currentState.status !== 'running' || !currentConfig) {
     return;
   }
 
+  // Calculate total delay: base throttle + random anti-ban delay
+  const baseDelay = currentConfig.throttleMs;
+  const randomDelay = getRandomDelay();
+  const totalDelay = baseDelay + randomDelay;
+
+  if (randomDelay > 0) {
+    console.log(`[AutoScroller] Next iteration in ${totalDelay}ms (base: ${baseDelay}ms + random: ${randomDelay}ms)`);
+  }
+
   scrollIntervalId = setTimeout(() => {
     void scrollIteration();
-  }, currentConfig.throttleMs);
+  }, totalDelay);
 }
 
 /**
@@ -493,6 +516,32 @@ function cleanup(): void {
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Generate a random delay within the configured range for anti-ban protection
+ */
+function getRandomDelay(): number {
+  if (!currentConfig) return 0;
+
+  const min = currentConfig.randomDelayMin ?? 0;
+  const max = currentConfig.randomDelayMax ?? 0;
+
+  if (min <= 0 && max <= 0) return 0;
+  if (min >= max) return min;
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Apply random delay if configured (for anti-ban protection)
+ */
+async function applyRandomDelay(): Promise<void> {
+  const randomDelay = getRandomDelay();
+  if (randomDelay > 0) {
+    console.log(`[AutoScroller] Applying random delay: ${randomDelay}ms`);
+    await delay(randomDelay);
+  }
 }
 
 // ==================== PROGRESS ESTIMATION ====================
@@ -658,6 +707,15 @@ export function startScroll(config: ScrollerConfig): void {
   currentConfig = { ...config };
   currentState = createInitialState();
   lastScrollHeight = document.documentElement.scrollHeight;
+  currentPage = 1; // Reset page counter
+
+  // Log anti-ban settings
+  if (config.randomDelayMin || config.randomDelayMax) {
+    console.log(`[AutoScroller] Anti-ban protection enabled: ${config.randomDelayMin}-${config.randomDelayMax}ms random delay`);
+  }
+  if (config.maxPages && config.maxPages > 0) {
+    console.log(`[AutoScroller] Page limit: ${config.maxPages} pages`);
+  }
 
   // Initialize progress estimation
   scrollStartTime = Date.now();

@@ -12,6 +12,31 @@ import type {
   ScrapingTemplate,
 } from '../types';
 
+import { analyzeData } from '../export/dataAnalysis';
+import { generateSlides, generateSlidesWithLLM, selectChartType } from '../visualization/chartSelector';
+import { exportToPptx, exportToPdf } from '../visualization/presentationExporter';
+import { loadLlmSettings as loadLlmSettingsFromStorage } from '../services/llmAnalysis';
+
+// ==========================================
+// WIRE TEST: Debug port connection (remove after fixing)
+// ==========================================
+console.log('[Sidepanel] boot', location.href);
+
+const debugPort = chrome.runtime.connect({ name: 'sidepanel' });
+console.log('[Sidepanel] port connected, waiting for SW_HELLO...');
+
+debugPort.onMessage.addListener((msg) => {
+  console.log('[Sidepanel] port msg:', msg);
+});
+
+debugPort.onDisconnect.addListener(() => {
+  console.warn('[Sidepanel] port disconnected', chrome.runtime.lastError);
+});
+
+// Send a ping to verify bidirectional communication
+debugPort.postMessage({ type: 'PING', ts: Date.now() });
+// ==========================================
+
 // State Interfaces
 interface AppConfig {
   patternConfig: PatternDetectorConfig;
@@ -91,8 +116,11 @@ const DEFAULT_CONFIG: AppConfig = {
   scrollerConfig: {
     throttleMs: 1000,
     maxItems: 0,
+    maxPages: 0,
     retryCount: 3,
-    retryDelayMs: 2000
+    retryDelayMs: 2000,
+    randomDelayMin: 500,
+    randomDelayMax: 2000,
   },
   extractionConfig: {
     fields: [
@@ -138,10 +166,23 @@ const ui = {
   matchId: document.getElementById('match-id') as HTMLInputElement,
   matchData: document.getElementById('match-data') as HTMLInputElement,
 
-  // Scroll Settings
+  // Scroll Settings (Match Strategy tab - legacy)
   scrollSpeed: document.getElementById('scroll-speed') as HTMLInputElement,
   maxItems: document.getElementById('max-items') as HTMLInputElement,
+  maxPages: document.getElementById('max-pages') as HTMLInputElement,
   retryCount: document.getElementById('retry-count') as HTMLInputElement,
+
+  // Anti-Ban Protection (Match Strategy tab - legacy)
+  randomDelayMin: document.getElementById('random-delay-min') as HTMLInputElement,
+  randomDelayMax: document.getElementById('random-delay-max') as HTMLInputElement,
+  enableRandomDelay: document.getElementById('enable-random-delay') as HTMLInputElement,
+
+  // Extraction Tab - Scraping Limits & Anti-Ban
+  extractMaxItems: document.getElementById('extract-max-items') as HTMLInputElement,
+  extractMaxPages: document.getElementById('extract-max-pages') as HTMLInputElement,
+  extractRandomDelayMin: document.getElementById('extract-random-delay-min') as HTMLInputElement,
+  extractRandomDelayMax: document.getElementById('extract-random-delay-max') as HTMLInputElement,
+  extractEnableRandomDelay: document.getElementById('extract-enable-random-delay') as HTMLInputElement,
 
   // Extraction Settings
   fieldsList: document.getElementById('fields-list') as HTMLDivElement,
@@ -214,6 +255,39 @@ const ui = {
   previewCards: document.getElementById('preview-cards') as HTMLDivElement,
   livePreviewContent: document.getElementById('live-preview-content') as HTMLDivElement,
   togglePreviewMode: document.getElementById('toggle-preview-mode') as HTMLButtonElement,
+
+  // Presentation
+  generatePresentationBtn: document.getElementById('generate-presentation-btn') as HTMLButtonElement,
+
+  // Export Progress
+  exportProgressContainer: document.getElementById('export-progress-container') as HTMLDivElement,
+  exportProgressBar: document.getElementById('export-progress-bar') as HTMLDivElement,
+  exportProgressLabel: document.getElementById('export-progress-label') as HTMLSpanElement,
+  exportProgressPercent: document.getElementById('export-progress-percent') as HTMLSpanElement,
+
+  // Scraping Progress (Extraction Tab)
+  scrapingProgressBar: document.getElementById('scraping-progress-bar') as HTMLDivElement,
+  scrapingItemsCurrent: document.getElementById('scraping-items-current') as HTMLSpanElement,
+
+  // LLM Settings
+  llmProvider: document.getElementById('llm-provider') as HTMLSelectElement,
+  llmApiKey: document.getElementById('llm-api-key') as HTMLInputElement,
+  llmApiKeyGroup: document.getElementById('llm-api-key-group') as HTMLDivElement,
+  llmModel: document.getElementById('llm-model') as HTMLSelectElement,
+  llmModelGroup: document.getElementById('llm-model-group') as HTMLDivElement,
+  saveLlmSettingsBtn: document.getElementById('save-llm-settings-btn') as HTMLButtonElement,
+  testLlmBtn: document.getElementById('test-llm-btn') as HTMLButtonElement,
+  toggleApiKeyVisibility: document.getElementById('toggle-api-key-visibility') as HTMLButtonElement,
+  llmStatus: document.getElementById('llm-status') as HTMLDivElement,
+
+  // AI Analysis
+  analyzeWithAiBtn: document.getElementById('analyze-with-ai-btn') as HTMLButtonElement,
+  aiAnalysisLoading: document.getElementById('ai-analysis-loading') as HTMLDivElement,
+  aiAnalysisResults: document.getElementById('ai-analysis-results') as HTMLDivElement,
+  aiSummaryText: document.getElementById('ai-summary-text') as HTMLParagraphElement,
+  aiInsightsList: document.getElementById('ai-insights-list') as HTMLUListElement,
+  aiRecommendationsList: document.getElementById('ai-recommendations-list') as HTMLUListElement,
+  aiAnalysisError: document.getElementById('ai-analysis-error') as HTMLDivElement,
 };
 
 // State
@@ -237,6 +311,158 @@ let savedUrls: SavedUrl[] = [];
 let templates: ScrapingTemplate[] = [];
 let suggestedTemplate: ScrapingTemplate | null = null;
 let currentContainerSelector: string = '';
+
+// LLM Settings
+interface LlmSettings {
+  provider: '' | 'openai' | 'anthropic' | 'gemini' | 'deepseek';
+  apiKey: string;  // Current provider's API key (for backward compatibility)
+  model: string;
+  apiKeys: Record<string, string>;  // Per-provider API keys
+}
+
+let llmSettings: LlmSettings = {
+  provider: '',
+  apiKey: '',
+  model: '',
+  apiKeys: {},  // { openai: 'key1', anthropic: 'key2', ... }
+};
+
+const LLM_MODELS: Record<string, Array<{ value: string; label: string }>> = {
+  openai: [
+    { value: 'gpt-4o', label: 'GPT-4o (Latest)' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Faster)' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Cheapest)' },
+  ],
+  anthropic: [
+    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Latest)' },
+    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Most Capable)' },
+    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Fastest)' },
+  ],
+  gemini: [
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Latest)' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Most Capable)' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  ],
+  deepseek: [
+    { value: 'deepseek-chat', label: 'DeepSeek Chat' },
+    { value: 'deepseek-coder', label: 'DeepSeek Coder' },
+  ],
+};
+
+const LLM_API_ENDPOINTS: Record<string, string> = {
+  openai: 'https://api.openai.com/v1/chat/completions',
+  anthropic: 'https://api.anthropic.com/v1/messages',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta/models',
+  deepseek: 'https://api.deepseek.com/v1/chat/completions',
+};
+
+// --- Direct Download Function (Fallback) ---
+
+async function downloadJsonDirect(filename: string, data: unknown): Promise<void> {
+  const json = JSON.stringify(data, null, 2);
+
+  // Try chrome.downloads API first
+  try {
+    const url = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+    const downloadId = await chrome.downloads.download({
+      url,
+      filename,
+      saveAs: true,
+    });
+    console.log('[Sidepanel] Direct download started, id =', downloadId);
+    return;
+  } catch (err) {
+    console.warn('[Sidepanel] chrome.downloads.download failed:', err);
+  }
+
+  // Fallback: Use <a download> (may work in some contexts)
+  const blob = new Blob([json], { type: 'application/json' });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    console.log('[Sidepanel] Fallback <a> download triggered');
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  }
+}
+
+// --- Download Base64 Data ---
+
+async function downloadBase64(filename: string, base64: string, mimeType: string): Promise<void> {
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+
+  // Try chrome.downloads API first
+  try {
+    const downloadId = await chrome.downloads.download({
+      url: dataUrl,
+      filename,
+      saveAs: true,
+    });
+    console.log('[Sidepanel] Base64 download started, id =', downloadId);
+    return;
+  } catch (err) {
+    console.warn('[Sidepanel] chrome.downloads.download failed for base64:', err);
+  }
+
+  // Fallback: Convert base64 to blob and use <a download>
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: mimeType });
+  const blobUrl = URL.createObjectURL(blob);
+
+  try {
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    console.log('[Sidepanel] Fallback blob download triggered');
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  }
+}
+
+// --- Export Progress Functions ---
+
+function showExportProgress(label: string = 'Exporting...') {
+  if (ui.exportProgressContainer) {
+    ui.exportProgressContainer.style.display = 'block';
+  }
+  if (ui.exportProgressLabel) {
+    ui.exportProgressLabel.textContent = label;
+  }
+  updateExportProgress(0);
+}
+
+function updateExportProgress(percent: number) {
+  const clampedPercent = Math.min(100, Math.max(0, percent));
+  if (ui.exportProgressBar) {
+    ui.exportProgressBar.style.width = `${clampedPercent}%`;
+  }
+  if (ui.exportProgressPercent) {
+    ui.exportProgressPercent.textContent = `${Math.round(clampedPercent)}%`;
+  }
+}
+
+function hideExportProgress() {
+  if (ui.exportProgressContainer) {
+    ui.exportProgressContainer.style.display = 'none';
+  }
+  updateExportProgress(0);
+}
 
 // --- Utility Functions ---
 
@@ -327,6 +553,12 @@ async function loadConfig(): Promise<AppConfig> {
 }
 
 async function saveConfig(config: AppConfig) {
+  console.log('[Sidepanel] Saving config - Limits:', {
+    maxItems: config.scrollerConfig.maxItems,
+    maxPages: config.scrollerConfig.maxPages,
+    throttleMs: config.scrollerConfig.throttleMs,
+    randomDelay: `${config.scrollerConfig.randomDelayMin}-${config.scrollerConfig.randomDelayMax}ms`
+  });
   await chrome.storage.local.set({ scraperConfig: config });
   sendMessage({ type: 'UPDATE_CONFIG', payload: config });
 }
@@ -423,6 +655,20 @@ function setupTabs() {
   });
 }
 
+/**
+ * Programmatically switch to a specific tab
+ */
+function switchToTab(tabName: string) {
+  ui.tabs.forEach(t => t.classList.remove('active'));
+  ui.contents.forEach(c => c.classList.remove('active'));
+
+  const targetTab = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (targetTab) {
+    targetTab.classList.add('active');
+  }
+  document.getElementById(`tab-${tabName}`)?.classList.add('active');
+}
+
 // --- Settings Logic ---
 
 async function syncUIWithConfig() {
@@ -434,10 +680,31 @@ async function syncUIWithConfig() {
   if (ui.matchId) ui.matchId.checked = currentConfig.patternConfig.matchBy.includes('id');
   if (ui.matchData) ui.matchData.checked = currentConfig.patternConfig.matchBy.includes('data');
 
-  // Scroll
+  // Scroll (Match Strategy tab - legacy)
   if (ui.scrollSpeed) ui.scrollSpeed.value = String(currentConfig.scrollerConfig.throttleMs);
   if (ui.maxItems) ui.maxItems.value = String(currentConfig.scrollerConfig.maxItems || 0);
+  if (ui.maxPages) ui.maxPages.value = String(currentConfig.scrollerConfig.maxPages || 0);
   if (ui.retryCount) ui.retryCount.value = String(currentConfig.scrollerConfig.retryCount || 3);
+
+  // Anti-Ban Protection (Match Strategy tab - legacy)
+  if (ui.randomDelayMin) ui.randomDelayMin.value = String(currentConfig.scrollerConfig.randomDelayMin || 500);
+  if (ui.randomDelayMax) ui.randomDelayMax.value = String(currentConfig.scrollerConfig.randomDelayMax || 2000);
+  if (ui.enableRandomDelay) {
+    ui.enableRandomDelay.checked = (currentConfig.scrollerConfig.randomDelayMin ?? 0) > 0 ||
+                                    (currentConfig.scrollerConfig.randomDelayMax ?? 0) > 0;
+  }
+
+  // Extraction Tab - Scraping Limits
+  if (ui.extractMaxItems) ui.extractMaxItems.value = String(currentConfig.scrollerConfig.maxItems || 0);
+  if (ui.extractMaxPages) ui.extractMaxPages.value = String(currentConfig.scrollerConfig.maxPages || 0);
+
+  // Extraction Tab - Anti-Ban Protection
+  if (ui.extractRandomDelayMin) ui.extractRandomDelayMin.value = String(currentConfig.scrollerConfig.randomDelayMin || 500);
+  if (ui.extractRandomDelayMax) ui.extractRandomDelayMax.value = String(currentConfig.scrollerConfig.randomDelayMax || 2000);
+  if (ui.extractEnableRandomDelay) {
+    ui.extractEnableRandomDelay.checked = (currentConfig.scrollerConfig.randomDelayMin ?? 0) > 0 ||
+                                           (currentConfig.scrollerConfig.randomDelayMax ?? 0) > 0;
+  }
 
   // Extraction
   if (ui.preserveHierarchy) ui.preserveHierarchy.checked = currentConfig.extractionConfig.preserveHierarchy || false;
@@ -455,21 +722,69 @@ function bindSettingsListeners() {
 
     currentConfig.patternConfig.matchBy = matchBy;
     currentConfig.scrollerConfig.throttleMs = parseInt(ui.scrollSpeed?.value) || 1000;
-    currentConfig.scrollerConfig.maxItems = parseInt(ui.maxItems?.value) || 0;
     currentConfig.scrollerConfig.retryCount = parseInt(ui.retryCount?.value) || 3;
+
+    // Read from both tabs (Extraction tab takes precedence if both exist)
+    const maxItemsValue = ui.extractMaxItems?.value || ui.maxItems?.value || '0';
+    const maxPagesValue = ui.extractMaxPages?.value || ui.maxPages?.value || '0';
+    currentConfig.scrollerConfig.maxItems = parseInt(maxItemsValue) || 0;
+    currentConfig.scrollerConfig.maxPages = parseInt(maxPagesValue) || 0;
+
+    // Anti-Ban Protection settings (Extraction tab takes precedence)
+    const enableRandomDelay = ui.extractEnableRandomDelay?.checked ?? ui.enableRandomDelay?.checked ?? true;
+    if (enableRandomDelay) {
+      const minValue = ui.extractRandomDelayMin?.value || ui.randomDelayMin?.value || '500';
+      const maxValue = ui.extractRandomDelayMax?.value || ui.randomDelayMax?.value || '2000';
+      currentConfig.scrollerConfig.randomDelayMin = parseInt(minValue) || 500;
+      currentConfig.scrollerConfig.randomDelayMax = parseInt(maxValue) || 2000;
+    } else {
+      currentConfig.scrollerConfig.randomDelayMin = 0;
+      currentConfig.scrollerConfig.randomDelayMax = 0;
+    }
+
     currentConfig.extractionConfig.preserveHierarchy = ui.preserveHierarchy?.checked || false;
     currentConfig.extractionConfig.normalize = ui.normalizeText?.checked !== false;
 
     saveConfig(currentConfig);
   };
 
+  // Sync between tabs helper
+  const syncExtractToMatch = () => {
+    if (ui.maxItems && ui.extractMaxItems) ui.maxItems.value = ui.extractMaxItems.value;
+    if (ui.maxPages && ui.extractMaxPages) ui.maxPages.value = ui.extractMaxPages.value;
+    if (ui.randomDelayMin && ui.extractRandomDelayMin) ui.randomDelayMin.value = ui.extractRandomDelayMin.value;
+    if (ui.randomDelayMax && ui.extractRandomDelayMax) ui.randomDelayMax.value = ui.extractRandomDelayMax.value;
+    if (ui.enableRandomDelay && ui.extractEnableRandomDelay) ui.enableRandomDelay.checked = ui.extractEnableRandomDelay.checked;
+  };
+
+  const syncMatchToExtract = () => {
+    if (ui.extractMaxItems && ui.maxItems) ui.extractMaxItems.value = ui.maxItems.value;
+    if (ui.extractMaxPages && ui.maxPages) ui.extractMaxPages.value = ui.maxPages.value;
+    if (ui.extractRandomDelayMin && ui.randomDelayMin) ui.extractRandomDelayMin.value = ui.randomDelayMin.value;
+    if (ui.extractRandomDelayMax && ui.randomDelayMax) ui.extractRandomDelayMax.value = ui.randomDelayMax.value;
+    if (ui.extractEnableRandomDelay && ui.enableRandomDelay) ui.extractEnableRandomDelay.checked = ui.enableRandomDelay.checked;
+  };
+
+  // Match Strategy tab listeners
   ui.matchTag?.addEventListener('change', updateConfig);
   ui.matchClass?.addEventListener('change', updateConfig);
   ui.matchId?.addEventListener('change', updateConfig);
   ui.matchData?.addEventListener('change', updateConfig);
   ui.scrollSpeed?.addEventListener('change', updateConfig);
-  ui.maxItems?.addEventListener('change', updateConfig);
+  ui.maxItems?.addEventListener('change', () => { syncMatchToExtract(); updateConfig(); });
+  ui.maxPages?.addEventListener('change', () => { syncMatchToExtract(); updateConfig(); });
   ui.retryCount?.addEventListener('change', updateConfig);
+  ui.randomDelayMin?.addEventListener('change', () => { syncMatchToExtract(); updateConfig(); });
+  ui.randomDelayMax?.addEventListener('change', () => { syncMatchToExtract(); updateConfig(); });
+  ui.enableRandomDelay?.addEventListener('change', () => { syncMatchToExtract(); updateConfig(); });
+
+  // Extraction tab listeners
+  ui.extractMaxItems?.addEventListener('change', () => { syncExtractToMatch(); updateConfig(); });
+  ui.extractMaxPages?.addEventListener('change', () => { syncExtractToMatch(); updateConfig(); });
+  ui.extractRandomDelayMin?.addEventListener('change', () => { syncExtractToMatch(); updateConfig(); });
+  ui.extractRandomDelayMax?.addEventListener('change', () => { syncExtractToMatch(); updateConfig(); });
+  ui.extractEnableRandomDelay?.addEventListener('change', () => { syncExtractToMatch(); updateConfig(); });
+
   ui.preserveHierarchy?.addEventListener('change', updateConfig);
   ui.normalizeText?.addEventListener('change', updateConfig);
 }
@@ -1055,6 +1370,9 @@ async function applyTemplate(template: ScrapingTemplate): Promise<void> {
     ui.templateSuggestionBanner.style.display = 'none';
   }
   suggestedTemplate = null;
+
+  // Switch to Extraction tab to continue workflow
+  switchToTab('extract');
 }
 
 function renderTemplates(): void {
@@ -1259,6 +1577,361 @@ function bindWebhookListeners() {
       addLogEntry(`Webhook error: ${error.message}`);
     }
   });
+}
+
+// --- LLM Settings ---
+
+async function loadLlmSettings(): Promise<LlmSettings> {
+  const result = await chrome.storage.local.get('llmSettings');
+  const stored = result.llmSettings || { provider: '', apiKey: '', model: '' };
+
+  // Migrate old format (single apiKey) to new format (apiKeys per provider)
+  if (!stored.apiKeys) {
+    stored.apiKeys = {};
+    // If there's an old apiKey and provider, migrate it
+    if (stored.apiKey && stored.provider) {
+      stored.apiKeys[stored.provider] = stored.apiKey;
+    }
+  }
+
+  // Set current apiKey based on selected provider
+  if (stored.provider && stored.apiKeys[stored.provider]) {
+    stored.apiKey = stored.apiKeys[stored.provider];
+  }
+
+  return stored;
+}
+
+async function saveLlmSettings(settings: LlmSettings): Promise<void> {
+  // Save current API key to the apiKeys object for the current provider
+  if (settings.provider && settings.apiKey) {
+    settings.apiKeys[settings.provider] = settings.apiKey;
+  }
+  await chrome.storage.local.set({ llmSettings: settings });
+}
+
+function syncLlmUI() {
+  if (ui.llmProvider) ui.llmProvider.value = llmSettings.provider;
+  if (ui.llmApiKey) ui.llmApiKey.value = llmSettings.apiKey;
+
+  // Update model dropdown
+  updateLlmModelOptions(llmSettings.provider);
+
+  if (ui.llmModel && llmSettings.model) {
+    ui.llmModel.value = llmSettings.model;
+  }
+
+  // Show/hide API key and model groups based on provider
+  const hasProvider = !!llmSettings.provider;
+  if (ui.llmApiKeyGroup) {
+    ui.llmApiKeyGroup.style.display = hasProvider ? 'block' : 'none';
+  }
+  if (ui.llmModelGroup) {
+    ui.llmModelGroup.style.display = hasProvider ? 'block' : 'none';
+  }
+}
+
+function updateLlmModelOptions(provider: string) {
+  if (!ui.llmModel) return;
+
+  ui.llmModel.innerHTML = '';
+
+  if (!provider || !LLM_MODELS[provider]) {
+    return;
+  }
+
+  const models = LLM_MODELS[provider];
+  for (const model of models) {
+    const option = document.createElement('option');
+    option.value = model.value;
+    option.textContent = model.label;
+    ui.llmModel.appendChild(option);
+  }
+
+  // Set default model
+  if (models.length > 0) {
+    ui.llmModel.value = models[0].value;
+  }
+}
+
+function showLlmStatus(message: string, type: 'success' | 'error' | 'info') {
+  if (!ui.llmStatus) return;
+
+  ui.llmStatus.style.display = 'block';
+  ui.llmStatus.textContent = message;
+  ui.llmStatus.style.color = type === 'success' ? 'var(--color-success)' :
+                             type === 'error' ? 'var(--color-error)' :
+                             'var(--color-text-muted)';
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    if (ui.llmStatus) ui.llmStatus.style.display = 'none';
+  }, 5000);
+}
+
+async function testLlmConnection(): Promise<boolean> {
+  if (!llmSettings.provider || !llmSettings.apiKey) {
+    showLlmStatus('Please select a provider and enter an API key', 'error');
+    return false;
+  }
+
+  showLlmStatus('Testing connection...', 'info');
+
+  try {
+    const provider = llmSettings.provider;
+    const apiKey = llmSettings.apiKey;
+    const model = llmSettings.model || LLM_MODELS[provider]?.[0]?.value || '';
+
+    let response: Response;
+
+    if (provider === 'openai' || provider === 'deepseek') {
+      const endpoint = LLM_API_ENDPOINTS[provider];
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5,
+        }),
+      });
+    } else if (provider === 'anthropic') {
+      response = await fetch(LLM_API_ENDPOINTS.anthropic, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5,
+        }),
+      });
+    } else if (provider === 'gemini') {
+      const endpoint = `${LLM_API_ENDPOINTS.gemini}/${model}:generateContent?key=${apiKey}`;
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Hi' }] }],
+        }),
+      });
+    } else {
+      showLlmStatus('Unknown provider', 'error');
+      return false;
+    }
+
+    if (response.ok) {
+      showLlmStatus('Connection successful!', 'success');
+      return true;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
+      showLlmStatus(`Connection failed: ${errorMsg}`, 'error');
+      return false;
+    }
+  } catch (error: any) {
+    showLlmStatus(`Connection error: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+function bindLlmSettingsListeners() {
+  // Provider change - update model options and switch API keys
+  ui.llmProvider?.addEventListener('change', () => {
+    const oldProvider = llmSettings.provider;
+    const newProvider = ui.llmProvider.value as LlmSettings['provider'];
+
+    // Save current API key to the old provider before switching
+    if (oldProvider && ui.llmApiKey?.value) {
+      llmSettings.apiKeys[oldProvider] = ui.llmApiKey.value;
+    }
+
+    llmSettings.provider = newProvider;
+
+    // Load API key for the new provider (or empty if not saved)
+    const newApiKey = newProvider ? (llmSettings.apiKeys[newProvider] || '') : '';
+    llmSettings.apiKey = newApiKey;
+    if (ui.llmApiKey) {
+      ui.llmApiKey.value = newApiKey;
+    }
+
+    updateLlmModelOptions(newProvider);
+
+    // Show/hide API key and model groups
+    const hasProvider = !!newProvider;
+    if (ui.llmApiKeyGroup) {
+      ui.llmApiKeyGroup.style.display = hasProvider ? 'block' : 'none';
+    }
+    if (ui.llmModelGroup) {
+      ui.llmModelGroup.style.display = hasProvider ? 'block' : 'none';
+    }
+
+    // Set default model for the new provider
+    if (newProvider && LLM_MODELS[newProvider]?.length > 0) {
+      llmSettings.model = LLM_MODELS[newProvider][0].value;
+      if (ui.llmModel) {
+        ui.llmModel.value = llmSettings.model;
+      }
+    } else {
+      llmSettings.model = '';
+    }
+  });
+
+  // Model change
+  ui.llmModel?.addEventListener('change', () => {
+    llmSettings.model = ui.llmModel.value;
+  });
+
+  // API key change
+  ui.llmApiKey?.addEventListener('input', () => {
+    llmSettings.apiKey = ui.llmApiKey.value;
+  });
+
+  // Toggle API key visibility
+  ui.toggleApiKeyVisibility?.addEventListener('click', () => {
+    if (!ui.llmApiKey) return;
+
+    const isPassword = ui.llmApiKey.type === 'password';
+    ui.llmApiKey.type = isPassword ? 'text' : 'password';
+
+    const icon = ui.toggleApiKeyVisibility.querySelector('.material-symbols-outlined');
+    if (icon) {
+      icon.textContent = isPassword ? 'visibility_off' : 'visibility';
+    }
+  });
+
+  // Save button
+  ui.saveLlmSettingsBtn?.addEventListener('click', async () => {
+    llmSettings.apiKey = ui.llmApiKey?.value || '';
+    llmSettings.model = ui.llmModel?.value || '';
+
+    await saveLlmSettings(llmSettings);
+    showLlmStatus('Settings saved!', 'success');
+    addLogEntry(`LLM settings saved: ${llmSettings.provider || 'disabled'}`);
+  });
+
+  // Test button
+  ui.testLlmBtn?.addEventListener('click', async () => {
+    llmSettings.apiKey = ui.llmApiKey?.value || '';
+    llmSettings.model = ui.llmModel?.value || '';
+
+    await testLlmConnection();
+  });
+
+  // AI Analysis button
+  ui.analyzeWithAiBtn?.addEventListener('click', async () => {
+    await runAiAnalysis();
+  });
+}
+
+// --- AI Analysis ---
+
+async function runAiAnalysis() {
+  // Get scraped data from state
+  const data = getScrapedData();
+
+  if (!data || data.length === 0) {
+    showAiAnalysisError('No data to analyze. Please scrape some data first.');
+    return;
+  }
+
+  // Check if LLM is configured
+  if (!llmSettings.provider || !llmSettings.apiKey) {
+    showAiAnalysisError('AI provider not configured. Please configure an LLM provider in Settings tab.');
+    return;
+  }
+
+  // Show loading state
+  ui.analyzeWithAiBtn.disabled = true;
+  ui.aiAnalysisLoading.style.display = 'block';
+  ui.aiAnalysisResults.style.display = 'none';
+  ui.aiAnalysisError.style.display = 'none';
+
+  addLogEntry('Starting AI analysis...');
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'ANALYZE_WITH_LLM',
+      payload: { items: data },
+    });
+
+    console.log('[Sidepanel] ANALYZE_WITH_LLM response:', response);
+
+    if (response.success && response.data) {
+      showAiAnalysisResults(response.data);
+      addLogEntry('AI analysis completed successfully');
+    } else {
+      showAiAnalysisError(response.error || 'Analysis failed');
+      addLogEntry(`AI analysis failed: ${response.error}`);
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    showAiAnalysisError(errorMsg);
+    addLogEntry(`AI analysis error: ${errorMsg}`);
+  } finally {
+    ui.analyzeWithAiBtn.disabled = false;
+    ui.aiAnalysisLoading.style.display = 'none';
+  }
+}
+
+function showAiAnalysisResults(data: { insights: string[]; recommendations: string[]; summary: string }) {
+  // Show results container
+  ui.aiAnalysisResults.style.display = 'block';
+  ui.aiAnalysisError.style.display = 'none';
+
+  // Populate summary
+  ui.aiSummaryText.textContent = data.summary || 'No summary available.';
+
+  // Populate insights
+  ui.aiInsightsList.innerHTML = '';
+  if (data.insights && data.insights.length > 0) {
+    data.insights.forEach(insight => {
+      const li = document.createElement('li');
+      li.textContent = insight;
+      ui.aiInsightsList.appendChild(li);
+    });
+  } else {
+    const li = document.createElement('li');
+    li.textContent = 'No insights available.';
+    li.style.color = 'var(--color-text-muted)';
+    ui.aiInsightsList.appendChild(li);
+  }
+
+  // Populate recommendations
+  ui.aiRecommendationsList.innerHTML = '';
+  if (data.recommendations && data.recommendations.length > 0) {
+    data.recommendations.forEach(rec => {
+      const li = document.createElement('li');
+      li.textContent = rec;
+      ui.aiRecommendationsList.appendChild(li);
+    });
+  } else {
+    const li = document.createElement('li');
+    li.textContent = 'No recommendations available.';
+    li.style.color = 'var(--color-text-muted)';
+    ui.aiRecommendationsList.appendChild(li);
+  }
+}
+
+function showAiAnalysisError(message: string) {
+  ui.aiAnalysisResults.style.display = 'none';
+  ui.aiAnalysisError.style.display = 'block';
+  ui.aiAnalysisError.textContent = message;
+}
+
+function getScrapedData(): ExtractedItem[] {
+  // Get data from preview items or make a request to get current data
+  if (previewItems && previewItems.length > 0) {
+    return previewItems;
+  }
+  return [];
 }
 
 // --- Wizard ---
@@ -1624,73 +2297,412 @@ ui.mainActionBtn?.addEventListener('click', async () => {
 });
 
 ui.exportBtn?.addEventListener('click', async () => {
-  const response = await sendToContentScript({ type: 'EXPORT_DATA' });
-  if (response.success && response.data) {
+  console.log('[Sidepanel] Export button clicked');
+  addLogEntry('Starting export...');
+  ui.exportBtn.disabled = true;
+
+  try {
+    // Show progress bar
+    showExportProgress('Preparing data...');
+    updateExportProgress(10);
+
+    const response = await sendToContentScript({ type: 'EXPORT_DATA' });
+    console.log('[Sidepanel] EXPORT_DATA response:', response);
+    updateExportProgress(30);
+
+    if (!response) {
+      throw new Error('No response from content script');
+    }
+
+    if (!response.success) {
+      throw new Error(response.error || 'Export failed - content script error');
+    }
+
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Export response missing data array');
+    }
+
     const data = response.data as ExtractedItem[];
+    console.log('[Sidepanel] Got', data.length, 'items to export');
+
     if (data.length === 0) {
       addLogEntry('Export failed: No data');
+      hideExportProgress();
       return;
     }
 
     const formatSelector = document.getElementById('export-format-selector') as HTMLSelectElement;
     const format = formatSelector ? formatSelector.value : 'json';
+    console.log('[Sidepanel] Export format:', format);
     const dateStr = new Date().toISOString().slice(0, 10);
+
+    // Update progress label based on format
+    const formatLabels: Record<string, string> = {
+      excel: 'Generating Excel file...',
+      csv: 'Generating CSV file...',
+      json: 'Generating JSON file...',
+    };
+    showExportProgress(formatLabels[format] || 'Exporting...');
+    updateExportProgress(50);
 
     if (format === 'excel') {
       // Use ExcelJS via service worker for proper .xlsx export
       addLogEntry('Generating Excel file...');
+      updateExportProgress(60);
+      const excelFilename = `scrape-${dateStr}.xlsx`;
       const excelResponse = await chrome.runtime.sendMessage({
         type: 'EXPORT_EXCEL',
         payload: {
           items: data,
           options: {
-            filename: `scrape-${dateStr}.xlsx`,
+            filename: excelFilename,
             includeAnalysis: true,
           },
         },
       });
 
-      if (excelResponse.success) {
+      console.log('[Sidepanel] EXPORT_EXCEL response:', excelResponse);
+
+      if (excelResponse.success && excelResponse.data.base64) {
+        updateExportProgress(80);
+        addLogEntry('Downloading Excel file...');
+        // Download from sidepanel using base64 data
+        await downloadBase64(
+          excelResponse.data.filename || excelFilename,
+          excelResponse.data.base64,
+          excelResponse.data.mimeType
+        );
+        updateExportProgress(100);
         addLogEntry(`Exported ${excelResponse.data.rowCount} items to Excel with analysis`);
       } else {
-        addLogEntry(`Excel export failed: ${excelResponse.error}`);
+        addLogEntry(`Excel export failed: ${excelResponse?.error || 'Unknown error'}`);
       }
     } else if (format === 'csv') {
       // Use CSV export via service worker
+      updateExportProgress(60);
+      const csvFilename = `scrape-${dateStr}.csv`;
       const csvResponse = await chrome.runtime.sendMessage({
         type: 'EXPORT_CSV',
         payload: {
           items: data,
-          filename: `scrape-${dateStr}.csv`,
+          filename: csvFilename,
         },
       });
 
-      if (csvResponse.success) {
+      console.log('[Sidepanel] EXPORT_CSV response:', csvResponse);
+
+      if (csvResponse.success && csvResponse.data.base64) {
+        updateExportProgress(80);
+        // Download from sidepanel using base64 data
+        await downloadBase64(
+          csvResponse.data.filename || csvFilename,
+          csvResponse.data.base64,
+          'text/csv'
+        );
+        updateExportProgress(100);
+        addLogEntry(`Exported ${csvResponse.data.rowCount} items as CSV`);
+      } else if (csvResponse.success) {
+        // Old format (download handled by SW)
+        updateExportProgress(100);
         addLogEntry(`Exported ${csvResponse.data.rowCount} items as CSV`);
       } else {
-        addLogEntry(`CSV export failed: ${csvResponse.error}`);
+        addLogEntry(`CSV export failed: ${csvResponse?.error || 'Unknown error'}`);
       }
     } else {
-      // JSON export (client-side)
-      const content = JSON.stringify(data, null, 2);
-      const blob = new Blob([content], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `scrape-${dateStr}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      addLogEntry(`Exported ${data.length} items as JSON`);
+      // JSON export via service worker
+      console.log('[Sidepanel] Sending EXPORT_JSON to service worker');
+      updateExportProgress(60);
+      try {
+        const jsonResponse = await chrome.runtime.sendMessage({
+          type: 'EXPORT_JSON',
+          payload: {
+            items: data,
+            filename: `scrape-${dateStr}.json`,
+          },
+        });
+
+        console.log('[Sidepanel] EXPORT_JSON response:', jsonResponse);
+
+        if (jsonResponse && jsonResponse.success) {
+          updateExportProgress(100);
+          addLogEntry(`Exported ${jsonResponse.data.rowCount} items as JSON`);
+        } else {
+          addLogEntry(`JSON export failed: ${jsonResponse?.error || 'Unknown error'}`);
+        }
+      } catch (err: any) {
+        console.error('[Sidepanel] EXPORT_JSON via service worker failed:', err);
+        addLogEntry(`Service worker export failed, trying direct download...`);
+
+        // Fallback: Direct download using data URL
+        try {
+          await downloadJsonDirect(`scrape-${dateStr}.json`, data);
+          updateExportProgress(100);
+          addLogEntry(`Exported ${data.length} items as JSON (direct download)`);
+        } catch (fallbackErr: any) {
+          console.error('[Sidepanel] Direct download also failed:', fallbackErr);
+          addLogEntry(`Export failed: ${fallbackErr.message}`);
+        }
+      }
     }
-  } else {
-    addLogEntry('Export failed: No data available');
+
+    // Hide progress bar after a short delay to show completion
+    setTimeout(() => hideExportProgress(), 1500);
+
+  } catch (err: any) {
+    console.error('[Sidepanel] Export error:', err);
+    addLogEntry(`Export error: ${err.message}`);
+    hideExportProgress();
+  } finally {
+    ui.exportBtn.disabled = false;
   }
 });
+
+// --- Generate Presentation ---
+
+ui.generatePresentationBtn?.addEventListener('click', async () => {
+  const response = await sendToContentScript({ type: 'EXPORT_DATA' });
+  if (response.success && response.data) {
+    const items = response.data as ExtractedItem[];
+    if (items.length === 0) {
+      addLogEntry('Presentation failed: No data');
+      return;
+    }
+
+    addLogEntry('Analyzing data for presentation...');
+
+    try {
+      // Analyze the scraped data
+      const analysis = analyzeData(items);
+
+      // Check if LLM is configured for enhanced insights
+      const llmConfig = await loadLlmSettingsFromStorage();
+      let slides;
+
+      if (llmConfig && llmConfig.provider && llmConfig.apiKey) {
+        addLogEntry('Generating AI-enhanced insights...');
+        slides = await generateSlidesWithLLM(analysis, items, 'Data Analysis Report');
+      } else {
+        // Fallback to basic slide generation
+        slides = generateSlides(analysis, items, 'Data Analysis Report');
+      }
+
+      addLogEntry(`Generated ${slides.length} slides`);
+
+      // Get chart recommendations for logging
+      const chartRecommendations = Object.entries(analysis.fieldStats).map(([field, stats]) => {
+        const numericStats = analysis.numericStats[field];
+        const pattern = analysis.patterns.find(p => p.field === field);
+        const recommendation = selectChartType(stats, numericStats, pattern);
+        return `${field}: ${recommendation.suggestedType}`;
+      });
+      console.log('[Presentation] Chart recommendations:', chartRecommendations);
+
+      // Show format selection dialog
+      const format = await showPresentationFormatDialog();
+      if (!format) {
+        addLogEntry('Presentation cancelled');
+        return;
+      }
+
+      addLogEntry(`Exporting as ${format.toUpperCase()}...`);
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filename = `presentation-${dateStr}`;
+
+      if (format === 'pptx') {
+        const result = await exportToPptx(slides, {
+          filename: `${filename}.pptx`,
+          author: 'Scraper Pro',
+          title: 'Data Analysis Report',
+        });
+        if (result.success) {
+          addLogEntry(`Presentation saved: ${result.filename}`);
+        } else {
+          addLogEntry(`Export failed: ${result.error}`);
+        }
+      } else if (format === 'pdf') {
+        const result = await exportToPdf(slides, {
+          filename: `${filename}.pdf`,
+          author: 'Scraper Pro',
+          title: 'Data Analysis Report',
+        });
+        if (result.success) {
+          addLogEntry(`PDF saved: ${result.filename}`);
+        } else {
+          addLogEntry(`Export failed: ${result.error}`);
+        }
+      }
+    } catch (error: any) {
+      addLogEntry(`Presentation error: ${error.message}`);
+      console.error('[Presentation] Error:', error);
+    }
+  } else {
+    addLogEntry('Presentation failed: No data available');
+  }
+});
+
+// Helper function to show format selection dialog
+function showPresentationFormatDialog(): Promise<'pptx' | 'pdf' | null> {
+  return new Promise((resolve) => {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'wizard-overlay active';
+    overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background: var(--color-bg-card); border-radius: 12px; padding: 24px; max-width: 320px; width: 90%;';
+    modal.innerHTML = `
+      <h3 style="margin: 0 0 8px 0; font-size: 16px;">Export Presentation</h3>
+      <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--color-text-muted);">Choose the export format for your presentation.</p>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="export-pptx" class="btn-primary" style="width: 100%; justify-content: center;">
+          <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 8px;">slideshow</span>
+          PowerPoint (.pptx)
+        </button>
+        <button id="export-pdf" class="btn-secondary" style="width: 100%; justify-content: center;">
+          <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 8px;">picture_as_pdf</span>
+          PDF Document
+        </button>
+        <button id="export-cancel" class="btn-text" style="width: 100%; margin-top: 8px;">Cancel</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const cleanup = () => {
+      document.body.removeChild(overlay);
+    };
+
+    modal.querySelector('#export-pptx')?.addEventListener('click', () => {
+      cleanup();
+      resolve('pptx');
+    });
+
+    modal.querySelector('#export-pdf')?.addEventListener('click', () => {
+      cleanup();
+      resolve('pdf');
+    });
+
+    modal.querySelector('#export-cancel')?.addEventListener('click', () => {
+      cleanup();
+      resolve(null);
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        cleanup();
+        resolve(null);
+      }
+    });
+  });
+}
+
+// --- Service Worker Port Connection ---
+// Use long-lived port for reliable push updates from content script
+
+function connectToServiceWorker() {
+  const port = chrome.runtime.connect({ name: 'sidepanel' });
+
+  console.log('[Sidepanel] Connecting to service worker...');
+
+  port.onMessage.addListener((msg) => {
+    // Log ALL messages at the top for debugging
+    console.log('[Sidepanel] Port message received:', msg.type, msg);
+
+    if (msg.type === 'UPDATE_PROGRESS') {
+      handleProgressUpdate(msg);
+    } else if (msg.type === 'UPDATE_STATUS') {
+      handleStatusUpdate(msg);
+    } else if (msg.type === 'UPDATE_PREVIEW') {
+      handlePreviewUpdate(msg);
+    } else if (msg.type === 'SHOW_ERROR') {
+      handleErrorUpdate(msg);
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
+    console.warn('[Sidepanel] SW port disconnected, reconnecting in 250ms...');
+    setTimeout(connectToServiceWorker, 250);
+  });
+
+  // Handshake for debugging
+  port.postMessage({ type: 'SIDEPANEL_READY', ts: Date.now() });
+}
+
+function handleProgressUpdate(msg: { payload?: { current?: number; max?: number }; tabId?: number }) {
+  const current = msg.payload?.current ?? 0;
+  const max = msg.payload?.max ?? 0;
+
+  console.log(`[Sidepanel] Progress: ${current}/${max > 0 ? max : '∞'}`);
+
+  // Update Dashboard item count
+  if (ui.itemCount) ui.itemCount.textContent = String(current);
+
+  // Update Extraction tab progress bar
+  if (ui.scrapingItemsCurrent) ui.scrapingItemsCurrent.textContent = String(current);
+
+  if (ui.scrapingProgressBar) {
+    if (max > 0) {
+      const progress = Math.min(100, (current / max) * 100);
+      ui.scrapingProgressBar.style.width = `${progress}%`;
+    } else {
+      // No limit - show progress based on count
+      const width = Math.min(90, current * 2);
+      ui.scrapingProgressBar.style.width = `${width}%`;
+    }
+  }
+}
+
+function handleStatusUpdate(msg: { payload?: { status?: string } }) {
+  const status = msg.payload?.status || 'idle';
+  if (ui.statusText) ui.statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+
+  ui.statusDot?.classList.remove('active', 'running', 'paused', 'error');
+  if (status === 'running') {
+    ui.statusDot?.classList.add('running');
+    updateMainButton('running');
+    if (ui.scrapingProgressBar) ui.scrapingProgressBar.style.width = '0%';
+    if (ui.scrapingItemsCurrent) ui.scrapingItemsCurrent.textContent = '0';
+  } else if (status === 'paused') {
+    ui.statusDot?.classList.add('paused');
+    updateMainButton('paused');
+  } else if (status === 'error') {
+    ui.statusDot?.classList.add('error');
+    updateMainButton('idle');
+  } else {
+    ui.statusDot?.classList.add('active');
+    updateMainButton('idle');
+  }
+}
+
+function handlePreviewUpdate(msg: { payload?: { items?: ExtractedItem[] } }) {
+  const items = (msg.payload?.items || []) as ExtractedItem[];
+  if (items.length > 0) {
+    previewItems = items;
+    if (previewMode === 'cards') {
+      renderPreviewCards(items);
+    } else {
+      ui.livePreviewContent.textContent = JSON.stringify(items.slice(-5), null, 2);
+    }
+  }
+}
+
+function handleErrorUpdate(msg: { payload?: { message?: string } }) {
+  const errorMsg = msg.payload?.message || 'Unknown error';
+  addLogEntry(`Error: ${errorMsg}`);
+  if (ui.statusText) ui.statusText.textContent = 'Error';
+  ui.statusDot?.classList.remove('active', 'running', 'paused');
+  ui.statusDot?.classList.add('error');
+}
 
 // --- Initialization ---
 
 async function init() {
   setupTabs();
+
+  // Connect to service worker for push updates
+  connectToServiceWorker();
 
   // Initialize extension toggle
   extensionEnabled = await loadExtensionEnabled();
@@ -1726,6 +2738,11 @@ async function init() {
   syncWebhookUI();
   bindWebhookListeners();
 
+  // Load and sync LLM settings
+  llmSettings = await loadLlmSettings();
+  syncLlmUI();
+  bindLlmSettingsListeners();
+
   // Poll for status
   updateDashboardStatus();
   setInterval(updateDashboardStatus, 1000);
@@ -1733,51 +2750,12 @@ async function init() {
 
 init();
 
-// --- Message Listener for Real-time Updates ---
+// --- Message Listener for Non-Push Updates ---
+// Note: UPDATE_STATUS, UPDATE_PROGRESS, UPDATE_PREVIEW, SHOW_ERROR are now handled via port
+// This listener handles other messages like SAVED_URLS_UPDATED, TEMPLATE_APPLIED, etc.
 
 chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
-  if (message.type === 'UPDATE_STATUS') {
-    const status = message.payload?.status || 'idle';
-    if (ui.statusText) ui.statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-
-    // Update status dot and button
-    ui.statusDot?.classList.remove('active', 'running', 'paused', 'error');
-    if (status === 'running') {
-      ui.statusDot?.classList.add('running');
-      updateMainButton('running');
-    } else if (status === 'paused') {
-      ui.statusDot?.classList.add('paused');
-      updateMainButton('paused');
-    } else if (status === 'error') {
-      ui.statusDot?.classList.add('error');
-      updateMainButton('idle');
-    } else {
-      ui.statusDot?.classList.add('active');
-      updateMainButton('idle');
-    }
-  } else if (message.type === 'UPDATE_PROGRESS') {
-    const { current } = message.payload || { current: 0 };
-    if (ui.itemCount) {
-      ui.itemCount.textContent = String(current);
-    }
-  } else if (message.type === 'SHOW_ERROR') {
-    const errorMsg = message.payload?.message || 'Unknown error';
-    addLogEntry(`Error: ${errorMsg}`);
-    if (ui.statusText) ui.statusText.textContent = 'Error';
-    ui.statusDot?.classList.remove('active', 'running', 'paused');
-    ui.statusDot?.classList.add('error');
-  } else if (message.type === 'UPDATE_PREVIEW') {
-    const items = (message.payload?.items || []) as ExtractedItem[];
-    if (items.length > 0) {
-      previewItems = items;
-
-      if (previewMode === 'cards') {
-        renderPreviewCards(items);
-      } else {
-        ui.livePreviewContent.textContent = JSON.stringify(items.slice(-5), null, 2);
-      }
-    }
-  } else if (message.type === 'SAVED_URLS_UPDATED') {
+  if (message.type === 'SAVED_URLS_UPDATED') {
     // Refresh saved URLs when updated from context menu
     loadSavedUrls().then(urls => {
       savedUrls = urls;

@@ -26,7 +26,13 @@ export default defineConfig({
       },
       output: {
         entryFileNames: '[name].js',
-        chunkFileNames: '[name].js',
+        // Rename chunks to avoid underscore prefix (Chrome extension requirement)
+        chunkFileNames: (chunkInfo) => {
+          const name = chunkInfo.name || 'chunk';
+          // Remove leading underscores from chunk names
+          const safeName = name.replace(/^_+/, 'vendor-');
+          return `${safeName}.js`;
+        },
         assetFileNames: '[name].[ext]',
         // Prevent code splitting for content scripts - they must be self-contained
         manualChunks(id) {

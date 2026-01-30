@@ -431,8 +431,33 @@
             <input type="number" id="max-items" value="0" min="0">
           </div>
           <div class="input-group">
+            <label>Max Pages (0 = unlimited)</label>
+            <input type="number" id="max-pages" value="0" min="0">
+            <small style="font-size: 11px; color: var(--color-text-muted); display: block; margin-top: 4px;">Limit pagination for multi-page scraping</small>
+          </div>
+          <div class="input-group">
             <label>Retry Count</label>
             <input type="number" id="retry-count" value="3" min="1" max="10">
+          </div>
+        </div>
+
+        <div class="option-card">
+          <h3>Anti-Ban Protection</h3>
+          <small style="font-size: 11px; color: var(--color-text-muted); display: block; margin-bottom: 12px;">Add random delays between requests to avoid detection and session timeouts</small>
+          <div class="input-group">
+            <label>Random Delay Min (ms)</label>
+            <input type="number" id="random-delay-min" value="500" min="0" max="30000">
+          </div>
+          <div class="input-group">
+            <label>Random Delay Max (ms)</label>
+            <input type="number" id="random-delay-max" value="2000" min="0" max="60000">
+          </div>
+          <div class="option-row" style="margin-top: 8px;">
+            <span>Enable Random Delays</span>
+            <label class="switch">
+              <input type="checkbox" id="enable-random-delay" checked>
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -465,6 +490,50 @@
         </div>
 
         <div class="option-card">
+          <h3>Scraping Limits</h3>
+          <div class="input-group">
+            <label>Max Items (0 = unlimited)</label>
+            <input type="number" id="extract-max-items" value="0" min="0">
+          </div>
+          <div class="input-group">
+            <label>Max Pages (0 = unlimited)</label>
+            <input type="number" id="extract-max-pages" value="0" min="0">
+            <small style="font-size: 11px; color: var(--color-text-muted); display: block; margin-top: 4px;">Limit pagination for multi-page scraping</small>
+          </div>
+        </div>
+
+        <!-- Scraping Progress Bar -->
+        <div class="option-card" id="scraping-progress-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 12px; font-weight: 500;">Progress</span>
+            <span id="scraping-items-current" style="font-size: 12px; font-weight: 600; color: var(--color-primary);">0</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: var(--color-bg); border-radius: 4px; overflow: hidden;">
+            <div id="scraping-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); border-radius: 4px; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div class="option-card">
+          <h3>Anti-Ban Protection</h3>
+          <small style="font-size: 11px; color: var(--color-text-muted); display: block; margin-bottom: 12px;">Add random delays between requests to avoid detection and session timeouts</small>
+          <div class="input-group">
+            <label>Random Delay Min (ms)</label>
+            <input type="number" id="extract-random-delay-min" value="500" min="0" max="30000">
+          </div>
+          <div class="input-group">
+            <label>Random Delay Max (ms)</label>
+            <input type="number" id="extract-random-delay-max" value="2000" min="0" max="60000">
+          </div>
+          <div class="option-row" style="margin-top: 8px;">
+            <span>Enable Random Delays</span>
+            <label class="switch">
+              <input type="checkbox" id="extract-enable-random-delay" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="option-card">
           <h3>Custom Fields</h3>
           <div id="fields-list" class="scrolling-list custom-scrollbar">
             <div class="empty-placeholder">No custom fields defined</div>
@@ -484,6 +553,55 @@
             <span class="material-symbols-outlined">download</span>
             Export Data
           </button>
+          <button id="generate-presentation-btn" class="btn-secondary" style="margin-top: 8px; width: 100%;">
+            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">slideshow</span>
+            Generate Presentation
+          </button>
+
+          <!-- Export Progress Bar -->
+          <div id="export-progress-container" style="display: none; margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span id="export-progress-label" style="font-size: 12px; color: var(--color-text-muted);">Exporting...</span>
+              <span id="export-progress-percent" style="font-size: 12px; font-weight: 500;">0%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: var(--color-bg); border-radius: 3px; overflow: hidden;">
+              <div id="export-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); border-radius: 3px; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Analysis Section -->
+        <div class="option-card" id="ai-analysis-section">
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--color-primary);">psychology</span>
+            AI Analysis
+          </h3>
+          <p style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 12px;">
+            Use AI to analyze scraped data and generate insights. Configure LLM in Settings first.
+          </p>
+          <button id="analyze-with-ai-btn" class="btn-secondary" style="width: 100%;">
+            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">auto_awesome</span>
+            Analyze with AI
+          </button>
+          <div id="ai-analysis-loading" style="display: none; margin-top: 12px; text-align: center;">
+            <div class="spinner" style="width: 24px; height: 24px; border: 3px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            <span style="font-size: 12px; color: var(--color-text-muted);">Analyzing data...</span>
+          </div>
+          <div id="ai-analysis-results" style="display: none; margin-top: 12px;">
+            <div id="ai-analysis-summary" style="background: var(--color-bg); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+              <h4 style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--color-primary);">Summary</h4>
+              <p id="ai-summary-text" style="font-size: 12px; line-height: 1.5;"></p>
+            </div>
+            <div id="ai-analysis-insights" style="background: var(--color-bg); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+              <h4 style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--color-accent);">Key Insights</h4>
+              <ul id="ai-insights-list" style="font-size: 12px; line-height: 1.6; padding-left: 16px; margin: 0;"></ul>
+            </div>
+            <div id="ai-analysis-recommendations" style="background: var(--color-bg); padding: 12px; border-radius: 8px;">
+              <h4 style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--color-success);">Recommendations</h4>
+              <ul id="ai-recommendations-list" style="font-size: 12px; line-height: 1.6; padding-left: 16px; margin: 0;"></ul>
+            </div>
+          </div>
+          <div id="ai-analysis-error" style="display: none; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; color: var(--color-error); font-size: 12px;"></div>
         </div>
       </div>
 
@@ -640,6 +758,49 @@
               Test Webhook
             </button>
           </div>
+        </div>
+
+        <div class="option-card">
+          <h3>AI Analysis (LLM)</h3>
+          <p style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 12px;">
+            Connect an LLM provider for enhanced data analysis and insights.
+          </p>
+          <div class="input-group">
+            <label>Provider</label>
+            <select id="llm-provider" class="form-select" style="height: 40px;">
+              <option value="">None (Disabled)</option>
+              <option value="openai">OpenAI (GPT-4)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+          <div class="input-group" id="llm-api-key-group" style="margin-top: 12px;">
+            <label>API Key</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="password" id="llm-api-key" placeholder="Enter your API key" style="flex: 1;">
+              <button type="button" id="toggle-api-key-visibility" class="btn-icon" style="padding: 8px;" title="Show/Hide">
+                <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+              </button>
+            </div>
+          </div>
+          <div class="input-group" id="llm-model-group" style="margin-top: 12px; display: none;">
+            <label>Model</label>
+            <select id="llm-model" class="form-select" style="height: 40px;">
+              <!-- Options populated dynamically -->
+            </select>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button id="save-llm-settings-btn" class="btn-primary" style="flex: 1;">
+              <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">save</span>
+              Save
+            </button>
+            <button id="test-llm-btn" class="btn-secondary" style="flex: 1;">
+              <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">science</span>
+              Test Connection
+            </button>
+          </div>
+          <div id="llm-status" style="margin-top: 8px; font-size: 11px; display: none;"></div>
         </div>
 
         <div class="option-card">

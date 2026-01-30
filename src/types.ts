@@ -34,6 +34,11 @@ export interface ScrollerConfig {
   maxItems?: number;
   retryCount: number;
   retryDelayMs: number;
+  // Random delay to avoid detection/bans (in milliseconds)
+  randomDelayMin?: number;
+  randomDelayMax?: number;
+  // Page limit (for multi-page scraping)
+  maxPages?: number;
 }
 
 export type ScrollerStatus = 'idle' | 'running' | 'paused' | 'error';
@@ -114,7 +119,9 @@ export type MessageType =
   | 'EXPORT_DATA'
   | 'EXPORT_EXCEL'
   | 'EXPORT_CSV'
+  | 'EXPORT_JSON'
   | 'ANALYZE_DATA'
+  | 'ANALYZE_WITH_LLM'
   | 'CLEAR_DATA'
   | 'UPDATE_CONFIG'
   // Recording messages

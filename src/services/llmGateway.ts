@@ -12,7 +12,7 @@ import type { RetryConfig } from '../types/ai';
 /**
  * Supported LLM providers
  */
-export type LLMProvider = 'anthropic' | 'openai' | 'groq' | 'ollama';
+export type LLMProvider = 'anthropic' | 'openai' | 'groq' | 'ollama' | 'gemini' | 'deepseek';
 
 /**
  * LLM request options
@@ -206,6 +206,93 @@ const PROVIDER_CONFIGS: Record<LLMProvider, ProviderConfig> = {
       };
     },
   },
+
+  gemini: {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
+    defaultModel: 'gemini-2.0-flash',
+    authHeader: '', // Uses query param instead
+    formatRequest: (prompt, options) => ({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      ...(options.systemPrompt && {
+        systemInstruction: { parts: [{ text: options.systemPrompt }] },
+      }),
+      generationConfig: {
+        maxOutputTokens: options.maxTokens || 1024,
+        temperature: options.temperature ?? 0.7,
+      },
+    }),
+    parseResponse: (data: unknown) => {
+      const d = data as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+          finishReason?: string;
+        }>;
+        modelVersion?: string;
+        usageMetadata?: {
+          promptTokenCount?: number;
+          candidatesTokenCount?: number;
+          totalTokenCount?: number;
+        };
+      };
+      return {
+        content: d.candidates?.[0]?.content?.parts?.[0]?.text || '',
+        model: d.modelVersion || '',
+        usage: d.usageMetadata
+          ? {
+              promptTokens: d.usageMetadata.promptTokenCount || 0,
+              completionTokens: d.usageMetadata.candidatesTokenCount || 0,
+              totalTokens: d.usageMetadata.totalTokenCount || 0,
+            }
+          : undefined,
+        finishReason: d.candidates?.[0]?.finishReason,
+      };
+    },
+  },
+
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+    defaultModel: 'deepseek-chat',
+    authHeader: 'Authorization',
+    formatRequest: (prompt, options) => ({
+      model: options.model || 'deepseek-chat',
+      max_tokens: options.maxTokens || 1024,
+      temperature: options.temperature ?? 0.7,
+      messages: [
+        ...(options.systemPrompt
+          ? [{ role: 'system', content: options.systemPrompt }]
+          : []),
+        { role: 'user', content: prompt },
+      ],
+    }),
+    parseResponse: (data: unknown) => {
+      // Same format as OpenAI
+      const d = data as {
+        choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+        model?: string;
+        usage?: {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+        };
+      };
+      return {
+        content: d.choices?.[0]?.message?.content || '',
+        model: d.model || '',
+        usage: d.usage
+          ? {
+              promptTokens: d.usage.prompt_tokens || 0,
+              completionTokens: d.usage.completion_tokens || 0,
+              totalTokens: d.usage.total_tokens || 0,
+            }
+          : undefined,
+        finishReason: d.choices?.[0]?.finish_reason,
+      };
+    },
+  },
 };
 
 /**
@@ -221,8 +308,8 @@ export interface LLMGatewayConfig {
 }
 
 const DEFAULT_GATEWAY_CONFIG: LLMGatewayConfig = {
-  providers: ['anthropic', 'openai', 'groq', 'ollama'],
-  defaultProvider: 'anthropic',
+  providers: ['anthropic', 'openai', 'gemini', 'deepseek', 'groq', 'ollama'],
+  defaultProvider: 'gemini',
   redactSensitiveData: true,
 };
 
@@ -392,16 +479,24 @@ export class LLMGateway {
         throw new Error(`No API key configured for ${provider}`);
       }
 
-      const url =
-        provider === 'ollama'
-          ? `${this.ollamaUrl}/api/generate`
-          : config.baseUrl;
+      // Build URL based on provider
+      let url: string;
+      if (provider === 'ollama') {
+        url = `${this.ollamaUrl}/api/generate`;
+      } else if (provider === 'gemini') {
+        // Gemini uses model in URL path and API key as query param
+        const model = options.model || config.defaultModel;
+        url = `${config.baseUrl}/${model}:generateContent?key=${apiKey}`;
+      } else {
+        url = config.baseUrl;
+      }
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
 
-      if (apiKey && config.authHeader) {
+      // Add auth headers (skip for Ollama and Gemini)
+      if (apiKey && config.authHeader && provider !== 'gemini') {
         if (config.authHeader === 'Authorization') {
           headers[config.authHeader] = `Bearer ${apiKey}`;
         } else {

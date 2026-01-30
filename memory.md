@@ -18,11 +18,11 @@ Chrome Extension (Manifest V3) for web scraping with AI-powered pattern detectio
 
 | Layer | Components |
 |-------|------------|
-| Content | `patternDetector`, `aiPatternDetector`, `autoScroller`, `dataExtractor` |
-| UI | `sidepanel` (dashboard, preview, settings, master toggle) |
-| Background | `service-worker` (scheduler, export) |
+| Content | `patternDetector`, `aiPatternDetector`, `autoScroller`, `dataExtractor`, `selectorGenerator` |
+| UI | `sidepanel` (dashboard, preview, settings, templates, arbitrage) |
+| Background | `service-worker` (scheduler, export, templates) |
 | Core | `eventBus`, `jobQueue`, `storageManager` |
-| Services | `llmGateway`, `voiceover` |
+| Services | `llmGateway`, `voiceover`, `priceComparison`, `trendDetection`, `arbitrageAnalyzer` |
 | Utils | `encryption`, `rateLimiter`, `redaction`, `retry` |
 
 ## Commands
@@ -67,8 +67,18 @@ bun run typecheck && bun run test
 - Price trend analysis & anomaly detection
 - AI-powered opportunity recommendations (buy/hold/avoid)
 
+## Scraping Templates
+
+Reusable templates for recurring scrape jobs:
+- **Save**: Lock pattern → generates CSS selector → save with URL pattern
+- **Apply**: Finds elements by selector → highlights → ready to scrape
+- **Auto-suggest**: Matches templates to current URL
+
+Key: `selectorGenerator.ts` creates stable selectors from detected patterns using class intersection and fallback chain (id → data-testid → stable classes → nth-of-type).
+
 ## Recent Updates
 
+- **Template selector fix** - generates CSS selectors when pattern locked, Apply Template now works
 - **E-commerce arbitrage** for 6 platforms with price comparison & trend analysis
 - Master ON/OFF toggle in sidepanel sidebar
 - AI pattern detector with LLM integration

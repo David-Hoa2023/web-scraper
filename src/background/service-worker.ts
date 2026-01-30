@@ -25,8 +25,40 @@ import {
 import { getPriceComparisonService } from '../services/priceComparison';
 import { getTrendDetectionService } from '../services/trendDetection';
 import { getArbitrageAnalyzer } from '../services/arbitrageAnalyzer';
+import { analyzeWithLLM } from '../services/llmAnalysis';
 
-console.log('[Web Scraper] Service worker initialized');
+console.log('[SW] boot');
+
+// --- Sidepanel Port Tracking ---
+// Track sidepanel ports for push updates (progress, status, etc.)
+const sidepanelPorts = new Set<chrome.runtime.Port>();
+
+chrome.runtime.onConnect.addListener((port) => {
+  console.log('[SW] onConnect', port.name, port.sender?.url);
+
+  if (port.name !== 'sidepanel') return;
+
+  sidepanelPorts.add(port);
+
+  // WIRE TEST: Send hello immediately to verify connection
+  port.postMessage({ type: 'SW_HELLO', ts: Date.now() });
+  console.log('[SW] Sent SW_HELLO to sidepanel');
+
+  port.onDisconnect.addListener(() => {
+    console.log('[SW] Sidepanel port disconnected');
+    sidepanelPorts.delete(port);
+  });
+
+  // Handle messages from sidepanel via port
+  port.onMessage.addListener((msg) => {
+    console.log('[SW] from sidepanel:', msg);
+    // WIRE TEST: Respond to PING with PONG
+    if (msg?.type === 'PING') {
+      port.postMessage({ type: 'PONG', ts: Date.now() });
+      console.log('[SW] Sent PONG');
+    }
+  });
+});
 
 // --- Types ---
 
@@ -909,12 +941,37 @@ chrome.runtime.onMessage.addListener(
   (message: ScraperMessage, sender, sendResponse: (response: ScraperResponse) => void) => {
     console.log('[Service Worker] Received message:', message.type);
 
-    // Forward UI-related messages from content scripts to all extension pages
-    if (sender.tab && ['UPDATE_STATUS', 'UPDATE_PROGRESS', 'UPDATE_PREVIEW', 'SHOW_ERROR'].includes(message.type)) {
-      // Broadcast to all extension views (sidepanel, popup, etc.)
-      chrome.runtime.sendMessage(message).catch(() => {
-        // No receivers - that's fine, sidepanel might be closed
-      });
+    // Forward UI-related messages from content scripts to sidepanel via port
+    const PUSH_TYPES = new Set(['UPDATE_STATUS', 'UPDATE_PROGRESS', 'UPDATE_PREVIEW', 'SHOW_ERROR']);
+
+    if (sender.tab && PUSH_TYPES.has(message.type)) {
+      const tabId = sender.tab.id!;
+      const forwarded = { ...message, tabId };
+
+      console.log(`[SW] Forwarding ${message.type} from tab ${tabId} to ${sidepanelPorts.size} sidepanel(s)`);
+
+      // Push to connected sidepanel(s) via port
+      let delivered = 0;
+      for (const port of sidepanelPorts) {
+        try {
+          port.postMessage(forwarded);
+          delivered++;
+        } catch (e) {
+          // Ignore dead ports - they'll be cleaned up on disconnect
+        }
+      }
+
+      // Fallback broadcast if no ports connected (e.g., popup listeners)
+      if (delivered === 0) {
+        chrome.runtime.sendMessage(forwarded).catch((err) => {
+          const msg = String((err as Error)?.message ?? err ?? '');
+          // Only ignore the normal "no receivers" case
+          if (!msg.includes('Receiving end does not exist')) {
+            console.warn('[SW] runtime.sendMessage failed:', err);
+          }
+        });
+      }
+
       sendResponse({ success: true });
       return true;
     }
@@ -967,17 +1024,21 @@ chrome.runtime.onMessage.addListener(
             options?: ExcelExportOptions;
           };
 
+          console.log('[SW] EXPORT_EXCEL: items count:', items?.length);
+
           if (!items || items.length === 0) {
             return { success: false, error: 'No items to export' };
           }
 
           try {
+            console.log('[SW] EXPORT_EXCEL: generating workbook...');
             const result = await exportToExcel(items, {
               filename: options?.filename || `scrape-export-${Date.now()}.xlsx`,
               includeAnalysis: options?.includeAnalysis ?? true,
               ...options,
             });
 
+            console.log('[SW] EXPORT_EXCEL: converting to base64...');
             // Convert blob to base64 for download
             const buffer = await result.blob.arrayBuffer();
             const base64 = btoa(
@@ -987,22 +1048,22 @@ chrome.runtime.onMessage.addListener(
               )
             );
 
-            // Trigger download
-            await chrome.downloads.download({
-              url: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`,
-              filename: result.filename,
-              saveAs: true,
-            });
+            console.log('[SW] EXPORT_EXCEL: base64 length:', base64.length);
 
+            // Return base64 data for sidepanel to handle download
+            // (service worker chrome.downloads can be unreliable with large data URLs)
             return {
               success: true,
               data: {
                 filename: result.filename,
                 rowCount: result.rowCount,
                 columnCount: result.columnCount,
+                base64,
+                mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
               },
             };
           } catch (error) {
+            console.error('[SW] EXPORT_EXCEL error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Export failed';
             return { success: false, error: errorMessage };
           }
@@ -1014,6 +1075,8 @@ chrome.runtime.onMessage.addListener(
             filename?: string;
           };
 
+          console.log('[SW] EXPORT_CSV: items count:', items?.length);
+
           if (!items || items.length === 0) {
             return { success: false, error: 'No items to export' };
           }
@@ -1023,17 +1086,57 @@ chrome.runtime.onMessage.addListener(
             const base64 = btoa(unescape(encodeURIComponent(csv)));
             const outputFilename = filename || `scrape-export-${Date.now()}.csv`;
 
-            await chrome.downloads.download({
-              url: `data:text/csv;base64,${base64}`,
+            // Return base64 data for sidepanel to handle download
+            return {
+              success: true,
+              data: {
+                filename: outputFilename,
+                rowCount: items.length,
+                base64,
+              },
+            };
+          } catch (error) {
+            console.error('[SW] EXPORT_CSV error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Export failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'EXPORT_JSON': {
+          const { items, filename } = message.payload as {
+            items: ExtractedItem[];
+            filename?: string;
+          };
+
+          console.log('[Service Worker] EXPORT_JSON called with', items?.length, 'items');
+
+          if (!items || items.length === 0) {
+            return { success: false, error: 'No items to export' };
+          }
+
+          try {
+            const json = JSON.stringify(items, null, 2);
+            const outputFilename = filename || `scrape-export-${Date.now()}.json`;
+
+            // Use data URL instead of blob URL (service workers don't have URL.createObjectURL)
+            const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+
+            console.log('[Service Worker] Starting download:', outputFilename);
+
+            const downloadId = await chrome.downloads.download({
+              url: dataUrl,
               filename: outputFilename,
               saveAs: true,
             });
+
+            console.log('[Service Worker] Download started with ID:', downloadId);
 
             return {
               success: true,
               data: { filename: outputFilename, rowCount: items.length },
             };
           } catch (error) {
+            console.error('[Service Worker] EXPORT_JSON error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Export failed';
             return { success: false, error: errorMessage };
           }
@@ -1059,6 +1162,38 @@ chrome.runtime.onMessage.addListener(
             };
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'ANALYZE_WITH_LLM': {
+          const { items } = message.payload as { items: ExtractedItem[] };
+
+          console.log('[SW] ANALYZE_WITH_LLM: items count:', items?.length);
+
+          if (!items || items.length === 0) {
+            return { success: false, error: 'No items to analyze' };
+          }
+
+          try {
+            const llmResult = await analyzeWithLLM(items as Array<Record<string, unknown>>);
+
+            if (!llmResult) {
+              return {
+                success: false,
+                error: 'LLM not configured. Please configure an AI provider in Settings.',
+              };
+            }
+
+            console.log('[SW] ANALYZE_WITH_LLM: analysis complete');
+
+            return {
+              success: true,
+              data: llmResult,
+            };
+          } catch (error) {
+            console.error('[SW] ANALYZE_WITH_LLM error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'LLM analysis failed';
             return { success: false, error: errorMessage };
           }
         }

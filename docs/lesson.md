@@ -328,3 +328,327 @@ function uniqueSelector(el: Element): string {
 4. **Block invalid saves**: Don't save templates with empty selectors. Show clear error message.
 
 5. **Message-based state sync**: Content script generates selectors, sidepanel stores them. Use Chrome messaging to keep them in sync.
+
+---
+
+# Lessons Learned: Progress Bar & Export Issues
+
+**Date:** 2026-01-30
+**Status:** UNRESOLVED
+
+## Issue 1: Progress Bar Not Updating in Extraction Tab
+
+### Symptoms
+- Added "Progress" section to Extraction tab with progress bar and item count
+- Progress bar always shows "0" and never updates during scraping
+- Console shows `[Content] Received: GET_STATUS undefined` (messages flowing TO content script)
+- No `[Sidepanel] UPDATE_PROGRESS received:` logs appear in sidepanel console
+- Data IS being collected (21 items confirmed via export log)
+
+### Architecture
+
+```
+Content Script                    Service Worker                 Sidepanel
+     |                                  |                            |
+     |-- UPDATE_PROGRESS ------------->|                            |
+     |                                  |-- forward message ------->|
+     |                                  |                            |
+     |                                  |                      [NOT RECEIVING]
+```
+
+### Code Locations
+- Content script sends: `src/content/index.ts:306-312`
+- Service worker forwards: `src/background/service-worker.ts:913-920`
+- Sidepanel listens: `src/ui/sidepanel.ts:2371-2391`
+
+### Service Worker Forwarding Code
+```typescript
+if (sender.tab && ['UPDATE_STATUS', 'UPDATE_PROGRESS', 'UPDATE_PREVIEW', 'SHOW_ERROR'].includes(message.type)) {
+  chrome.runtime.sendMessage(message).catch(() => {});
+  sendResponse({ success: true });
+  return true;
+}
+```
+
+### Attempted Fixes (ALL FAILED)
+
+| # | Fix Attempted | Result |
+|---|---------------|--------|
+| 1 | Made progress section always visible (removed `display: none`) | Section visible but never updates |
+| 2 | Moved extraction BEFORE sending UPDATE_PROGRESS | No change - collectedData was correct |
+| 3 | Added logging `[Content] Progress: X/Y items` | Never saw this log, suggesting callback not firing |
+| 4 | Simplified UI to just progress bar and count | Still not updating |
+| 5 | Added `console.log` in UPDATE_PROGRESS handler | Never triggered |
+
+### Root Cause (Suspected)
+
+The issue is **NOT** in the UI code. The messages never reach the sidepanel.
+
+**Possible causes:**
+1. `chrome.runtime.sendMessage()` in service worker doesn't reach sidepanel context
+2. Sidepanel may need `chrome.runtime.connect()` for persistent port connection
+3. The sidepanel's `onMessage` listener may not be registered in time
+4. Messages from service worker to extension pages may need different API
+
+### Evidence
+- `[Content] Received: GET_STATUS` works (sidepanel → content via service worker) ✓
+- `[Content] Exporting data: 21 items` works (data returns from content) ✓
+- `UPDATE_PROGRESS` never logged in sidepanel (content → sidepanel) ✗
+
+This proves **one-way communication works, return path is broken**.
+
+---
+
+## Issue 2: Export Not Downloading File
+
+### Symptoms
+- Click "Export" button in Extraction tab
+- Console shows: `[Content] Exporting data: 21 items`
+- No file download occurs
+- No error messages
+
+### Code Flow
+```
+Sidepanel: exportBtn.click()
+    ↓
+sendToContentScript({ type: 'EXPORT_DATA' })
+    ↓
+Content: returns { success: true, data: collectedData }
+    ↓
+Sidepanel: [should receive response and trigger download]
+    ↓
+[FAILS SILENTLY]
+```
+
+### Suspected Issues
+1. `sendToContentScript` may not properly await or return the response
+2. The download logic may have an exception that's being swallowed
+3. Response from content script may not include the data
+
+---
+
+## Files Modified (To Be Reverted or Completed)
+
+| File | Changes Made |
+|------|--------------|
+| `src/ui/sidepanel.html:505-514` | Added progress bar section |
+| `src/ui/sidepanel.ts:248-250` | Added UI element refs |
+| `src/ui/sidepanel.ts:2355-2391` | Added message handlers |
+| `src/ui/styles.css:1124-1135` | Added indeterminate animation |
+| `src/content/index.ts:280-318` | Reordered extraction, added logging |
+
+---
+
+## Key Lessons
+
+### 1. Verify Infrastructure Before Building Features
+Built entire progress bar UI assuming message flow worked. Should have:
+1. Added `console.log` to verify UPDATE_PROGRESS reaches sidepanel
+2. Then built the UI
+3. Not assumed 60+ lines of UI code would "just work"
+
+### 2. Chrome Extension Messaging is NOT Symmetric
+- `content → service worker`: Works via `chrome.runtime.sendMessage()`
+- `sidepanel → content`: Works via `chrome.tabs.sendMessage()`
+- `service worker → sidepanel`: **May NOT work** via `chrome.runtime.sendMessage()`
+
+The sidepanel is a special context. Broadcasting from service worker may not reach it.
+
+### 3. Silent `.catch(() => {})` Hides Problems
+```typescript
+chrome.runtime.sendMessage(message).catch(() => {
+  // No receivers - that's fine, sidepanel might be closed
+});
+```
+This catches and ignores ALL errors, including real problems.
+
+### 4. Test Incrementally
+Don't write 100 lines of code then test. Test after every 10-20 lines:
+1. Add `console.log('HERE')`
+2. Build & reload
+3. Verify it prints
+4. Continue
+
+---
+
+## Recommended Fix (Not Implemented)
+
+### Option A: Use Persistent Port Connection
+```typescript
+// In sidepanel init:
+const port = chrome.runtime.connect({ name: 'sidepanel' });
+port.onMessage.addListener((msg) => {
+  if (msg.type === 'UPDATE_PROGRESS') { ... }
+});
+
+// In service worker:
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'sidepanel') {
+    sidepanelPort = port;
+  }
+});
+// Then use sidepanelPort.postMessage() to send
+```
+
+### Option B: Direct Tab Query
+```typescript
+// In service worker, instead of broadcast:
+const views = await chrome.runtime.getViews({ type: 'popup' });
+// Or query for sidepanel window and send directly
+```
+
+### Option C: Use Storage as Message Bus
+```typescript
+// Content writes:
+chrome.storage.local.set({ lastProgress: { current, max } });
+
+// Sidepanel listens:
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.lastProgress) updateProgressUI(changes.lastProgress.newValue);
+});
+```
+
+---
+
+## Conclusion
+
+**Time spent:** ~1 hour
+**Lines of code added:** ~80
+**Result:** UI exists but non-functional
+
+The fundamental issue is **Chrome extension message routing**, not the UI code. The progress bar UI is correct but receives no data because `UPDATE_PROGRESS` messages from the service worker never reach the sidepanel listener.
+
+Future work must:
+1. Fix message infrastructure first (verify with simple test)
+2. Then build UI on working foundation
+3. Never assume message delivery works
+
+---
+
+## Fix Applied (2026-01-30)
+
+### Solution: Long-lived Port Connection
+
+The fix uses `chrome.runtime.connect()` for reliable push updates instead of broadcast `sendMessage()`.
+
+### Changes Made
+
+**1. Service Worker (`service-worker.ts`)**
+
+Added port tracking at top level:
+```typescript
+const sidepanelPorts = new Set<chrome.runtime.Port>();
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'sidepanel') return;
+  console.log('[SW] Sidepanel port connected');
+  sidepanelPorts.add(port);
+  port.onDisconnect.addListener(() => sidepanelPorts.delete(port));
+});
+```
+
+Replaced broadcast with port.postMessage:
+```typescript
+if (sender.tab && PUSH_TYPES.has(message.type)) {
+  const forwarded = { ...message, tabId: sender.tab.id };
+  for (const port of sidepanelPorts) {
+    port.postMessage(forwarded);
+  }
+}
+```
+
+**2. Sidepanel (`sidepanel.ts`)**
+
+Added port connection on init:
+```typescript
+function connectToServiceWorker() {
+  const port = chrome.runtime.connect({ name: 'sidepanel' });
+  port.onMessage.addListener((msg) => {
+    if (msg.type === 'UPDATE_PROGRESS') handleProgressUpdate(msg);
+    // ... other handlers
+  });
+  port.onDisconnect.addListener(() => setTimeout(connectToServiceWorker, 250));
+}
+```
+
+**3. Content Script (`content/index.ts`)**
+
+Added proper error logging instead of silent catch:
+```typescript
+chrome.runtime.sendMessage({ type: 'UPDATE_PROGRESS', payload })
+  .catch((err) => console.debug('[Content] UPDATE_PROGRESS failed:', err));
+```
+
+### Verification Checklist
+
+1. **Page console** should show: `[Content] Sending UPDATE_PROGRESS: X/Y items`
+2. **Service worker console** should show: `[SW] Sidepanel port connected` and `[SW] Forwarding UPDATE_PROGRESS from tab X to 1 sidepanel(s)`
+3. **Sidepanel console** should show: `[Sidepanel] Port message received: UPDATE_PROGRESS`
+
+### Why This Works
+
+1. **Port connection is explicit** - sidepanel registers with service worker
+2. **Messages are pushed directly** - no broadcast that might be ignored
+3. **tabId is preserved** - forwarded messages include original tab ID
+4. **Auto-reconnect on disconnect** - handles service worker restarts
+
+### Status
+**PENDING VERIFICATION** - Build successful, needs testing
+
+---
+
+## Export Fix Applied (2026-01-30)
+
+### Problem
+Export button shows "[Content] Exporting data: 21 items" but no file downloads.
+
+### Root Cause
+1. Silent error handling hid failures
+2. No fallback when service worker export failed
+3. Missing proper response validation
+
+### Changes Made
+
+**1. Added `downloadJsonDirect` function (`sidepanel.ts:331-363`)**
+
+Direct download using `chrome.downloads.download` with `<a download>` fallback:
+```typescript
+async function downloadJsonDirect(filename: string, data: unknown): Promise<void> {
+  const json = JSON.stringify(data, null, 2);
+
+  // Try chrome.downloads API first
+  try {
+    const url = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+    await chrome.downloads.download({ url, filename, saveAs: true });
+    return;
+  } catch (err) {
+    console.warn('[Sidepanel] chrome.downloads.download failed:', err);
+  }
+
+  // Fallback: <a download>
+  const blob = new Blob([json], { type: 'application/json' });
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+```
+
+**2. Improved export button handler**
+
+- Added `ui.exportBtn.disabled = true/false` to prevent double-clicks
+- Wrapped entire flow in try/catch/finally
+- Added validation for response and data array
+- Added fallback to `downloadJsonDirect` if service worker fails
+
+### Verification
+1. Click Export button
+2. Console should show: `[Sidepanel] EXPORT_DATA response: {success: true, data: [...]}`
+3. Either service worker download or direct download should trigger
+4. Save dialog should appear
+
+### Status
+**PENDING VERIFICATION** - Build successful, needs testing

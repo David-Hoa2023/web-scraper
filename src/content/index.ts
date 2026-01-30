@@ -278,39 +278,44 @@ function extractWithHeuristics() {
 }
 
 function onScrollerProgress(state: ScrollerState) {
-  // Update UI via Messages
+  // Update status first
   chrome.runtime.sendMessage({
     type: 'UPDATE_STATUS',
     payload: { status: state.status }
-  }).catch(() => { });
-
-  chrome.runtime.sendMessage({
-    type: 'UPDATE_PROGRESS',
-    payload: {
-      current: collectedData.length, // Report unique items collected
-      max: appConfig.scrollerConfig.maxItems || 0
-    }
-  }).catch(() => { });
+  }).catch((err) => console.debug('[Content] UPDATE_STATUS failed:', err));
 
   if (state.errors.length > 0) {
     chrome.runtime.sendMessage({
       type: 'SHOW_ERROR',
       payload: { message: state.errors[state.errors.length - 1] }
-    }).catch(() => { });
+    }).catch((err) => console.debug('[Content] SHOW_ERROR failed:', err));
   }
 
-  // Extract data based on pattern or heuristics
+  // Extract data based on pattern or heuristics BEFORE sending progress
   if (currentPattern) {
     extractFromCurrentPattern();
   } else {
     extractWithHeuristics();
   }
 
+  // Now send progress with updated collectedData count
+  const currentCount = collectedData.length;
+  const maxItems = appConfig.scrollerConfig.maxItems || 0;
+  console.log(`[Content] Sending UPDATE_PROGRESS: ${currentCount}/${maxItems > 0 ? maxItems : '∞'} items`);
+
+  chrome.runtime.sendMessage({
+    type: 'UPDATE_PROGRESS',
+    payload: {
+      current: currentCount,
+      max: maxItems
+    }
+  }).catch((err) => console.debug('[Content] UPDATE_PROGRESS failed:', err));
+
   // Update preview with last 5 items
   chrome.runtime.sendMessage({
     type: 'UPDATE_PREVIEW',
     payload: { items: collectedData.slice(-5) }
-  }).catch(() => { });
+  }).catch((err) => console.debug('[Content] UPDATE_PREVIEW failed:', err));
 }
 
 // --- Message Handling ---
@@ -367,7 +372,12 @@ chrome.runtime.onMessage.addListener(
         case 'UPDATE_CONFIG':
           if (message.payload) {
             appConfig = { ...appConfig, ...(message.payload as any) };
-            console.log('[Content] Config updated', appConfig);
+            console.log('[Content] Config updated - Limits:', {
+              maxItems: appConfig.scrollerConfig.maxItems,
+              maxPages: appConfig.scrollerConfig.maxPages,
+              throttleMs: appConfig.scrollerConfig.throttleMs,
+              randomDelay: `${appConfig.scrollerConfig.randomDelayMin || 0}-${appConfig.scrollerConfig.randomDelayMax || 0}ms`
+            });
           }
           sendResponse({ success: true });
           break;
@@ -483,11 +493,36 @@ chrome.runtime.onMessage.addListener(
             highlightPattern(currentPattern);
             lockPattern();
 
-            console.log('[Content] Template applied - pattern set with', elements.length, 'items');
+            // Extract data from found elements immediately
+            const seenKeys = new Set(collectedData.map(item => item.link || item.title || JSON.stringify(item)));
+            let extractedCount = 0;
+
+            for (const element of elements) {
+              const extracted = extractData(element, appConfig.extractionConfig);
+
+              // Deduplication key
+              const key = (extracted.link as string) || (extracted.image as string) || (extracted.text as string) || JSON.stringify(extracted);
+
+              if (key && !seenKeys.has(key)) {
+                seenKeys.add(key);
+                collectedData.push(extracted);
+                extractedCount++;
+              }
+            }
+
+            console.log('[Content] Template applied - pattern set with', elements.length, 'items,', extractedCount, 'extracted');
+
+            // Send preview update
+            chrome.runtime.sendMessage({
+              type: 'UPDATE_PREVIEW',
+              payload: { items: collectedData.slice(-5) }
+            });
+
             sendResponse({
               success: true,
               data: {
                 itemCount: elements.length,
+                extractedCount,
                 selector,
               }
             });
@@ -623,6 +658,17 @@ async function init() {
         allowSingleFallback: true // Allow single items too
       }
     };
+    console.log('[Content] Loaded config from storage - Limits:', {
+      maxItems: appConfig.scrollerConfig.maxItems,
+      maxPages: appConfig.scrollerConfig.maxPages,
+      throttleMs: appConfig.scrollerConfig.throttleMs,
+      randomDelay: `${appConfig.scrollerConfig.randomDelayMin || 0}-${appConfig.scrollerConfig.randomDelayMax || 0}ms`
+    });
+  } else {
+    console.log('[Content] No saved config, using defaults - Limits:', {
+      maxItems: appConfig.scrollerConfig.maxItems,
+      maxPages: appConfig.scrollerConfig.maxPages
+    });
   }
 
   // Always initialize pattern detection (will be a no-op if already initialized)
