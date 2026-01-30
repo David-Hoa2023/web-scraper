@@ -4,26 +4,23 @@
 
 ## Overview
 
-Chrome Extension (Manifest V3) for web scraping with AI-powered pattern detection, data analysis, and visualization.
+Chrome Extension (Manifest V3) for web scraping with AI-powered analysis and multi-format export.
 
 ## Key Features
 
-- **Scraping:** Pattern detection, auto-scroll, SPA support, ON/OFF toggle
-- **AI:** LLM-powered pattern detection, voiceover, multi-provider gateway
-- **Analysis:** Statistics, aggregations, insights extraction
-- **Export:** JSON, CSV, Excel with analysis sheet
-- **Visualization:** HTML reports with Chart.js
+- **Scraping:** Pattern detection, auto-scroll, SPA support, templates
+- **AI Analysis:** LLM integration (OpenAI, Anthropic, Gemini, DeepSeek) for data insights
+- **Export:** JSON, CSV, Excel (with analysis sheet)
+- **Arbitrage:** Cross-platform price comparison for 6 e-commerce sites
 
 ## Architecture
 
-| Layer | Components |
-|-------|------------|
-| Content | `patternDetector`, `aiPatternDetector`, `autoScroller`, `dataExtractor`, `selectorGenerator` |
-| UI | `sidepanel` (dashboard, preview, settings, templates, arbitrage) |
-| Background | `service-worker` (scheduler, export, templates) |
-| Core | `eventBus`, `jobQueue`, `storageManager` |
-| Services | `llmGateway`, `voiceover`, `priceComparison`, `trendDetection`, `arbitrageAnalyzer` |
-| Utils | `encryption`, `rateLimiter`, `redaction`, `retry` |
+| Layer | Purpose |
+|-------|---------|
+| Content Scripts | Pattern detection, auto-scroll, data extraction |
+| Sidepanel UI | Dashboard, extraction settings, templates, AI analysis |
+| Service Worker | Message routing, export handlers, scheduler |
+| Services | LLM gateway, price comparison, trend detection |
 
 ## Commands
 
@@ -32,57 +29,29 @@ bun install && bun run build
 bun run typecheck && bun run test
 ```
 
-## Claude Code Skills
+## LLM Settings
 
-| Skill | Purpose |
-|-------|---------|
-| `scraper-data-analysis` | Analyze CSV/JSON, generate insights & reports |
-| `frontend-slides` | Create HTML presentations from data |
+- Per-provider API key storage (each provider has its own key)
+- Supported: OpenAI, Anthropic, Gemini, DeepSeek
+- AI Analysis in Extraction tab generates insights & recommendations
+
+## Export Flow
+
+- Service worker generates file data (base64)
+- Sidepanel handles download via `chrome.downloads` API
+- Supports JSON, CSV, Excel formats
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/ui/sidepanel.ts` | Main UI logic |
+| `src/background/service-worker.ts` | Message handlers, export |
+| `src/services/llmAnalysis.ts` | LLM-powered data analysis |
+| `src/services/llmGateway.ts` | Multi-provider LLM client |
 
 ## Documentation
 
-| Doc | Description |
-|-----|-------------|
-| `docs/use-cases.md` | User stories & pain points (Vietnamese) |
-| `docs/BLUEPRINT-ai-phase1.md` | AI features roadmap |
-| `CLAUDE.md` | Build commands & architecture reference |
-
-## E-Commerce Arbitrage Module
-
-**Supported Platforms:** Temu, Shein, AliExpress, Shopee, Lazada, TikTok Shop
-
-| Component | Purpose |
-|-----------|---------|
-| `extractors/platformConfigs` | Platform-specific field extractors |
-| `extractors/index` | Auto-detection & product extraction |
-| `services/priceComparison` | Cross-platform matching (Jaccard similarity) |
-| `services/trendDetection` | Price trends (linear regression, Z-score) |
-| `services/arbitrageAnalyzer` | Opportunity detection & AI analysis |
-
-**Features:**
-- Platform auto-detection from URL
-- Product extraction (title, price, image, rating, sales)
-- Cross-platform price comparison & matching
-- Profit margin calculations
-- Price trend analysis & anomaly detection
-- AI-powered opportunity recommendations (buy/hold/avoid)
-
-## Scraping Templates
-
-Reusable templates for recurring scrape jobs:
-- **Save**: Lock pattern → generates CSS selector → save with URL pattern
-- **Apply**: Finds elements by selector → highlights → ready to scrape
-- **Auto-suggest**: Matches templates to current URL
-
-Key: `selectorGenerator.ts` creates stable selectors from detected patterns using class intersection and fallback chain (id → data-testid → stable classes → nth-of-type).
-
-## Recent Updates
-
-- **Template selector fix** - generates CSS selectors when pattern locked, Apply Template now works
-- **E-commerce arbitrage** for 6 platforms with price comparison & trend analysis
-- Master ON/OFF toggle in sidepanel sidebar
-- AI pattern detector with LLM integration
-- Core infrastructure (eventBus, jobQueue, storageManager)
-- i18n internationalization support
-- Removed legacy popup/overlay (sidepanel-only architecture)
-- Vietnamese user stories and HTML report generator
+- `CLAUDE.md` - Build commands & architecture
+- `docs/lesson.md` - Debugging lessons learned
+- `docs/use-cases.md` - User stories (Vietnamese)
