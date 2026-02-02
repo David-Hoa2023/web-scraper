@@ -652,3 +652,114 @@ async function downloadJsonDirect(filename: string, data: unknown): Promise<void
 
 ### Status
 **PENDING VERIFICATION** - Build successful, needs testing
+
+---
+
+# Lessons Learned: Excel Export Failing with Object.assign Error
+
+**Date:** 2026-02-02
+**Status:** FIXED
+
+## Issue
+**Excel export fails silently**: Clicking "Export Data" with Excel format selected does nothing. No file downloads, no visible error in sidepanel.
+
+## Console Evidence (Service Worker)
+```
+[SW] EXPORT_EXCEL: items count: 1
+[SW] EXPORT_EXCEL: generating workbook...
+[SW] EXPORT_EXCEL error: TypeError: Cannot convert undefined or null to object
+    at Object.assign (<anonymous>)
+    at service-worker.js:57:2791
+    at Array.forEach (<anonymous>)
+    at x.exports.eachCell (service-worker.js:1:29929)
+```
+
+## Root Cause
+
+In `src/export/excelExporter.ts`, the code was using `Object.assign()` on cell properties that were initially `undefined`:
+
+```typescript
+// BROKEN CODE
+row.eachCell((cell) => {
+  Object.assign(cell.border, DATA_CELL_STYLE.border);  // cell.border is undefined!
+});
+```
+
+`Object.assign(target, source)` requires `target` to be an object. When `cell.border` is `undefined`, it throws:
+> TypeError: Cannot convert undefined or null to object
+
+Similarly, the header row styling used:
+```typescript
+// ALSO PROBLEMATIC
+headerRow.eachCell((cell) => {
+  Object.assign(cell, { style: headerStyle });  // May cause issues
+});
+```
+
+## The Fix
+
+### 1. Direct Assignment for Data Cells
+```typescript
+// FIXED CODE
+row.eachCell((cell) => {
+  // Set border directly (cell.border may be undefined initially)
+  if (DATA_CELL_STYLE.border) {
+    cell.border = DATA_CELL_STYLE.border;
+  }
+  // ... rest of formatting
+});
+```
+
+### 2. Individual Property Assignment for Header Cells
+```typescript
+// FIXED CODE
+headerRow.eachCell((cell) => {
+  // Apply header style properties individually to avoid Object.assign issues
+  if (headerStyle.font) cell.font = headerStyle.font;
+  if (headerStyle.fill) cell.fill = headerStyle.fill as ExcelJS.Fill;
+  if (headerStyle.alignment) cell.alignment = headerStyle.alignment;
+  if (headerStyle.border) cell.border = headerStyle.border;
+});
+```
+
+## Key Lessons
+
+### 1. Object.assign Requires Non-Null Target
+```typescript
+Object.assign(undefined, { foo: 'bar' });  // TypeError!
+Object.assign({}, { foo: 'bar' });          // OK: { foo: 'bar' }
+```
+Always verify the target exists before using `Object.assign`.
+
+### 2. ExcelJS Cell Properties Start as Undefined
+ExcelJS cells don't have default objects for `border`, `fill`, `font`, etc. They're `undefined` until explicitly set. You must assign directly:
+```typescript
+cell.border = { top: {...}, bottom: {...} };  // Correct
+Object.assign(cell.border, {...});             // Wrong if border undefined
+```
+
+### 3. Check Service Worker Console for Errors
+The error only appeared in the **service worker console** (chrome://extensions → "service worker" link), not in the sidepanel or page console. Always check all relevant consoles when debugging.
+
+### 4. Silent Failures Need Explicit Logging
+The original code caught the error but the user saw nothing. Added explicit logging:
+```typescript
+console.log('[SW] EXPORT_EXCEL: items count:', items?.length);
+console.log('[SW] EXPORT_EXCEL: generating workbook...');
+// ... on error:
+console.error('[SW] EXPORT_EXCEL error:', error);
+```
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/export/excelExporter.ts:193-206` | Changed `Object.assign(cell.border, ...)` to direct `cell.border = ...` |
+| `src/export/excelExporter.ts:176-182` | Changed `Object.assign(cell, { style })` to individual property assignments |
+
+## Verification
+1. Scrape at least 1 item
+2. Select "Excel (.xlsx with Analysis)" format
+3. Click "Export Data"
+4. Save dialog should appear
+5. Excel file should open with data and formatting

@@ -174,7 +174,11 @@ export async function exportToExcel(
   // Add header row
   const headerRow = dataSheet.addRow(headers);
   headerRow.eachCell((cell) => {
-    Object.assign(cell, { style: headerStyle });
+    // Apply header style properties individually to avoid Object.assign issues
+    if (headerStyle.font) cell.font = headerStyle.font;
+    if (headerStyle.fill) cell.fill = headerStyle.fill as ExcelJS.Fill;
+    if (headerStyle.alignment) cell.alignment = headerStyle.alignment;
+    if (headerStyle.border) cell.border = headerStyle.border;
   });
   headerRow.height = 25;
 
@@ -192,7 +196,10 @@ export async function exportToExcel(
 
     // Apply data cell style
     row.eachCell((cell) => {
-      Object.assign(cell.border, DATA_CELL_STYLE.border);
+      // Set border directly (cell.border may be undefined initially)
+      if (DATA_CELL_STYLE.border) {
+        cell.border = DATA_CELL_STYLE.border;
+      }
 
       // Auto-format numbers
       const value = cell.value?.toString() || '';

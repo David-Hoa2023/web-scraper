@@ -60,10 +60,10 @@ interface ProviderConfig {
 const PROVIDER_CONFIGS: Record<LLMProvider, ProviderConfig> = {
   anthropic: {
     baseUrl: 'https://api.anthropic.com/v1/messages',
-    defaultModel: 'claude-3-haiku-20240307',
+    defaultModel: 'claude-sonnet-4-20250514',
     authHeader: 'x-api-key',
     formatRequest: (prompt, options) => ({
-      model: options.model || 'claude-3-haiku-20240307',
+      model: options.model || 'claude-sonnet-4-20250514',
       max_tokens: options.maxTokens || 1024,
       messages: [{ role: 'user', content: prompt }],
       ...(options.systemPrompt && { system: options.systemPrompt }),
@@ -507,6 +507,7 @@ export class LLMGateway {
       // Add Anthropic-specific headers
       if (provider === 'anthropic') {
         headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
       }
 
       const body = config.formatRequest(prompt, {

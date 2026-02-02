@@ -335,9 +335,10 @@ const LLM_MODELS: Record<string, Array<{ value: string; label: string }>> = {
     { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Cheapest)' },
   ],
   anthropic: [
-    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Latest)' },
-    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Most Capable)' },
-    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Fastest)' },
+    { value: 'claude-opus-4-20250514', label: 'Claude Opus 4.5 (Most Capable)' },
+    { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (Recommended)' },
+    { value: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet' },
+    { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku (Fastest)' },
   ],
   gemini: [
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Latest)' },
@@ -396,22 +397,9 @@ async function downloadJsonDirect(filename: string, data: unknown): Promise<void
 // --- Download Base64 Data ---
 
 async function downloadBase64(filename: string, base64: string, mimeType: string): Promise<void> {
-  const dataUrl = `data:${mimeType};base64,${base64}`;
+  console.log('[Sidepanel] downloadBase64 called:', filename, 'base64 length:', base64.length, 'mimeType:', mimeType);
 
-  // Try chrome.downloads API first
-  try {
-    const downloadId = await chrome.downloads.download({
-      url: dataUrl,
-      filename,
-      saveAs: true,
-    });
-    console.log('[Sidepanel] Base64 download started, id =', downloadId);
-    return;
-  } catch (err) {
-    console.warn('[Sidepanel] chrome.downloads.download failed for base64:', err);
-  }
-
-  // Fallback: Convert base64 to blob and use <a download>
+  // Convert base64 to blob first (more reliable than data URLs for large files)
   const byteCharacters = atob(base64);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -420,18 +408,40 @@ async function downloadBase64(filename: string, base64: string, mimeType: string
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: mimeType });
   const blobUrl = URL.createObjectURL(blob);
+  console.log('[Sidepanel] Created blob URL:', blobUrl.substring(0, 50) + '...');
 
+  // Try chrome.downloads API with blob URL
   try {
+    const downloadId = await chrome.downloads.download({
+      url: blobUrl,
+      filename,
+      saveAs: true,
+    });
+    console.log('[Sidepanel] chrome.downloads started, id =', downloadId);
+    // Revoke after a delay to allow download to start
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    return;
+  } catch (err) {
+    console.warn('[Sidepanel] chrome.downloads.download failed:', err);
+  }
+
+  // Fallback: Use <a download> element
+  try {
+    console.log('[Sidepanel] Trying <a download> fallback...');
     const a = document.createElement('a');
     a.href = blobUrl;
     a.download = filename;
-    a.rel = 'noopener';
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    console.log('[Sidepanel] Fallback blob download triggered');
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    document.body.removeChild(a);
+    console.log('[Sidepanel] Fallback <a download> triggered');
+    // Revoke after a delay
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch (fallbackErr) {
+    console.error('[Sidepanel] Fallback download also failed:', fallbackErr);
+    URL.revokeObjectURL(blobUrl);
+    throw new Error('Download failed - please try again');
   }
 }
 
@@ -616,26 +626,34 @@ async function sendMessage(message: ScraperMessage): Promise<ScraperResponse> {
 }
 
 async function sendToContentScript(message: ScraperMessage): Promise<ScraperResponse> {
+  console.log('[Sidepanel] sendToContentScript:', message.type);
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    console.log('[Sidepanel] Active tab:', tab?.id, tab?.url?.substring(0, 50));
+
     if (!tab?.id) {
+      console.warn('[Sidepanel] No active tab found');
       return { success: false, error: 'No active tab' };
     }
 
     if (tab.url?.startsWith('chrome') || tab.url?.startsWith('edge')) {
+      console.log('[Sidepanel] Skipping browser internal page');
       return { success: false, error: '' };
     }
 
     return new Promise((resolve) => {
       chrome.tabs.sendMessage(tab.id!, message, (response) => {
         if (chrome.runtime.lastError) {
-          resolve({ success: false, error: 'Content script not ready' });
+          console.warn('[Sidepanel] sendMessage error:', chrome.runtime.lastError.message);
+          resolve({ success: false, error: `Content script not ready: ${chrome.runtime.lastError.message}` });
           return;
         }
-        resolve(response || { success: false, error: 'No response' });
+        console.log('[Sidepanel] Got response for', message.type, ':', response?.success);
+        resolve(response || { success: false, error: 'No response from content script' });
       });
     });
   } catch (e: any) {
+    console.error('[Sidepanel] sendToContentScript error:', e);
     return { success: false, error: e.message };
   }
 }
@@ -1336,13 +1354,15 @@ async function applyTemplate(template: ScrapingTemplate): Promise<void> {
   // Update UI to reflect template config (reload from storage to sync)
   await syncUIWithConfig();
 
-  // Send config to content script
-  sendToContentScript({
+  // Send config to content script (await to ensure it's processed first)
+  const configResult = await sendToContentScript({
     type: 'UPDATE_CONFIG',
     payload: currentConfig,
   });
+  console.log('[Sidepanel] UPDATE_CONFIG result:', configResult);
 
   // Apply template to content script - this will find elements and highlight them
+  console.log('[Sidepanel] Sending APPLY_TEMPLATE with selector:', template.containerSelector);
   const applyResult = await sendToContentScript({
     type: 'APPLY_TEMPLATE',
     payload: {
@@ -1351,6 +1371,7 @@ async function applyTemplate(template: ScrapingTemplate): Promise<void> {
       patternConfig: template.patternConfig,
     },
   });
+  console.log('[Sidepanel] APPLY_TEMPLATE result:', applyResult);
 
   if (applyResult?.success) {
     const data = applyResult.data as { itemCount?: number } | undefined;
@@ -2296,10 +2317,13 @@ ui.mainActionBtn?.addEventListener('click', async () => {
   setTimeout(updateDashboardStatus, 200);
 });
 
-ui.exportBtn?.addEventListener('click', async () => {
-  console.log('[Sidepanel] Export button clicked');
+// Export button click handler function
+async function handleExportClick() {
+  console.log('[Sidepanel] Export button clicked - handler started');
   addLogEntry('Starting export...');
-  ui.exportBtn.disabled = true;
+
+  const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+  if (exportBtn) exportBtn.disabled = true;
 
   try {
     // Show progress bar
@@ -2328,6 +2352,7 @@ ui.exportBtn?.addEventListener('click', async () => {
     if (data.length === 0) {
       addLogEntry('Export failed: No data');
       hideExportProgress();
+      if (exportBtn) exportBtn.disabled = false;
       return;
     }
 
@@ -2347,35 +2372,51 @@ ui.exportBtn?.addEventListener('click', async () => {
 
     if (format === 'excel') {
       // Use ExcelJS via service worker for proper .xlsx export
+      console.log('[Sidepanel] Starting Excel export with', data.length, 'items');
       addLogEntry('Generating Excel file...');
       updateExportProgress(60);
       const excelFilename = `scrape-${dateStr}.xlsx`;
-      const excelResponse = await chrome.runtime.sendMessage({
-        type: 'EXPORT_EXCEL',
-        payload: {
-          items: data,
-          options: {
-            filename: excelFilename,
-            includeAnalysis: true,
+
+      try {
+        console.log('[Sidepanel] Sending EXPORT_EXCEL to service worker...');
+        const excelResponse = await chrome.runtime.sendMessage({
+          type: 'EXPORT_EXCEL',
+          payload: {
+            items: data,
+            options: {
+              filename: excelFilename,
+              includeAnalysis: true,
+            },
           },
-        },
-      });
+        });
 
-      console.log('[Sidepanel] EXPORT_EXCEL response:', excelResponse);
+        console.log('[Sidepanel] EXPORT_EXCEL response:', excelResponse);
 
-      if (excelResponse.success && excelResponse.data.base64) {
-        updateExportProgress(80);
-        addLogEntry('Downloading Excel file...');
-        // Download from sidepanel using base64 data
-        await downloadBase64(
-          excelResponse.data.filename || excelFilename,
-          excelResponse.data.base64,
-          excelResponse.data.mimeType
-        );
-        updateExportProgress(100);
-        addLogEntry(`Exported ${excelResponse.data.rowCount} items to Excel with analysis`);
-      } else {
-        addLogEntry(`Excel export failed: ${excelResponse?.error || 'Unknown error'}`);
+        if (!excelResponse) {
+          throw new Error('No response from service worker');
+        }
+
+        if (excelResponse.success && excelResponse.data?.base64) {
+          updateExportProgress(80);
+          addLogEntry('Downloading Excel file...');
+          console.log('[Sidepanel] Calling downloadBase64...');
+          // Download from sidepanel using base64 data
+          await downloadBase64(
+            excelResponse.data.filename || excelFilename,
+            excelResponse.data.base64,
+            excelResponse.data.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          );
+          updateExportProgress(100);
+          addLogEntry(`Exported ${excelResponse.data.rowCount} items to Excel with analysis`);
+          console.log('[Sidepanel] Excel export completed successfully');
+        } else {
+          const errorMsg = excelResponse?.error || 'Unknown error - no base64 data';
+          console.error('[Sidepanel] Excel export failed:', errorMsg);
+          addLogEntry(`Excel export failed: ${errorMsg}`);
+        }
+      } catch (excelError: any) {
+        console.error('[Sidepanel] Excel export error:', excelError);
+        addLogEntry(`Excel export error: ${excelError.message}`);
       }
     } else if (format === 'csv') {
       // Use CSV export via service worker
@@ -2453,9 +2494,24 @@ ui.exportBtn?.addEventListener('click', async () => {
     addLogEntry(`Export error: ${err.message}`);
     hideExportProgress();
   } finally {
-    ui.exportBtn.disabled = false;
+    const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+    if (exportBtn) exportBtn.disabled = false;
   }
-});
+}
+
+// Set up export button listener
+console.log('[Sidepanel] Setting up export button listener...');
+const exportBtnElement = document.getElementById('export-btn');
+console.log('[Sidepanel] Export button element:', exportBtnElement);
+if (exportBtnElement) {
+  exportBtnElement.addEventListener('click', handleExportClick);
+  console.log('[Sidepanel] Export button listener attached successfully');
+} else {
+  console.error('[Sidepanel] ERROR: export-btn element not found!');
+}
+
+// Also expose to window for onclick fallback
+(window as any).handleExportClick = handleExportClick;
 
 // --- Generate Presentation ---
 

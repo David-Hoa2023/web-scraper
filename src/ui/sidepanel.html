@@ -549,7 +549,7 @@
               <option value="excel">Excel (.xlsx with Analysis)</option>
             </select>
           </div>
-          <button id="export-btn" class="btn-primary">
+          <button id="export-btn" class="btn-primary" onclick="console.log('[HTML] Export clicked!'); if(window.handleExportClick) window.handleExportClick();">
             <span class="material-symbols-outlined">download</span>
             Export Data
           </button>

@@ -456,9 +456,10 @@ function createSettingsHTML(settings: Settings): string {
                   <option value="gpt-3.5-turbo" ${settings.llm.model === 'gpt-3.5-turbo' ? 'selected' : ''}>GPT-3.5 Turbo</option>
                 </optgroup>
                 <optgroup label="Anthropic">
-                  <option value="claude-3-opus" ${settings.llm.model === 'claude-3-opus' ? 'selected' : ''}>Claude 3 Opus</option>
-                  <option value="claude-3-sonnet" ${settings.llm.model === 'claude-3-sonnet' ? 'selected' : ''}>Claude 3 Sonnet</option>
-                  <option value="claude-3-haiku" ${settings.llm.model === 'claude-3-haiku' ? 'selected' : ''}>Claude 3 Haiku</option>
+                  <option value="claude-opus-4-20250514" ${settings.llm.model === 'claude-opus-4-20250514' ? 'selected' : ''}>Claude Opus 4.5</option>
+                  <option value="claude-sonnet-4-20250514" ${settings.llm.model === 'claude-sonnet-4-20250514' ? 'selected' : ''}>Claude Sonnet 4</option>
+                  <option value="claude-3-7-sonnet-20250219" ${settings.llm.model === 'claude-3-7-sonnet-20250219' ? 'selected' : ''}>Claude 3.7 Sonnet</option>
+                  <option value="claude-3-5-haiku-20241022" ${settings.llm.model === 'claude-3-5-haiku-20241022' ? 'selected' : ''}>Claude 3.5 Haiku</option>
                 </optgroup>
               </select>
             </div>
