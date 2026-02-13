@@ -14,6 +14,7 @@ Tài liệu này mô tả các câu chuyện người dùng, điểm đau đư�
 6. [Thu Thập Dữ Liệu Mạng Xã Hội](#user-story-6-thu-thập-dữ-liệu-mạng-xã-hội)
 7. [Ghi Lại Quy Trình Làm Việc](#user-story-7-ghi-lại-quy-trình-làm-việc)
 8. [Kiểm Thử & Tái Tạo Bug](#user-story-8-kiểm-thử--tái-tạo-bug)
+9. [Học Tiếng Trung Từ Dữ Liệu](#user-story-9-học-tiếng-trung-từ-dữ-liệu-thu-thập)
 
 ---
 
@@ -580,6 +581,49 @@ Click nút **Thêm mới** ở góc phải trên cùng.
 
 ---
 
+## User Story 9: Học Tiếng Trung Từ Dữ Liệu Thu Thập
+
+### Nhân Vật
+**Huy**, sinh viên học tiếng Trung, thu thập dữ liệu sản phẩm từ Taobao/1688 và muốn học từ vựng từ tên sản phẩm.
+
+### Điểm Đau (Pain Points)
+
+| Vấn Đề | Mô Tả |
+|--------|-------|
+| **Không hiểu chữ Hán** | Tên sản phẩm toàn chữ Trung, không biết nghĩa |
+| **Tra từ điển mất thời gian** | Phải copy từng chữ vào Google Translate |
+| **Không nhớ được** | Không có cách học cấu tạo chữ |
+
+### Web Scraper Pro Giải Quyết
+
+- **Vocabulary Extraction**: Tự động trích xuất từ vựng tiếng Trung từ dữ liệu
+- **IDS Decomposition**: Phân tích cấu tạo chữ Hán (⿰, ⿱, ⿲...)
+- **Vietnamese Meanings**: 186 bộ thủ có nghĩa tiếng Việt
+- **Browser TTS**: Phát âm không cần API key
+
+### Tính Năng Mới (02/2026)
+
+| Module | Mô Tả |
+|--------|-------|
+| `vocabularyExtractor.ts` | Nhận diện ngôn ngữ (zh, ja, ko, vi, en), trích xuất từ vựng |
+| `ids/idsParser.ts` | Phân tích cấu tạo chữ theo chuẩn IDS |
+| `ids/dataLoader.ts` | 186 nghĩa tiếng Việt cho bộ thủ thông dụng |
+| `browserTts.ts` | Web Speech API với mapping bộ thủ → chữ phát âm được |
+
+### Ví Dụ
+
+```typescript
+// Phân tích chữ 休 (nghỉ ngơi)
+const ids = '⿰亻木';  // Trái-Phải: người + cây
+const components = ['亻', '木'];
+const meanings = {
+  vi: 'người (bộ) + cây, gỗ',
+  en: 'person + tree'
+};
+```
+
+---
+
 ## Bảng Tổng Hợp: Tính Năng → Điểm Đau Được Giải Quyết
 
 | Tính Năng | Điểm Đau Được Giải Quyết |
@@ -596,6 +640,9 @@ Click nút **Thêm mới** ở góc phải trên cùng.
 | **Multi-format Export** | Format không tương thích |
 | **MutationObserver** | Mất dữ liệu từ virtualized lists |
 | **Shadow DOM Handler** | Không truy cập được web components |
+| **Vocabulary Extraction** | Không hiểu từ vựng tiếng Trung |
+| **IDS Decomposition** | Không nhớ cấu tạo chữ Hán |
+| **Browser TTS** | Cần API key để phát âm |
 
 ---
 
@@ -619,4 +666,4 @@ Click nút **Thêm mới** ở góc phải trên cùng.
 
 ---
 
-*Tài liệu được cập nhật: 28/01/2026*
+*Tài liệu được cập nhật: 13/02/2026*
