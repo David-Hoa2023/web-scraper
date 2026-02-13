@@ -1,16 +1,23 @@
 /**
  * AI Voiceover Service - Text-to-speech integration
- * FP-3: ElevenLabs and OpenAI TTS integration for tutorial narration
+ * FP-3: ElevenLabs, OpenAI, and Browser TTS integration for tutorial narration
  */
 
 import { RateLimiter } from '../utils/rateLimiter';
 import { withRetry, APIError } from '../utils/retry';
 import { getKeyVault } from '../utils/encryption';
+import {
+  speakText as browserSpeakText,
+  stopSpeaking as browserStopSpeaking,
+  isSpeechSupported,
+  getAvailableVoices,
+  type BrowserTTSConfig,
+} from './browserTts';
 
 /**
  * Supported TTS providers
  */
-export type TTSProvider = 'elevenlabs' | 'openai';
+export type TTSProvider = 'elevenlabs' | 'openai' | 'browser';
 
 /**
  * Voice configuration
@@ -44,6 +51,7 @@ export interface VoiceoverResult {
 
 /**
  * Available voices per provider
+ * Note: Browser voices are dynamically loaded at runtime via getAvailableVoices()
  */
 export const VOICES: Record<TTSProvider, Array<{ id: string; name: string; language: string }>> = {
   elevenlabs: [
@@ -62,6 +70,11 @@ export const VOICES: Record<TTSProvider, Array<{ id: string; name: string; langu
     { id: 'nova', name: 'Nova', language: 'en' },
     { id: 'shimmer', name: 'Shimmer', language: 'en' },
   ],
+  browser: [
+    // Browser voices are system-dependent and loaded dynamically
+    // Use getBrowserVoices() for actual available voices
+    { id: 'default', name: 'System Default', language: 'en' },
+  ],
 };
 
 /**
@@ -78,6 +91,11 @@ const DEFAULT_CONFIGS: Record<TTSProvider, VoiceConfig> = {
   openai: {
     provider: 'openai',
     voiceId: 'nova',
+    speed: 1.0,
+  },
+  browser: {
+    provider: 'browser',
+    voiceId: 'default',
     speed: 1.0,
   },
 };
@@ -139,7 +157,7 @@ export class VoiceoverService {
    */
   async generateVoiceover(request: VoiceoverRequest): Promise<VoiceoverResult> {
     return this.rateLimiter.throttle(async () => {
-      const provider = request.config?.provider || this.config.defaultProvider;
+      let provider = request.config?.provider || this.config.defaultProvider;
       const voiceConfig = {
         ...DEFAULT_CONFIGS[provider],
         ...request.config,
@@ -152,8 +170,24 @@ export class VoiceoverService {
         );
       }
 
+      // Handle browser TTS provider
+      if (provider === 'browser') {
+        return this.generateBrowserVoiceover(request.text, voiceConfig);
+      }
+
+      // Check for API key, fallback to browser TTS if not configured
       const apiKey = this.apiKeys.get(provider);
       if (!apiKey) {
+        // Fallback to browser TTS when no API keys are configured
+        if (isSpeechSupported()) {
+          console.warn(
+            `No API key configured for ${provider}, falling back to browser TTS`
+          );
+          return this.generateBrowserVoiceover(request.text, {
+            ...voiceConfig,
+            provider: 'browser',
+          });
+        }
         throw new Error(`No API key configured for ${provider}`);
       }
 
@@ -198,6 +232,9 @@ export class VoiceoverService {
    * Check if a provider is available
    */
   isProviderAvailable(provider: TTSProvider): boolean {
+    if (provider === 'browser') {
+      return isSpeechSupported();
+    }
     return this.apiKeys.has(provider);
   }
 
@@ -216,6 +253,55 @@ export class VoiceoverService {
       URL.revokeObjectURL(url);
     }
     this.audioUrls = [];
+    // Also stop any browser TTS
+    browserStopSpeaking();
+  }
+
+  /**
+   * Get browser voices dynamically
+   */
+  async getBrowserVoices(): Promise<
+    Array<{ id: string; name: string; language: string }>
+  > {
+    const voices = await getAvailableVoices();
+    return voices.map((voice) => ({
+      id: voice.voiceURI,
+      name: voice.name,
+      language: voice.lang,
+    }));
+  }
+
+  /**
+   * Generate voiceover using browser's Web Speech API
+   * Note: Browser TTS doesn't produce audio files, it plays directly
+   * For consistency, we return a result with empty blob but still play the audio
+   */
+  private async generateBrowserVoiceover(
+    text: string,
+    config: VoiceConfig
+  ): Promise<VoiceoverResult> {
+    if (!isSpeechSupported()) {
+      throw new Error('Browser speech synthesis is not supported');
+    }
+
+    const browserConfig: BrowserTTSConfig = {
+      lang: 'en-US',
+      rate: config.speed ?? 1.0,
+      voiceName: config.voiceId !== 'default' ? config.voiceId : undefined,
+    };
+
+    // Speak the text using browser TTS
+    await browserSpeakText(text, browserConfig);
+
+    // Browser TTS doesn't produce a blob, return empty blob for compatibility
+    const emptyBlob = new Blob([], { type: 'audio/wav' });
+
+    return {
+      audioBlob: emptyBlob,
+      audioUrl: '', // No URL for browser TTS
+      provider: 'browser',
+      voiceId: config.voiceId,
+    };
   }
 
   private async callElevenLabs(
@@ -329,3 +415,12 @@ export function splitTextForTTS(text: string, maxLength = 500): string[] {
 
   return chunks;
 }
+
+// Re-export browser TTS utilities for direct access
+export {
+  isSpeechSupported,
+  getAvailableVoices,
+  speakText as browserSpeakText,
+  stopSpeaking as browserStopSpeaking,
+  preloadBrowserTTS,
+} from './browserTts';

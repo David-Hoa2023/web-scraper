@@ -4,6 +4,93 @@
  */
 
 import { getLLMGateway, type LLMProvider, type LLMRequestOptions } from './llmGateway';
+import type { LanguageLearningContent } from '../types/tutorial';
+import { extractLanguageLearningContent, hasExtractableVocabulary } from './vocabularyExtractor';
+
+/**
+ * Regex pattern to detect CJK (Chinese, Japanese, Korean) characters
+ * Primarily used for Chinese character detection
+ * Range: U+4E00 to U+9FFF (CJK Unified Ideographs)
+ */
+const CJK_REGEX = /[\u4e00-\u9fff]/;
+
+/**
+ * Extended CJK detection including Extension blocks
+ * - CJK Unified Ideographs: U+4E00-U+9FFF
+ * - CJK Extension A: U+3400-U+4DBF
+ * - CJK Extension B-F: U+20000-U+2FA1F (surrogate pairs in JS)
+ * - CJK Compatibility: U+F900-U+FAFF
+ */
+const CJK_EXTENDED_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]|[\ud840-\ud87f][\udc00-\udfff]/;
+
+/**
+ * Detect if data contains Chinese content
+ * Useful for determining whether to apply Chinese-specific analysis or IDS parsing
+ *
+ * @param data - Array of data records to check
+ * @returns True if any string value contains Chinese characters
+ *
+ * @example
+ * ```typescript
+ * const data = [{ name: '苹果手机', price: 5999 }];
+ * if (detectChineseContent(data)) {
+ *   // Enable Chinese character decomposition features
+ * }
+ * ```
+ */
+export function detectChineseContent(data: Record<string, unknown>[]): boolean {
+  if (!data || data.length === 0) return false;
+
+  for (const item of data) {
+    for (const value of Object.values(item)) {
+      if (typeof value === 'string' && CJK_REGEX.test(value)) {
+        return true;
+      }
+      // Handle nested objects/arrays
+      if (typeof value === 'object' && value !== null) {
+        const stringified = JSON.stringify(value);
+        if (CJK_REGEX.test(stringified)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Count Chinese characters in a string
+ * @param text - Text to analyze
+ * @returns Number of Chinese characters found
+ */
+export function countChineseCharacters(text: string): number {
+  if (!text) return 0;
+  const matches = text.match(new RegExp(CJK_REGEX.source, 'g'));
+  return matches ? matches.length : 0;
+}
+
+/**
+ * Extract unique Chinese characters from data
+ * @param data - Array of data records
+ * @returns Set of unique Chinese characters
+ */
+export function extractChineseCharacters(data: Record<string, unknown>[]): Set<string> {
+  const characters = new Set<string>();
+
+  for (const item of data) {
+    for (const value of Object.values(item)) {
+      if (typeof value === 'string') {
+        const matches = value.match(new RegExp(CJK_EXTENDED_REGEX.source, 'g'));
+        if (matches) {
+          matches.forEach((char) => characters.add(char));
+        }
+      }
+    }
+  }
+
+  return characters;
+}
 
 export interface LlmSettings {
   provider: '' | 'openai' | 'anthropic' | 'gemini' | 'deepseek';
@@ -16,6 +103,8 @@ export interface DataAnalysisResult {
   recommendations: string[];
   summary: string;
   rawResponse?: string;
+  /** Language learning content (vocabulary, character breakdowns) when Chinese content detected */
+  languageLearning?: LanguageLearningContent;
 }
 
 /**
@@ -196,7 +285,30 @@ export async function analyzeWithLLM(data: Array<Record<string, unknown>>): Prom
     console.log('[LLM Analysis] Response received:', response.content.substring(0, 200) + '...');
 
     // Parse response
-    return parseAnalysisResponse(response.content);
+    const result = parseAnalysisResponse(response.content);
+
+    // Extract vocabulary if Chinese content detected
+    if (detectChineseContent(data) && hasExtractableVocabulary(data)) {
+      console.log('[LLM Analysis] Chinese content detected, extracting vocabulary...');
+      try {
+        const languageLearning = await extractLanguageLearningContent(data, {
+          includeBreakdowns: true,
+          includePronunciation: true,
+          maxItems: 50,
+        });
+        if (languageLearning) {
+          result.languageLearning = languageLearning;
+          console.log(
+            `[LLM Analysis] Extracted ${languageLearning.vocabulary.length} vocabulary items`
+          );
+        }
+      } catch (vocabErr) {
+        console.warn('[LLM Analysis] Vocabulary extraction failed:', vocabErr);
+        // Continue without vocabulary - don't fail the whole analysis
+      }
+    }
+
+    return result;
   } catch (err) {
     console.error('[LLM Analysis] Error:', err);
     return {

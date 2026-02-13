@@ -337,3 +337,75 @@ export const DEFAULT_TUTORIAL_STORAGE_CONFIG: TutorialStorageConfig = {
   maxStorageSize: 100 * 1024 * 1024, // 100MB
   autoDeleteAfterDays: 30,
 };
+
+// ============================================================================
+// Language Learning Types
+// ============================================================================
+
+/**
+ * Represents a vocabulary item extracted from content
+ * Used for language learning features, particularly Chinese character study
+ */
+export interface VocabularyItem {
+  /** The term (word or character) */
+  term: string;
+  /** Definition or meaning */
+  definition: string;
+  /** Pinyin romanization (for Chinese) */
+  pinyin?: string;
+  /** Audio file path or TTS text for pronunciation */
+  pronunciation?: string;
+  /** IDS decomposition components (for Chinese characters) */
+  components?: string[];
+}
+
+/**
+ * Character breakdown with component meanings
+ * Used for detailed analysis of Chinese characters
+ */
+export interface CharacterBreakdown {
+  /** The character being analyzed */
+  character: string;
+  /** Component parts (from IDS decomposition) */
+  components: string[];
+  /** Meanings of each component by language */
+  meanings: Record<string, string>;
+}
+
+/**
+ * Language learning content attached to tutorials or scraped data
+ * Contains vocabulary, character breakdowns, and related learning materials
+ */
+export interface LanguageLearningContent {
+  /** Target language code (e.g., 'zh', 'ja', 'ko') */
+  targetLanguage: string;
+  /** Extracted vocabulary items */
+  vocabulary: VocabularyItem[];
+  /** Detailed character breakdowns (for CJK languages) */
+  characterBreakdowns?: CharacterBreakdown[];
+}
+
+/**
+ * Supported language codes for vocabulary extraction
+ */
+export type SupportedLanguage = 'zh' | 'ja' | 'ko' | 'en' | 'vi' | 'unknown';
+
+/**
+ * Configuration for vocabulary extraction
+ */
+export interface VocabularyExtractionConfig {
+  /** Target language for extraction (auto-detect if not specified) */
+  targetLanguage?: SupportedLanguage;
+  /** Include IDS character breakdowns */
+  includeBreakdowns: boolean;
+  /** Include pronunciation/pinyin */
+  includePronunciation: boolean;
+  /** Maximum vocabulary items to extract */
+  maxItems: number;
+}
+
+export const DEFAULT_VOCABULARY_CONFIG: VocabularyExtractionConfig = {
+  includeBreakdowns: true,
+  includePronunciation: true,
+  maxItems: 100,
+};
