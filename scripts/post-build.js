@@ -31,4 +31,12 @@ if (existsSync(iconsSrc)) {
   console.log('[post-build] Copied icons/');
 }
 
+// Copy data (IDS maps for Chinese learning)
+const dataSrc = join(rootDir, 'src', 'data');
+const dataDest = join(distDir, 'data');
+if (existsSync(dataSrc)) {
+  cpSync(dataSrc, dataDest, { recursive: true });
+  console.log('[post-build] Copied data/');
+}
+
 console.log('[post-build] Done!');

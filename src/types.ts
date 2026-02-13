@@ -180,7 +180,9 @@ export type MessageType =
   | 'GET_ARBITRAGE_STATS'
   | 'GET_ARBITRAGE_SETTINGS'
   | 'UPDATE_ARBITRAGE_SETTINGS'
-  | 'CLEANUP_ARBITRAGE';
+  | 'CLEANUP_ARBITRAGE'
+  // Language learning messages
+  | 'CHINESE_LEARN';
 
 export interface ScraperMessage {
   type: MessageType;

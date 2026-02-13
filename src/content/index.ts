@@ -25,6 +25,19 @@ import { buildSelectorsFromPattern, type PatternSelectors } from './selectorGene
 import * as AutoScroller from './autoScroller';
 // Overlay imports removed
 import { extractData } from './dataExtractor';
+import {
+  speakText,
+  stopSpeaking,
+  isSpeechSupported,
+  getPronounceable,
+} from '../services/browserTts';
+import {
+  parseIDS,
+  extractComponents,
+  getIDSForCharacter,
+  getComponentInfo,
+  getVietnameseMeaning,
+} from '../services/ids';
 
 console.log('[Web Scraper] Content script loaded');
 
@@ -559,6 +572,22 @@ chrome.runtime.onMessage.addListener(
           break;
         }
 
+        case 'CHINESE_LEARN': {
+          const learnPayload = message.payload as {
+            text: string;
+            action: 'pronounce' | 'meaning' | 'both';
+          };
+
+          if (!learnPayload?.text) {
+            sendResponse({ success: false, error: 'No text provided' });
+            break;
+          }
+
+          handleChineseLearning(learnPayload.text, learnPayload.action);
+          sendResponse({ success: true });
+          break;
+        }
+
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
       }
@@ -622,6 +651,247 @@ function handleStopScrape() {
   initPatternDetection();
 
   console.log('[Content] Scrape stopped');
+}
+
+// --- Chinese Learning Handler ---
+
+let chinesePopup: HTMLDivElement | null = null;
+
+function showChinesePopup(content: string) {
+  // Remove existing popup if any
+  if (chinesePopup) {
+    chinesePopup.remove();
+  }
+
+  // Create popup
+  chinesePopup = document.createElement('div');
+  chinesePopup.id = 'web-scraper-chinese-popup';
+  chinesePopup.innerHTML = `
+    <style>
+      #web-scraper-chinese-popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 400px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #fff;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        z-index: 2147483647;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid rgba(255,255,255,0.1);
+        animation: slideIn 0.3s ease-out;
+      }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      #web-scraper-chinese-popup .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      #web-scraper-chinese-popup .title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #4fc3f7;
+      }
+      #web-scraper-chinese-popup .close-btn {
+        background: none;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px;
+      }
+      #web-scraper-chinese-popup .close-btn:hover {
+        color: #fff;
+      }
+      #web-scraper-chinese-popup .character {
+        font-size: 48px;
+        text-align: center;
+        padding: 16px 0;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+      #web-scraper-chinese-popup .meaning-row {
+        display: flex;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      #web-scraper-chinese-popup .label {
+        color: #888;
+        min-width: 80px;
+      }
+      #web-scraper-chinese-popup .value {
+        color: #fff;
+      }
+      #web-scraper-chinese-popup .components {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+      }
+      #web-scraper-chinese-popup .component {
+        background: rgba(79, 195, 247, 0.2);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 18px;
+      }
+      #web-scraper-chinese-popup .speak-btn {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        padding: 10px;
+        background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      #web-scraper-chinese-popup .speak-btn:hover {
+        transform: scale(1.02);
+      }
+    </style>
+    <div class="header">
+      <span class="title">🈶 Chinese Learning</span>
+      <button class="close-btn">&times;</button>
+    </div>
+    ${content}
+  `;
+
+  document.body.appendChild(chinesePopup);
+
+  // Close button handler
+  const closeBtn = chinesePopup.querySelector('.close-btn');
+  closeBtn?.addEventListener('click', () => {
+    chinesePopup?.remove();
+    chinesePopup = null;
+    stopSpeaking();
+  });
+
+  // Auto-close after 30 seconds
+  setTimeout(() => {
+    chinesePopup?.remove();
+    chinesePopup = null;
+  }, 30000);
+}
+
+async function handleChineseLearning(
+  text: string,
+  action: 'pronounce' | 'meaning' | 'both'
+) {
+  console.log('[Content] Chinese learning:', text, action);
+
+  // Clean up text - get unique characters
+  const chars = [...new Set(text.replace(/\s+/g, '').split(''))];
+
+  // Filter to only CJK characters
+  const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+  const cjkChars = chars.filter((c) => cjkRegex.test(c));
+
+  if (cjkChars.length === 0) {
+    // No Chinese characters, just speak the text if TTS is available
+    if (action === 'pronounce' || action === 'both') {
+      if (isSpeechSupported()) {
+        await speakText(text, { lang: 'en-US' });
+      }
+    }
+    return;
+  }
+
+  // Build content for popup
+  let popupContent = '';
+
+  for (const char of cjkChars.slice(0, 5)) {
+    // Limit to 5 characters
+    popupContent += `<div class="character">${char}</div>`;
+
+    // Get Vietnamese meaning
+    const viMeaning = getVietnameseMeaning(char);
+    if (viMeaning) {
+      popupContent += `
+        <div class="meaning-row">
+          <span class="label">Nghĩa:</span>
+          <span class="value">${viMeaning}</span>
+        </div>
+      `;
+    }
+
+    // Get IDS decomposition
+    const idsString = await getIDSForCharacter(char);
+    if (idsString) {
+      const tree = parseIDS(idsString);
+      const components = extractComponents(tree);
+
+      if (components.length > 0) {
+        const componentMeanings: string[] = [];
+        for (const comp of components) {
+          const info = await getComponentInfo(comp);
+          if (info?.meaningVi) {
+            componentMeanings.push(`${comp} (${info.meaningVi})`);
+          } else {
+            componentMeanings.push(comp);
+          }
+        }
+
+        popupContent += `
+          <div class="meaning-row">
+            <span class="label">Cấu tạo:</span>
+            <span class="value">${idsString}</span>
+          </div>
+          <div class="meaning-row">
+            <span class="label">Bộ thủ:</span>
+            <div class="components">
+              ${components.map((c) => `<span class="component">${c}</span>`).join('')}
+            </div>
+          </div>
+          <div class="meaning-row">
+            <span class="label">Giải nghĩa:</span>
+            <span class="value">${componentMeanings.join(' + ')}</span>
+          </div>
+        `;
+      }
+    }
+  }
+
+  // Add speak button
+  if (isSpeechSupported()) {
+    popupContent += `<button class="speak-btn" id="chinese-speak-btn">🔊 Phát âm</button>`;
+  }
+
+  // Show popup for meaning
+  if (action === 'meaning' || action === 'both') {
+    showChinesePopup(popupContent);
+
+    // Bind speak button
+    setTimeout(() => {
+      const speakBtn = document.getElementById('chinese-speak-btn');
+      speakBtn?.addEventListener('click', () => {
+        // Map radicals to pronounceable forms
+        const pronounceableText = cjkChars.map(getPronounceable).join('');
+        speakText(pronounceableText, { lang: 'zh-CN', rate: 0.8 });
+      });
+    }, 100);
+  }
+
+  // Pronounce
+  if (action === 'pronounce' || action === 'both') {
+    if (isSpeechSupported()) {
+      // Map radicals to pronounceable forms
+      const pronounceableText = cjkChars.map(getPronounceable).join('');
+      await speakText(pronounceableText, { lang: 'zh-CN', rate: 0.8 });
+    }
+  }
 }
 
 // --- Initialization ---

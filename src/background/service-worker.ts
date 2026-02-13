@@ -1423,6 +1423,34 @@ chrome.runtime.onInstalled.addListener(() => {
     title: 'Save to Scraping List',
     contexts: ['page']
   });
+
+  // Language learning context menu
+  chrome.contextMenus.create({
+    id: 'chinese-learn',
+    title: '🈶 Chinese Learning',
+    contexts: ['selection']
+  });
+
+  chrome.contextMenus.create({
+    id: 'chinese-pronounce',
+    parentId: 'chinese-learn',
+    title: '🔊 Pronounce',
+    contexts: ['selection']
+  });
+
+  chrome.contextMenus.create({
+    id: 'chinese-meaning',
+    parentId: 'chinese-learn',
+    title: '📖 Show Meaning',
+    contexts: ['selection']
+  });
+
+  chrome.contextMenus.create({
+    id: 'chinese-both',
+    parentId: 'chinese-learn',
+    title: '🔊📖 Pronounce & Meaning',
+    contexts: ['selection']
+  });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -1432,6 +1460,30 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }).catch(() => {
       // Content script might not be ready or injected
       console.log('[Service Worker] Could not send message to tab');
+    });
+  } else if (
+    (info.menuItemId === 'chinese-pronounce' ||
+      info.menuItemId === 'chinese-meaning' ||
+      info.menuItemId === 'chinese-both') &&
+    tab?.id &&
+    info.selectionText
+  ) {
+    // Send to content script for TTS and meaning lookup
+    const action =
+      info.menuItemId === 'chinese-pronounce'
+        ? 'pronounce'
+        : info.menuItemId === 'chinese-meaning'
+          ? 'meaning'
+          : 'both';
+
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'CHINESE_LEARN',
+      payload: {
+        text: info.selectionText,
+        action,
+      },
+    }).catch(() => {
+      console.log('[Service Worker] Could not send Chinese learn message to tab');
     });
   } else if (info.menuItemId === 'save-to-scraping-list' && tab?.url) {
     // Save current page to scraping list
