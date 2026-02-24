@@ -5,6 +5,8 @@
 
 import type { LLMConfig } from '../types/tutorial';
 import type { RecordingConfig } from '../types/recording';
+import type { Crawl4AISettings } from '../types';
+import { DEFAULT_CRAWL4AI_SETTINGS } from '../types';
 
 // Constants
 const SETTINGS_ID = 'web-scraper-settings-panel';
@@ -19,6 +21,7 @@ let shadowRoot: ShadowRoot | null = null;
 export interface Settings {
   llm: LLMConfig;
   recording: RecordingConfig;
+  crawl4ai: Crawl4AISettings;
 }
 
 /**
@@ -41,6 +44,7 @@ const DEFAULT_SETTINGS: Settings = {
     videoQuality: 'medium',
     cursorFps: 60,
   },
+  crawl4ai: { ...DEFAULT_CRAWL4AI_SETTINGS },
 };
 
 let currentSettings: Settings = { ...DEFAULT_SETTINGS };
@@ -540,6 +544,67 @@ function createSettingsHTML(settings: Settings): string {
               >
             </div>
           </div>
+
+          <div class="section">
+            <div class="section-title">Crawl4AI Backend</div>
+
+            <div class="checkbox-group">
+              <div class="checkbox-label">
+                <span class="checkbox-title">Enable Crawl4AI</span>
+                <span class="checkbox-desc">Use Crawl4AI Docker service for advanced extraction</span>
+              </div>
+              <div class="toggle ${settings.crawl4ai.enabled ? 'active' : ''}"
+                   id="toggle-crawl4ai"
+                   data-setting="crawl4aiEnabled"></div>
+            </div>
+
+            <div class="form-group" id="crawl4ai-settings" style="${settings.crawl4ai.enabled ? '' : 'opacity: 0.5; pointer-events: none;'}">
+              <label class="label">Service URL</label>
+              <input
+                type="text"
+                class="input"
+                id="crawl4ai-url"
+                value="${settings.crawl4ai.serviceUrl}"
+                placeholder="http://localhost:11235"
+              >
+              <div class="hint">Crawl4AI Docker service URL (default: http://localhost:11235)</div>
+            </div>
+
+            <div class="form-group" style="${settings.crawl4ai.enabled ? '' : 'opacity: 0.5; pointer-events: none;'}">
+              <label class="label">Extraction Strategy</label>
+              <select class="select" id="crawl4ai-strategy">
+                <option value="auto" ${settings.crawl4ai.strategy === 'auto' ? 'selected' : ''}>Auto (Recommended)</option>
+                <option value="local" ${settings.crawl4ai.strategy === 'local' ? 'selected' : ''}>Local Only</option>
+                <option value="crawl4ai" ${settings.crawl4ai.strategy === 'crawl4ai' ? 'selected' : ''}>Always Crawl4AI</option>
+              </select>
+              <div class="hint">Auto mode uses local extraction for simple tasks, Crawl4AI for complex ones</div>
+            </div>
+
+            <div class="checkbox-group" style="${settings.crawl4ai.enabled ? '' : 'opacity: 0.5; pointer-events: none;'}">
+              <div class="checkbox-label">
+                <span class="checkbox-title">Fallback to Local</span>
+                <span class="checkbox-desc">Use local extraction if Crawl4AI is unavailable</span>
+              </div>
+              <div class="toggle ${settings.crawl4ai.fallbackToLocal ? 'active' : ''}"
+                   id="toggle-crawl4ai-fallback"
+                   data-setting="crawl4aiFallback"></div>
+            </div>
+
+            <div class="checkbox-group" style="${settings.crawl4ai.enabled ? '' : 'opacity: 0.5; pointer-events: none;'}">
+              <div class="checkbox-label">
+                <span class="checkbox-title">Enable LLM Extraction</span>
+                <span class="checkbox-desc">Use AI-powered extraction (requires LLM API key)</span>
+              </div>
+              <div class="toggle ${settings.crawl4ai.llmEnabled ? 'active' : ''}"
+                   id="toggle-crawl4ai-llm"
+                   data-setting="crawl4aiLLM"></div>
+            </div>
+
+            <div id="crawl4ai-status" class="status-indicator" style="${settings.crawl4ai.enabled ? '' : 'display: none;'}">
+              <span class="status-dot pending"></span>
+              <span>Checking connection...</span>
+            </div>
+          </div>
         </div>
 
         <div class="footer">
@@ -570,6 +635,80 @@ function setupEventListeners(): void {
   const temperatureSlider = shadowRoot.getElementById('llm-temperature') as HTMLInputElement;
   const videoQualitySelect = shadowRoot.getElementById('video-quality') as HTMLSelectElement;
   const snapshotSlider = shadowRoot.getElementById('snapshot-interval') as HTMLInputElement;
+
+  // Crawl4AI elements
+  const crawl4aiToggle = shadowRoot.getElementById('toggle-crawl4ai');
+  const crawl4aiUrlInput = shadowRoot.getElementById('crawl4ai-url') as HTMLInputElement;
+  const crawl4aiStrategySelect = shadowRoot.getElementById('crawl4ai-strategy') as HTMLSelectElement;
+  const crawl4aiSettings = shadowRoot.getElementById('crawl4ai-settings');
+  const crawl4aiStatus = shadowRoot.getElementById('crawl4ai-status');
+
+  // Crawl4AI toggle - enable/disable other settings
+  crawl4aiToggle?.addEventListener('click', () => {
+    crawl4aiToggle.classList.toggle('active');
+    const isEnabled = crawl4aiToggle.classList.contains('active');
+
+    // Show/hide settings based on toggle
+    const settingsGroups = shadowRoot?.querySelectorAll('.section:last-child .form-group, .section:last-child .checkbox-group:not(:first-child)');
+    settingsGroups?.forEach(group => {
+      (group as HTMLElement).style.opacity = isEnabled ? '' : '0.5';
+      (group as HTMLElement).style.pointerEvents = isEnabled ? '' : 'none';
+    });
+
+    // Show/hide status indicator
+    if (crawl4aiStatus) {
+      crawl4aiStatus.style.display = isEnabled ? '' : 'none';
+      if (isEnabled) {
+        checkCrawl4AIStatus();
+      }
+    }
+  });
+
+  // Check Crawl4AI connection status
+  async function checkCrawl4AIStatus() {
+    if (!crawl4aiStatus) return;
+
+    const dot = crawl4aiStatus.querySelector('.status-dot');
+    const text = crawl4aiStatus.querySelector('span:last-child');
+
+    if (dot && text) {
+      dot.className = 'status-dot pending';
+      text.textContent = 'Checking connection...';
+    }
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'CRAWL4AI_HEALTH_CHECK',
+      });
+
+      if (dot && text) {
+        if (response.success && response.data?.healthy) {
+          dot.className = 'status-dot success';
+          text.textContent = `Connected${response.data.version ? ` (v${response.data.version})` : ''}`;
+        } else {
+          dot.className = 'status-dot error';
+          text.textContent = response.data?.error || 'Service unavailable';
+        }
+      }
+    } catch (error) {
+      if (dot && text) {
+        dot.className = 'status-dot error';
+        text.textContent = 'Connection failed';
+      }
+    }
+  }
+
+  // Check status on URL change
+  crawl4aiUrlInput?.addEventListener('blur', () => {
+    if (crawl4aiToggle?.classList.contains('active')) {
+      checkCrawl4AIStatus();
+    }
+  });
+
+  // Initial status check if enabled
+  if (crawl4aiToggle?.classList.contains('active')) {
+    checkCrawl4AIStatus();
+  }
 
   // Temperature display
   const tempValue = shadowRoot.getElementById('temp-value');
@@ -620,7 +759,9 @@ function setupEventListeners(): void {
   });
 
   // Save button
-  saveBtn?.addEventListener('click', () => {
+  saveBtn?.addEventListener('click', async () => {
+    const crawl4aiEnabled = shadowRoot?.getElementById('toggle-crawl4ai')?.classList.contains('active') ?? false;
+
     const newSettings: Settings = {
       llm: {
         provider: providerSelect?.value as 'openai' | 'anthropic' | 'custom' || 'openai',
@@ -638,10 +779,32 @@ function setupEventListeners(): void {
         videoQuality: videoQualitySelect?.value as 'low' | 'medium' | 'high' || 'medium',
         cursorFps: currentSettings.recording.cursorFps,
       },
+      crawl4ai: {
+        enabled: crawl4aiEnabled,
+        serviceUrl: crawl4aiUrlInput?.value || 'http://localhost:11235',
+        strategy: crawl4aiStrategySelect?.value as 'auto' | 'local' | 'crawl4ai' || 'auto',
+        llmEnabled: shadowRoot?.getElementById('toggle-crawl4ai-llm')?.classList.contains('active') ?? false,
+        llmProvider: currentSettings.crawl4ai.llmProvider,
+        llmApiKey: currentSettings.crawl4ai.llmApiKey,
+        maxBatchSize: currentSettings.crawl4ai.maxBatchSize,
+        timeoutMs: currentSettings.crawl4ai.timeoutMs,
+        fallbackToLocal: shadowRoot?.getElementById('toggle-crawl4ai-fallback')?.classList.contains('active') ?? true,
+      },
     };
 
     currentSettings = newSettings;
-    saveSettingsToStorage(newSettings);
+    await saveSettingsToStorage(newSettings);
+
+    // Sync Crawl4AI settings to the extraction service
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_CRAWL4AI_SETTINGS',
+        payload: newSettings.crawl4ai,
+      });
+    } catch (error) {
+      console.warn('[SettingsPanel] Failed to sync Crawl4AI settings:', error);
+    }
+
     handlers?.onSave(newSettings);
     hideSettingsPanel();
   });
@@ -721,17 +884,27 @@ async function saveSettingsToStorage(settings: Settings): Promise<void> {
  */
 async function loadSettingsFromStorage(): Promise<void> {
   try {
+    let stored: Partial<Settings> | null = null;
+
     if (typeof chrome !== 'undefined' && chrome.storage) {
       const result = await chrome.storage.local.get(STORAGE_KEY);
-      if (result[STORAGE_KEY]) {
-        currentSettings = { ...DEFAULT_SETTINGS, ...result[STORAGE_KEY] };
-      }
+      stored = result[STORAGE_KEY] || null;
     } else {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        currentSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
-      }
+      const localStored = localStorage.getItem(STORAGE_KEY);
+      stored = localStored ? JSON.parse(localStored) : null;
     }
+
+    if (stored) {
+      // Deep merge settings to preserve nested defaults
+      currentSettings = {
+        llm: { ...DEFAULT_SETTINGS.llm, ...stored.llm },
+        recording: { ...DEFAULT_SETTINGS.recording, ...stored.recording },
+        crawl4ai: { ...DEFAULT_SETTINGS.crawl4ai, ...stored.crawl4ai },
+      };
+    } else {
+      currentSettings = { ...DEFAULT_SETTINGS };
+    }
+
     console.log('[SettingsPanel] Settings loaded');
   } catch (error) {
     console.error('[SettingsPanel] Error loading settings:', error);
@@ -755,6 +928,9 @@ export function updateSettings(updates: Partial<Settings>): void {
   }
   if (updates.recording) {
     currentSettings.recording = { ...currentSettings.recording, ...updates.recording };
+  }
+  if (updates.crawl4ai) {
+    currentSettings.crawl4ai = { ...currentSettings.crawl4ai, ...updates.crawl4ai };
   }
   saveSettingsToStorage(currentSettings);
 }

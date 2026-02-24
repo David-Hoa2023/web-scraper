@@ -26,6 +26,17 @@ import { getPriceComparisonService } from '../services/priceComparison';
 import { getTrendDetectionService } from '../services/trendDetection';
 import { getArbitrageAnalyzer } from '../services/arbitrageAnalyzer';
 import { analyzeWithLLM } from '../services/llmAnalysis';
+import {
+  extract,
+  extractWithLLM,
+  getMarkdown,
+  extractBatchUrls,
+  checkHealth,
+  getCrawl4AISettings,
+  saveCrawl4AISettings,
+  type ExtractionOptions,
+  type BatchExtractionOptions,
+} from '../services/extractionService';
 
 console.log('[SW] boot');
 
@@ -1391,6 +1402,90 @@ chrome.runtime.onMessage.addListener(
           const analyzer = getArbitrageAnalyzer();
           const removedCount = await analyzer.cleanupOldOpportunities();
           return { success: true, data: { removedCount } };
+        }
+
+        // --- Crawl4AI Operations ---
+        case 'CRAWL4AI_HEALTH_CHECK': {
+          try {
+            const health = await checkHealth();
+            return { success: true, data: health };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Health check failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'CRAWL4AI_EXTRACT': {
+          const options = message.payload as ExtractionOptions;
+
+          if (!options?.url || !options?.fields?.length) {
+            return { success: false, error: 'URL and fields are required' };
+          }
+
+          try {
+            const result = await extract(options);
+            return { success: true, data: result };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Extraction failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'CRAWL4AI_EXTRACT_BATCH': {
+          const options = message.payload as BatchExtractionOptions;
+
+          if (!options?.urls?.length || !options?.fields?.length) {
+            return { success: false, error: 'URLs and fields are required' };
+          }
+
+          try {
+            const results = await extractBatchUrls(options);
+            return { success: true, data: results };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Batch extraction failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'CRAWL4AI_GET_MARKDOWN': {
+          const { url, options: markdownOptions } = message.payload as {
+            url: string;
+            options?: { scanFullPage?: boolean; waitFor?: string };
+          };
+
+          if (!url) {
+            return { success: false, error: 'URL is required' };
+          }
+
+          try {
+            const markdown = await getMarkdown(url, markdownOptions);
+            return { success: true, data: { markdown, url } };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Markdown extraction failed';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'GET_CRAWL4AI_SETTINGS': {
+          try {
+            const settings = await getCrawl4AISettings();
+            return { success: true, data: settings };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to get settings';
+            return { success: false, error: errorMessage };
+          }
+        }
+
+        case 'UPDATE_CRAWL4AI_SETTINGS': {
+          const settings = message.payload as Parameters<typeof saveCrawl4AISettings>[0];
+
+          try {
+            await saveCrawl4AISettings(settings);
+            return { success: true };
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
+            return { success: false, error: errorMessage };
+          }
         }
 
         default:

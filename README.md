@@ -135,6 +135,42 @@ The visual overlay uses Shadow DOM to:
 - Ensure consistent appearance across websites
 - Isolate extension UI from page manipulation
 
+## Crawl4AI Integration (Optional)
+
+Web Scraper Pro supports an optional [Crawl4AI](https://github.com/unclecode/crawl4ai) backend for enhanced extraction capabilities.
+
+### Features
+
+- **LLM-powered extraction**: Use AI to intelligently extract data from complex pages
+- **Batch processing**: Efficiently scrape multiple URLs in parallel
+- **Fit Markdown**: LLM-optimized markdown output (67% fewer tokens)
+- **Graceful fallback**: Automatically uses local extraction when Crawl4AI is unavailable
+
+### Quick Setup
+
+```bash
+# Start Crawl4AI Docker service
+docker run -d -p 11235:11235 unclecode/crawl4ai:latest
+```
+
+Then enable in Settings > Crawl4AI Backend > Enable Crawl4AI.
+
+### Architecture
+
+```
+Extension (local) ──┬──▶ Local Extraction (fast, offline)
+                    │
+                    └──▶ Crawl4AI Docker (LLM, batch, advanced)
+```
+
+The extension intelligently routes extraction requests:
+- **Simple pages**: Local extraction (fastest)
+- **Complex selectors**: Crawl4AI (more robust)
+- **LLM extraction**: Crawl4AI (AI-powered)
+- **Batch URLs**: Crawl4AI (parallel processing)
+
+See [docs/CRAWL4AI_SETUP.md](docs/CRAWL4AI_SETUP.md) for detailed setup instructions.
+
 ## API
 
 ### Pattern Detector

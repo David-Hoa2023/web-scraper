@@ -3,6 +3,33 @@ export * from './types/recording';
 export * from './types/tutorial';
 export * from './types/arbitrage';
 
+// Crawl4AI Integration Types
+export type Crawl4AIStrategy = 'css' | 'xpath' | 'llm' | 'regex';
+
+export type ExtractionBackend = 'auto' | 'local' | 'crawl4ai';
+
+export interface Crawl4AISettings {
+  enabled: boolean;
+  serviceUrl: string;
+  strategy: ExtractionBackend;
+  llmEnabled: boolean;
+  llmProvider?: 'openai' | 'anthropic' | 'groq' | 'ollama';
+  llmApiKey?: string;
+  maxBatchSize: number;
+  timeoutMs: number;
+  fallbackToLocal: boolean;
+}
+
+export const DEFAULT_CRAWL4AI_SETTINGS: Crawl4AISettings = {
+  enabled: false,
+  serviceUrl: 'http://localhost:11235',
+  strategy: 'auto',
+  llmEnabled: false,
+  maxBatchSize: 10,
+  timeoutMs: 30000,
+  fallbackToLocal: true,
+};
+
 // Pattern Detection Types
 export interface Fingerprint {
   tag: string;
@@ -182,7 +209,14 @@ export type MessageType =
   | 'UPDATE_ARBITRAGE_SETTINGS'
   | 'CLEANUP_ARBITRAGE'
   // Language learning messages
-  | 'CHINESE_LEARN';
+  | 'CHINESE_LEARN'
+  // Crawl4AI messages
+  | 'CRAWL4AI_HEALTH_CHECK'
+  | 'CRAWL4AI_EXTRACT'
+  | 'CRAWL4AI_EXTRACT_BATCH'
+  | 'CRAWL4AI_GET_MARKDOWN'
+  | 'GET_CRAWL4AI_SETTINGS'
+  | 'UPDATE_CRAWL4AI_SETTINGS';
 
 export interface ScraperMessage {
   type: MessageType;
